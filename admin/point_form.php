@@ -1,0 +1,357 @@
+<?php
+/**
+ * Formulario de Punto de Interés
+ * 
+ * Crear o editar un punto de interés con subida de imágenes
+ */
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../src/models/Point.php';
+require_once __DIR__ . '/../src/models/Trip.php';
+require_once __DIR__ . '/../src/helpers/FileHelper.php';
+
+$pointModel = new Point();
+$tripModel = new Trip();
+$errors = [];
+$success = false;
+$point = null;
+$is_edit = false;
+
+// Verificar si es edición
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $point_id = (int) $_GET['id'];
+    $point = $pointModel->getById($point_id);
+    
+    if (!$point) {
+        header('Location: points.php');
+        exit;
+    }
+    $is_edit = true;
+}
+
+// Obtener todos los viajes para el select
+$trips = $tripModel->getAll('title ASC');
+
+// Procesar formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = [
+        'trip_id' => $_POST['trip_id'] ?? null,
+        'title' => trim($_POST['title'] ?? ''),
+        'description' => trim($_POST['description'] ?? ''),
+        'type' => $_POST['type'] ?? '',
+        'icon' => $_POST['icon'] ?? 'default',
+        'latitude' => $_POST['latitude'] ?? '',
+        'longitude' => $_POST['longitude'] ?? '',
+        'visit_date' => $_POST['visit_date'] ?? null,
+        'image_path' => $is_edit ? $point['image_path'] : null
+    ];
+
+    // Validar datos
+    $errors = $pointModel->validate($data);
+
+    // Procesar imagen si se subió
+    if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $upload_result = FileHelper::uploadImage($_FILES['image']);
+        
+        if ($upload_result['success']) {
+            // Si es edición y tenía imagen anterior, eliminarla
+            if ($is_edit && !empty($point['image_path'])) {
+                FileHelper::deleteFile($point['image_path']);
+            }
+            $data['image_path'] = $upload_result['path'];
+        } else {
+            $errors['image'] = $upload_result['error'];
+        }
+    }
+
+    if (empty($errors)) {
+        if ($is_edit) {
+            // Actualizar
+            if ($pointModel->update($point_id, $data)) {
+                $success = true;
+                $point = $pointModel->getById($point_id); // Recargar datos
+                $message = 'Punto de interés actualizado correctamente';
+            } else {
+                $errors['general'] = 'Error al actualizar el punto de interés';
+            }
+        } else {
+            // Crear
+            $new_id = $pointModel->create($data);
+            if ($new_id) {
+                $success = true;
+                $message = 'Punto de interés creado correctamente';
+                // Redirigir a edición del nuevo punto
+                header("Location: point_form.php?id={$new_id}&success=1");
+                exit;
+            } else {
+                $errors['general'] = 'Error al crear el punto de interés';
+            }
+        }
+    }
+}
+
+// Valores por defecto para formulario
+$form_data = $point ?? [
+    'trip_id' => $_POST['trip_id'] ?? ($_GET['trip_id'] ?? ''),
+    'title' => $_POST['title'] ?? '',
+    'description' => $_POST['description'] ?? '',
+    'type' => $_POST['type'] ?? 'visit',
+    'icon' => $_POST['icon'] ?? 'default',
+    'latitude' => $_POST['latitude'] ?? '',
+    'longitude' => $_POST['longitude'] ?? '',
+    'visit_date' => $_POST['visit_date'] ?? '',
+    'image_path' => null
+];
+
+$point_types = Point::getTypes();
+?>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-<?= $is_edit ? 'pencil' : 'plus-circle' ?> me-2" viewBox="0 0 16 16">
+                <?php if ($is_edit): ?>
+                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                <?php else: ?>
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                <?php endif; ?>
+            </svg>
+            <?= $is_edit ? 'Editar Punto de Interés' : 'Nuevo Punto de Interés' ?>
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="points.php<?= isset($_GET['trip_id']) ? '?trip_id=' . $_GET['trip_id'] : '' ?>" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+            </svg>
+            Volver al listado
+        </a>
+    </div>
+</div>
+
+<?php if ($success && isset($message)): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+            <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+        </svg>
+        <?= htmlspecialchars($message) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Punto de interés creado correctamente
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($errors['general'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($errors['general']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    <!-- Viaje -->
+                    <div class="mb-3">
+                        <label for="trip_id" class="form-label">Viaje <span class="text-danger">*</span></label>
+                        <select class="form-select <?= isset($errors['trip_id']) ? 'is-invalid' : '' ?>" 
+                                id="trip_id" 
+                                name="trip_id" 
+                                required>
+                            <option value="">Selecciona un viaje...</option>
+                            <?php foreach ($trips as $trip): ?>
+                                <option value="<?= $trip['id'] ?>" <?= $form_data['trip_id'] == $trip['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($trip['title']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (isset($errors['trip_id'])): ?>
+                            <div class="invalid-feedback"><?= htmlspecialchars($errors['trip_id']) ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Título -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control <?= isset($errors['title']) ? 'is-invalid' : '' ?>" 
+                               id="title" 
+                               name="title" 
+                               value="<?= htmlspecialchars($form_data['title']) ?>" 
+                               required 
+                               maxlength="200"
+                               placeholder="Ej: Torre Eiffel">
+                        <?php if (isset($errors['title'])): ?>
+                            <div class="invalid-feedback"><?= htmlspecialchars($errors['title']) ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  rows="3"
+                                  placeholder="Describe el lugar..."><?= htmlspecialchars($form_data['description'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="row">
+                        <!-- Tipo -->
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Tipo <span class="text-danger">*</span></label>
+                            <select class="form-select <?= isset($errors['type']) ? 'is-invalid' : '' ?>" 
+                                    id="type" 
+                                    name="type" 
+                                    required>
+                                <?php foreach ($point_types as $type_key => $type_label): ?>
+                                    <option value="<?= $type_key ?>" <?= $form_data['type'] === $type_key ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($type_label) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php if (isset($errors['type'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['type']) ?></div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="visit_date" class="form-label">Fecha de Visita</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="visit_date" 
+                                   name="visit_date" 
+                                   value="<?= htmlspecialchars($form_data['visit_date'] ?? '') ?>">
+                        </div>
+                    </div>
+
+                    <!-- Coordenadas -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="latitude" class="form-label">Latitud <span class="text-danger">*</span></label>
+                            <input type="number" 
+                                   class="form-control <?= isset($errors['latitude']) ? 'is-invalid' : '' ?>" 
+                                   id="latitude" 
+                                   name="latitude" 
+                                   value="<?= htmlspecialchars($form_data['latitude']) ?>" 
+                                   step="0.000001" 
+                                   min="-90" 
+                                   max="90" 
+                                   required
+                                   placeholder="-34.603722">
+                            <?php if (isset($errors['latitude'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['latitude']) ?></div>
+                            <?php else: ?>
+                                <small class="form-text text-muted">Rango: -90 a 90</small>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="longitude" class="form-label">Longitud <span class="text-danger">*</span></label>
+                            <input type="number" 
+                                   class="form-control <?= isset($errors['longitude']) ? 'is-invalid' : '' ?>" 
+                                   id="longitude" 
+                                   name="longitude" 
+                                   value="<?= htmlspecialchars($form_data['longitude']) ?>" 
+                                   step="0.000001" 
+                                   min="-180" 
+                                   max="180" 
+                                   required
+                                   placeholder="-58.381592">
+                            <?php if (isset($errors['longitude'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['longitude']) ?></div>
+                            <?php else: ?>
+                                <small class="form-text text-muted">Rango: -180 a 180</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Imagen -->
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Imagen</label>
+                        <input type="file" 
+                               class="form-control <?= isset($errors['image']) ? 'is-invalid' : '' ?>" 
+                               id="image" 
+                               name="image" 
+                               accept="image/jpeg,image/png,image/jpg">
+                        <?php if (isset($errors['image'])): ?>
+                            <div class="invalid-feedback"><?= htmlspecialchars($errors['image']) ?></div>
+                        <?php else: ?>
+                            <small class="form-text text-muted">Formatos permitidos: JPG, JPEG, PNG. Tamaño máximo: 5MB</small>
+                        <?php endif; ?>
+
+                        <?php if ($is_edit && !empty($point['image_path'])): ?>
+                            <div class="mt-2">
+                                <label class="form-label">Imagen actual:</label><br>
+                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>" 
+                                     alt="Imagen actual" 
+                                     class="img-thumbnail" 
+                                     style="max-width: 200px;">
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="points.php<?= isset($_GET['trip_id']) ? '?trip_id=' . $_GET['trip_id'] : '' ?>" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save me-1" viewBox="0 0 16 16">
+                                <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/>
+                            </svg>
+                            <?= $is_edit ? 'Guardar Cambios' : 'Crear Punto' ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533z"/>
+                        <path d="M9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                    </svg>
+                    Ayuda
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Campos obligatorios</h6>
+                <ul>
+                    <li><strong>Viaje:</strong> A qué viaje pertenece</li>
+                    <li><strong>Título:</strong> Nombre del lugar</li>
+                    <li><strong>Tipo:</strong> Categoría del punto</li>
+                    <li><strong>Coordenadas:</strong> Ubicación exacta</li>
+                </ul>
+
+                <h6 class="mt-3">Tipos de puntos</h6>
+                <ul class="list-unstyled">
+                    <li>🏨 <strong>Alojamiento:</strong> Hoteles, hostales</li>
+                    <li>📸 <strong>Punto de Visita:</strong> Atracciones turísticas</li>
+                    <li>🍽️ <strong>Restaurante:</strong> Lugares de comida</li>
+                </ul>
+
+                <h6 class="mt-3">Obtener coordenadas</h6>
+                <p class="small">Puedes obtener coordenadas desde:</p>
+                <ul class="small">
+                    <li><a href="https://www.google.com/maps" target="_blank">Google Maps</a></li>
+                    <li>Clic derecho en el mapa → Copiar coordenadas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
