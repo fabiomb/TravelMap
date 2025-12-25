@@ -1,0 +1,63 @@
+/* Estilos personalizados para el panel de administración */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Animaciones suaves */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Botones mejorados */
+.btn {
+    transition: all 0.2s ease;
+}
+
+/* Tablas responsivas mejoradas */
+.table-responsive {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Badges personalizados */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Alertas mejoradas */
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-success {
+    border-left-color: #198754;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
