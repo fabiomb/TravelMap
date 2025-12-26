@@ -1,118 +1,142 @@
 # TravelMap - Aplicación de Diario de Viajes Interactivo
 
-Aplicación web para crear mapas interactivos con información de viajes utilizando tecnologías nativas.
+Aplicación web completa para crear y visualizar mapas interactivos de viajes con puntos de interés, rutas georreferenciadas y gestión multimedia. Sistema desarrollado con tecnologías nativas sin dependencias de frameworks externos.
 
-## 🚀 Tecnologías Utilizadas
+## ✨ Características Principales
 
+### Panel de Administración
+- **Gestión de Viajes**: CRUD completo con título, descripción, fechas, color identificador y estado de publicación
+- **Puntos de Interés**: Creación de marcadores con coordenadas, descripciones, categorías y galería de imágenes
+- **Editor de Rutas**: Herramienta visual para dibujar rutas en el mapa con clasificación por tipo de transporte (coche, avión, tren, barco, pie)
+- **Sistema de Autenticación**: Login seguro con sesiones, protección de rutas y gestión de usuarios
+- **Mapas Interactivos**: Selección de coordenadas mediante click o arrastrar marcadores
+- **Gestión Multimedia**: Subida y validación de imágenes con almacenamiento organizado
+
+### Visualizador Público
+- **Mapa a Pantalla Completa**: Interfaz responsive con todos los viajes y puntos publicados
+- **Clustering Inteligente**: Agrupación automática de puntos cercanos con Leaflet.markercluster
+- **Filtrado por Viaje**: Panel lateral con lista de viajes y filtros en tiempo real
+- **Popups Detallados**: Información completa de cada punto con imágenes y descripción
+- **Rutas Coloreadas**: Visualización de trayectos diferenciados por viaje y tipo de transporte
+- **API REST**: Endpoint JSON público para obtener todos los datos geográficos
+
+## 🚀 Especificaciones Técnicas
+
+### Stack Tecnológico
 - **Backend**: PHP 8.x (Vanilla, sin frameworks)
+  - PDO para conexión a base de datos
+  - Password hashing con `password_hash()`
+  - Sesiones con expiración configurada
+  - Validación de tipos de archivo
 - **Base de Datos**: MySQL/MariaDB
-- **Frontend**: Bootstrap 5 + jQuery 3.x (locales)
-- **Mapas**: Leaflet.js con plugins (draw, markercluster, polylineDecorator)
+  - Foreign Keys con CASCADE
+  - Almacenamiento GeoJSON para rutas
+  - Índices optimizados
+- **Frontend**: 
+  - Bootstrap 5 (UI responsive)
+  - jQuery 3.x (manipulación DOM)
+  - HTML5 / CSS3
+- **Mapas**: 
+  - Leaflet.js (motor de mapas)
+  - Leaflet.draw (editor de geometrías)
+  - Leaflet.markercluster (clustering)
+  - Leaflet.polylineDecorator (decoradores de rutas)
 
-## 📁 Estructura del Proyecto
+### Arquitectura
+- Patrón MVC simplificado
+- Modelos: Trip, Point, Route con métodos CRUD
+- Helpers: FileHelper para gestión de uploads
+- Configuración centralizada
+- Separación de código público/administrativo
 
-Ver [ESTRUCTURA.md](ESTRUCTURA.md) para detalles completos de la organización de carpetas.
+## 📋 Requisitos del Sistema
+
+### Software Necesario
+- **Servidor Web**: XAMPP, WAMP, LAMP o similar
+- **PHP**: Versión 8.0 o superior
+- **Base de Datos**: MySQL 5.7+ o MariaDB 10.3+
+- **Navegador**: Chrome, Firefox, Safari o Edge (versión reciente)
+
+### Librerías Locales (sin CDN)
+Todas las librerías están incluidas localmente en `assets/vendor/`:
+- Bootstrap 5 (CSS + JS)
+- jQuery 3.7.1
+- Leaflet.js + plugins
+
+**Nota**: Consulta [LIBRERIAS.md](LIBRERIAS.md) para instrucciones detalladas de descarga si necesitas actualizar las librerías.
 
 ## 🔧 Instalación
 
-### Requisitos Previos
-- XAMPP, WAMP o servidor similar con PHP 8.x
-- MySQL o MariaDB
-- Navegador web moderno
+### 1. Clonar o Copiar el Proyecto
+Coloca el proyecto en tu carpeta `htdocs` (XAMPP) o equivalente:
+```
+c:\xampp\htdocs\TravelMap
+```
 
-### Pasos de Instalación
+### 2. Crear la Base de Datos
+- Abre phpMyAdmin o tu cliente MySQL
+- Importa el archivo [database.sql](database.sql)
+- Esto creará la base de datos `travelmap` con todas las tablas necesarias
 
-1. **Clonar o copiar el proyecto** en tu carpeta `htdocs` (o equivalente):
-   ```
-   c:\xampp\htdocs\TravelMap
-   ```
+### 3. Configurar la Conexión a la Base de Datos
+Edita [config/db.php](config/db.php) si tus credenciales son diferentes:
+```php
+// Valores por defecto
+'user' => 'root',
+'password' => ''  // vacía
+```
 
-2. **Crear la base de datos**:
-   - Abre phpMyAdmin o tu cliente MySQL
-   - Importa el archivo `database.sql`
-   - Esto creará la base de datos `travelmap` y todas las tablas necesarias
+### 4. Ajustar la URL Base
+Edita [config/config.php](config/config.php):
+```php
+$folder = 'TravelMap';  // Cambia si tu carpeta tiene otro nombre
+```
 
-3. **Configurar la conexión**:
-   - Edita `config/db.php` si tu usuario/contraseña de MySQL son diferentes
-   - Por defecto usa: user=`root`, password=`` (vacía)
+### 5. Crear Usuario Administrador
+Accede a la URL de instalación (solo una vez):
+```
+http://localhost/TravelMap/install/seed_admin.php
+```
 
-4. **Ajustar la URL base**:
-   - Edita `config/config.php` 
-   - Modifica la variable `$folder` si tu carpeta no se llama "TravelMap"
+Esto creará el usuario administrador:
+- **Usuario**: admin
+- **Contraseña**: admin123
 
-5. **Descargar librerías locales**:
-   - **IMPORTANTE**: Consulta [LIBRERIAS.md](LIBRERIAS.md) para instrucciones detalladas
-   - Bootstrap 5 → `assets/vendor/bootstrap/`
-   - jQuery 3.x → `assets/vendor/jquery/`
-   - Leaflet.js + plugins → `assets/vendor/leaflet/`
-     - Leaflet.draw (para editor de rutas)
-     - Leaflet.markercluster (para clustering de puntos)
+**⚠️ IMPORTANTE**: Elimina o protege la carpeta `install/` después de ejecutar este paso.
 
-6. **Crear usuario administrador**:
-   - Accede a: `http://localhost/TravelMap/install/seed_admin.php`
-   - Esto creará el usuario: **admin** / **admin123**
-   - **IMPORTANTE**: Elimina o protege la carpeta `install/` después
+### 6. Acceder a la Aplicación
 
-7. **Acceder a la aplicación**:
-   - Panel Admin: `http://localhost/TravelMap/admin/`
-   - Vista Pública: `http://localhost/TravelMap/`
+- **Panel Administrativo**: [http://localhost/TravelMap/admin/](http://localhost/TravelMap/admin/)
+- **Vista Pública**: [http://localhost/TravelMap/](http://localhost/TravelMap/)
+
+## 📖 Guía de Uso
+
+1. Inicia sesión en el panel de administración con las credenciales creadas
+2. Crea un nuevo viaje definiendo título, descripción, fechas y color identificador
+3. Agrega rutas dibujándolas directamente en el mapa y especificando el tipo de transporte
+4. Añade puntos de interés con coordenadas (click en el mapa), descripción y fotos
+5. Marca el viaje como "publicado" para que aparezca en el mapa público
+6. Visualiza todos tus viajes en el mapa público con clustering y filtros
 
 ## 🔐 Seguridad
 
-- Las contraseñas se almacenan con `password_hash()` de PHP
-- Sesiones configuradas con tiempo de expiración
-- Validación de tipos de archivo en uploads
-- Foreign Keys con CASCADE para integridad referencial
+- Contraseñas hasheadas con algoritmo bcrypt (`password_hash()`)
+- Sesiones con tiempo de expiración configurable
+- Validación estricta de tipos de archivo en uploads (JPEG, PNG, GIF)
+- Protección de rutas administrativas mediante autenticación
+- Foreign Keys con restricciones CASCADE para integridad referencial
+- Preparación de consultas SQL con PDO (prevención de SQL injection)
 
-## 📝 Uso
+## 📁 Estructura del Proyecto
 
-1. Inicia sesión en el panel de administración
-2. Crea un nuevo viaje con título, descripción, fechas y color
-3. Agrega rutas dibujándolas en el mapa (especificando tipo de transporte)
-4. Agrega puntos de interés con fotos, descripciones y coordenadas
-5. Publica el viaje para visualizarlo en el mapa público
-
-## 📦 Estado del Proyecto
-
-**✅ Fase 1 Completada**: Base de datos y estructura del proyecto
-- ✅ Script SQL con todas las tablas
-- ✅ Estructura de carpetas organizada
-- ✅ Conexión PDO con manejo de excepciones
-- ✅ Configuración global del sistema
-
-**✅ Fase 2 Completada**: Sistema de autenticación y layout base
-- ✅ Sistema de login/logout con sesiones
-- ✅ Layout Bootstrap con navbar responsive
-- ✅ Dashboard administrativo
-- ✅ Protección de rutas privadas
-
-**✅ Fase 3 Completada**: ABM de Viajes y Puntos
-- ✅ CRUD completo de viajes
-- ✅ CRUD completo de puntos de interés
-- ✅ Subida y validación de imágenes
-- ✅ Formularios con validación PHP
-
-**✅ Fase 4 Completada**: Editor de Mapas
-- ✅ Modelo de rutas con GeoJSON
-- ✅ Editor de mapas con Leaflet.draw
-- ✅ Dibujo de polilíneas por tipo de transporte
-- ✅ Selector de coordenadas con mapa interactivo
-- ✅ Marcadores arrastrables para puntos
-
-**✅ Fase 5 Completada**: Visualizador Público
-- ✅ API endpoint JSON con datos públicos
-- ✅ Mapa interactivo a pantalla completa
-- ✅ Clustering de puntos con markercluster
-- ✅ Filtros por viaje con panel lateral
-- ✅ Popups con imágenes y detalles
-- ✅ Diseño responsive y moderno
-
-**🎉 Proyecto Completo y Funcional**
+Ver [ESTRUCTURA.md](ESTRUCTURA.md) para detalles completos de la organización de carpetas y archivos.
 
 ## 🤝 Contribuciones
 
-Este proyecto es personal, pero siéntete libre de hacer fork y adaptarlo.
+Creado por Fabio Baccaglioni <fabiomb@gmail.com>
+Este es un proyecto personal de código abierto. Siéntete libre de hacer fork y adaptarlo a tus necesidades.
 
 ## 📄 Licencia
 
-Ver archivo [LICENSE](LICENSE)
+GPL v3
+Ver archivo [LICENSE](LICENSE) para más información.
