@@ -206,7 +206,8 @@
         const transportType = route.transport_type || 'car';
         const config = transportConfig[transportType] || transportConfig['car'];
         
-        const color = route.color || config.color;
+        // Si el viaje está planificado, usar color gris independientemente del tipo de transporte
+        const color = trip.status === 'planned' ? '#999999' : (route.color || config.color);
         const dashArray = config.dashArray;
 
         const layer = L.geoJSON(route.geojson, {

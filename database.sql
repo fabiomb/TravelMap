@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS trips (
     start_date DATE,
     end_date DATE,
     color_hex VARCHAR(7) DEFAULT '#3388ff',
-    status ENUM('public', 'draft') DEFAULT 'draft',
+    status ENUM('public', 'draft', 'planned') DEFAULT 'draft',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_status (status),

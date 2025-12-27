@@ -219,11 +219,12 @@ $form_data = $trip ?? [
                                     name="status">
                                 <option value="draft" <?= $form_data['status'] === 'draft' ? 'selected' : '' ?>>Borrador</option>
                                 <option value="public" <?= $form_data['status'] === 'public' ? 'selected' : '' ?>>Público</option>
+                                <option value="planned" <?= $form_data['status'] === 'planned' ? 'selected' : '' ?>>Planificado</option>
                             </select>
                             <?php if (isset($errors['status'])): ?>
                                 <div class="invalid-feedback"><?= htmlspecialchars($errors['status']) ?></div>
                             <?php endif; ?>
-                            <small class="form-text text-muted">Solo los viajes públicos se mostrarán en el mapa</small>
+                            <small class="form-text text-muted">Públicos y planificados se muestran en el mapa (planificados en gris)</small>
                         </div>
                     </div>
 
