@@ -35,7 +35,7 @@ define('ASSETS_URL', BASE_URL . '/assets');
 define('UPLOADS_URL', BASE_URL . '/uploads');
 
 // Configuración de archivos
-define('MAX_UPLOAD_SIZE', 5 * 1024 * 1024); // 5MB
+define('MAX_UPLOAD_SIZE', 8 * 1024 * 1024); // 5MB
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/jpg']);
 define('ALLOWED_IMAGE_EXTENSIONS', ['jpg', 'jpeg', 'png']);
 

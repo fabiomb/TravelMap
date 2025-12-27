@@ -340,7 +340,7 @@ $point_types = Point::getTypes();
                                     </svg>
                                     Seleccionar archivo
                                 </button>
-                                <p class="small text-muted mt-2 mb-0">JPG, JPEG, PNG - Máximo 5MB</p>
+                                <p class="small text-muted mt-2 mb-0">JPG, JPEG, PNG - Máximo <?php echo round(MAX_UPLOAD_SIZE / 1024 / 1024, 2); ?>MB</p>
                             </div>
                             <div id="previewArea" style="display: none;">
                                 <img id="imagePreview" src="" alt="Vista previa" class="img-thumbnail mb-2" style="max-width: 100%; max-height: 300px;">
@@ -535,10 +535,11 @@ $(document).ready(function() {
             return;
         }
 
-        // Validar tamaño (5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        // Validar tamaño
+        const maxSize = <?php echo MAX_UPLOAD_SIZE; ?>; // Tomado de config.php
         if (file.size > maxSize) {
-            alert('El archivo es demasiado grande. El tamaño máximo es 5MB');
+            const maxMB = (maxSize / 1024 / 1024).toFixed(2);
+            alert(`El archivo es demasiado grande. El tamaño máximo es ${maxMB}MB`);
             return;
         }
 
