@@ -154,8 +154,26 @@ require_once __DIR__ . '/../includes/header.php';
                     </button>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div id="map" style="height: 600px; width: 100%;"></div>
+            <div class="card-body">
+                <!-- Buscador de lugares -->
+                <div class="input-group mb-3">
+                    <span class="input-group-text">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                    </span>
+                    <input type="text" 
+                           class="form-control" 
+                           id="placeSearch" 
+                           placeholder="Buscar ciudad, lugar o dirección para navegar en el mapa..."
+                           autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        Buscar
+                    </button>
+                </div>
+                <div id="searchResults" class="list-group mb-3" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+                
+                <div id="map" style="height: 550px; width: 100%;"></div>
             </div>
         </div>
 

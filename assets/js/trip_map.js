@@ -318,6 +318,116 @@
     }
 
     /**
+     * Busca lugares usando Nominatim (OpenStreetMap)
+     */
+    function searchPlace(query) {
+        if (!query || query.trim().length < 3) {
+            alert('Por favor, ingresa al menos 3 caracteres para buscar');
+            return;
+        }
+
+        const searchResults = $('#searchResults');
+        searchResults.html('<div class="list-group-item"><div class="spinner-border spinner-border-sm me-2"></div>Buscando...</div>');
+        searchResults.show();
+
+        // Usar proxy local para evitar problemas de CORS
+        const url = `${window.location.origin}/TravelMap/api/geocode.php?q=${encodeURIComponent(query)}&limit=5`;
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            dataType: 'json',
+            success: function(results) {
+                searchResults.empty();
+
+                if (!results || results.length === 0) {
+                    searchResults.html('<div class="list-group-item text-muted">No se encontraron resultados</div>');
+                    return;
+                }
+
+                if (results.error) {
+                    searchResults.html(`<div class="list-group-item text-danger">${results.error}</div>`);
+                    return;
+                }
+
+                results.forEach(function(place) {
+                    const displayName = place.display_name;
+                    const lat = parseFloat(place.lat);
+                    const lon = parseFloat(place.lon);
+                    
+                    const item = $(`
+                        <button type="button" class="list-group-item list-group-item-action" data-lat="${lat}" data-lon="${lon}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-geo-alt-fill me-1" viewBox="0 0 16 16">
+                                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>
+                                    </svg>
+                                    ${place.name || place.type}
+                                </h6>
+                            </div>
+                            <p class="mb-1 small text-muted">${displayName}</p>
+                        </button>
+                    `);
+
+                    item.on('click', function() {
+                        const lat = parseFloat($(this).data('lat'));
+                        const lon = parseFloat($(this).data('lon'));
+                        goToPlace(lat, lon, displayName);
+                    });
+
+                    searchResults.append(item);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error en búsqueda:', error);
+                let errorMsg = 'Error al buscar. Intenta nuevamente.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                
+                searchResults.html(`<div class="list-group-item text-danger">${errorMsg}</div>`);
+            }
+        });
+    }
+
+    /**
+     * Navega a un lugar específico en el mapa
+     */
+    function goToPlace(lat, lon, name) {
+        // Centrar mapa en el lugar
+        map.setView([lat, lon], 13);
+
+        // Ocultar resultados
+        $('#searchResults').hide().empty();
+
+        // Limpiar input
+        $('#placeSearch').val('');
+
+        // Mostrar marcador temporal
+        const tempMarker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'temp-search-marker',
+                html: `<div style="background-color: #0066FF; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 16px;">📍</div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            })
+        }).addTo(map);
+
+        tempMarker.bindPopup(`
+            <strong>${name}</strong><br>
+            <small>Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}</small>
+        `).openPopup();
+
+        // Remover marcador después de 10 segundos
+        setTimeout(() => {
+            map.removeLayer(tempMarker);
+        }, 10000);
+
+        console.log('Navegado a:', name, lat, lon);
+    }
+
+    /**
      * Inicialización cuando el DOM está listo
      */
     $(document).ready(function () {
@@ -329,6 +439,27 @@
 
         // Evento para el formulario
         $('#routesForm').on('submit', handleFormSubmit);
+
+        // Eventos del buscador
+        $('#searchBtn').on('click', function() {
+            const query = $('#placeSearch').val();
+            searchPlace(query);
+        });
+
+        $('#placeSearch').on('keypress', function(e) {
+            if (e.which === 13) { // Enter
+                e.preventDefault();
+                const query = $(this).val();
+                searchPlace(query);
+            }
+        });
+
+        // Cerrar resultados al hacer clic fuera
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#placeSearch, #searchBtn, #searchResults').length) {
+                $('#searchResults').hide();
+            }
+        });
 
         console.log('Trip Map Editor inicializado');
     });
