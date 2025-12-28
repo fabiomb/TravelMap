@@ -2,6 +2,8 @@
 
 Aplicación web completa para crear y visualizar mapas interactivos de viajes con puntos de interés, rutas georreferenciadas y gestión multimedia. Sistema desarrollado con tecnologías nativas sin dependencias de frameworks externos.
 
+![TravelMap](https://github.com/fabiomb/TravelMap/blob/main/docs/travelmap.png)
+
 ## ✨ Características Principales
 
 ### Panel de Administración
