@@ -269,6 +269,27 @@ class FileHelper {
             return false;
         }
         
+        // Corregir orientación EXIF si es una imagen JPEG
+        if ($image_type === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($source_path);
+            if ($exif !== false && isset($exif['Orientation'])) {
+                $source_image = self::fixImageOrientation($source_image, $exif['Orientation']);
+                
+                // Actualizar dimensiones si la imagen fue rotada 90° o 270°
+                if (in_array($exif['Orientation'], [5, 6, 7, 8])) {
+                    // La imagen fue rotada 90° o 270°, intercambiar dimensiones
+                    $temp = $orig_width;
+                    $orig_width = $orig_height;
+                    $orig_height = $temp;
+                    
+                    // Recalcular nuevas dimensiones con las dimensiones corregidas
+                    $ratio = min($max_width / $orig_width, $max_height / $orig_height);
+                    $new_width = round($orig_width * $ratio);
+                    $new_height = round($orig_height * $ratio);
+                }
+            }
+        }
+        
         // Crear imagen de destino
         $dest_image = imagecreatetruecolor($new_width, $new_height);
         
@@ -353,5 +374,53 @@ class FileHelper {
         imagedestroy($source_image);
         
         return $result;
+    }
+    
+    /**
+     * Corrige la orientación de una imagen basándose en los datos EXIF
+     * 
+     * @param resource $image Recurso de imagen GD
+     * @param int $orientation Valor de orientación EXIF
+     * @return resource Recurso de imagen corregido
+     */
+    private static function fixImageOrientation($image, $orientation) {
+        if (!is_resource($image) && !($image instanceof \GdImage)) {
+            return $image;
+        }
+        
+        switch ($orientation) {
+            case 2:
+                // Volteo horizontal
+                imageflip($image, IMG_FLIP_HORIZONTAL);
+                break;
+            case 3:
+                // Rotación 180°
+                $image = imagerotate($image, 180, 0);
+                break;
+            case 4:
+                // Volteo vertical
+                imageflip($image, IMG_FLIP_VERTICAL);
+                break;
+            case 5:
+                // Volteo vertical + rotación 90° anti-horario
+                imageflip($image, IMG_FLIP_VERTICAL);
+                $image = imagerotate($image, -90, 0);
+                break;
+            case 6:
+                // Rotación 90° anti-horario (o 270° horario)
+                $image = imagerotate($image, -90, 0);
+                break;
+            case 7:
+                // Volteo horizontal + rotación 90° anti-horario
+                imageflip($image, IMG_FLIP_HORIZONTAL);
+                $image = imagerotate($image, -90, 0);
+                break;
+            case 8:
+                // Rotación 90° horario (o 270° anti-horario)
+                $image = imagerotate($image, 90, 0);
+                break;
+        }
+        
+        return $image;
     }
 }
