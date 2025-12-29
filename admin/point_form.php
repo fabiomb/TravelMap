@@ -443,6 +443,9 @@ $point_types = Point::getTypes();
 <script src="<?= ASSETS_URL ?>/vendor/leaflet/js/leaflet.js"></script>
 
 <script>
+// Configuración base
+const BASE_URL = '<?= BASE_URL ?>';
+
 // Pasar datos PHP a JavaScript
 const initialLat = <?= !empty($form_data['latitude']) ? $form_data['latitude'] : 'null' ?>;
 const initialLng = <?= !empty($form_data['longitude']) ? $form_data['longitude'] : 'null' ?>;

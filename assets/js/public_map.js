@@ -604,7 +604,7 @@
         searchResults.show();
 
         // Usar proxy local para evitar problemas de CORS
-        const url = `${window.location.origin}/TravelMap/api/geocode.php?q=${encodeURIComponent(query)}&limit=5`;
+        const url = `${BASE_URL}/api/geocode.php?q=${encodeURIComponent(query)}&limit=5`;
 
         $.ajax({
             url: url,
