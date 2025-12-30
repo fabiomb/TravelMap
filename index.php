@@ -170,10 +170,37 @@ require_once __DIR__ . '/config/config.php';
     <script>
         const BASE_URL = '<?= BASE_URL ?>';
         const API_URL = '<?= BASE_URL ?>/api/get_all_data.php';
+        
+        // Console art - Invite to collaborate
+        console.log(`%c
+:::::::::::''  ''::'      '::::::  \`:::::::::::::'.:::::::::::::::
+:::::::::' :. :  :         ::::::  :::::::::::.:::':::::::::::::::
+::::::::::  :   :::.       :::::::::::::..::::'     :::: : :::::::
+::::::::    :':  "::'     '"::::::::::::: :'           '' ':::::::
+:'        : '   :  ::    .::::::::'    '                        .:
+:               :  .:: .::. ::::'                              :::
+:. .,.        :::  ':::::::::::.: '                      .:...::::
+:::::::.      '     .::::::: '''                         :: :::::.
+::::::::            ':::::::::  '',            '    '   .:::::::::
+::::::::.        :::::::::::: '':,:   '    :         ''' :::::::::
+::::::::::      ::::::::::::'                        :::::::::::::
+: .::::::::.   .:''::::::::    '         ::   :   '::.::::::::::::
+:::::::::::::::. '  '::::::.  '  '     :::::.:.:.:.:.:::::::::::::
+:::::::::::::::: :     ':::::::::   ' ,:::::::::: : :.:'::::::::::
+::::::::::::::::: '     :::::::::   . :'::::::::::::::' ':::::::::
+::::::::::::::::::''   :::::::::: :' : ,:::::::::::'      ':::::::
+:::::::::::::::::'   .::::::::::::  ::::::::::::::::       :::::::
+:::::::::::::::::. .::::::::::::::::::::::::::::::::::::.'::::::::
+:::::::::::::::::' :::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::.:::::::::::::::::::::::::::::::::::::::::::::::
+`, 'color: rgb(64, 96, 144); font-family: monospace; font-size: 10px;');
+        console.log('%c✈️ TravelMap', 'color:rgb(64, 96, 144); font-size: 20px; font-weight: bold;');
+        console.log('%cWant to contribute? Check out our GitHub! → https://github.com/fabiomb/TravelMap', 'color: #64748b; font-size: 12px;');
+        console.log('%cPRs, issues, and stars are welcome! ⭐', 'color: #64748b; font-size: 12px;');
     </script>
     
     <!-- Public Map JS -->
-    <script src="<?= ASSETS_URL ?>/js/public_map.js?v=9"></script>
+    <script src="<?= ASSETS_URL ?>/js/public_map.js?v=10"></script>
     
     <!-- Lightbox para imágenes -->
     <div id="imageLightbox" class="lightbox" style="display: none;">
