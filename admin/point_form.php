@@ -418,10 +418,10 @@ $point_types = Point::getTypes();
                 </ul>
 
                 <h6 class="mt-3">Tipos de puntos</h6>
-                <ul class="list-unstyled">
-                    <li>🏨 <strong>Alojamiento:</strong> Hoteles, hostales</li>
-                    <li>📸 <strong>Punto de Visita:</strong> Atracciones turísticas</li>
-                    <li>🍽️ <strong>Restaurante:</strong> Lugares de comida</li>
+                <ul class="list-unstyled point-types-list">
+                    <li><?= Point::getSvgIcon('stay', 16) ?> <strong>Alojamiento:</strong> Hoteles, hostales</li>
+                    <li><?= Point::getSvgIcon('visit', 16) ?> <strong>Punto de Visita:</strong> Atracciones turísticas</li>
+                    <li><?= Point::getSvgIcon('food', 16) ?> <strong>Restaurante:</strong> Lugares de comida</li>
                 </ul>
 
                 <h6 class="mt-3">Obtener coordenadas</h6>

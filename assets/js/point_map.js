@@ -75,7 +75,7 @@
         // Icono personalizado
         const icon = L.divIcon({
             className: 'custom-poi-marker',
-            html: `<div style="background-color: #FF4444; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); font-size: 20px; cursor: move;">📍</div>`,
+            html: `<div style="background-color: #FF4444; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); cursor: move;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="6" r="4"/><path d="M5 16C3.7492 16.6327 3 17.4385 3 18.3158C3 20.3505 7.02944 22 12 22C16.9706 22 21 20.3505 21 18.3158C21 17.4385 20.2508 16.6327 19 16"/><path d="M12 10L12 18"/></svg></div>`,
             iconSize: [36, 36],
             iconAnchor: [18, 36]
         });

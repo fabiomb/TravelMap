@@ -180,7 +180,10 @@ $point_types = Point::getTypes();
                                             </span>
                                         </td>
                                         <td>
-                                            <small><?= htmlspecialchars($point_types[$point['type']] ?? $point['type']) ?></small>
+                                            <small class="d-flex align-items-center gap-1">
+                                                <?= Point::getSvgIcon($point['type'], 14) ?>
+                                                <?= htmlspecialchars($point_types[$point['type']] ?? $point['type']) ?>
+                                            </small>
                                         </td>
                                         <td>
                                             <small class="text-muted font-monospace">

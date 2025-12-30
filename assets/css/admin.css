@@ -177,3 +177,15 @@ main {
     vertical-align: middle;
     margin-bottom: 2px;
 }
+
+/* Point type SVG icons */
+.point-types-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.point-types-list svg {
+    flex-shrink: 0;
+}
