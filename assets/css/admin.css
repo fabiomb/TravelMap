@@ -171,3 +171,9 @@ main {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     border-radius: 4px;
 }
+
+/* SVG icons in form labels */
+.form-label svg {
+    vertical-align: middle;
+    margin-bottom: 2px;
+}

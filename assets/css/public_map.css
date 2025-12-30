@@ -156,6 +156,16 @@ body {
     margin-right: 8px;
 }
 
+.legend-item small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-item svg {
+    flex-shrink: 0;
+}
+
 /* ========== Clusters personalizados ========== */
 .custom-cluster-icon {
     background: transparent !important;
