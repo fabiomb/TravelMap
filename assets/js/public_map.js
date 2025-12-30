@@ -573,15 +573,15 @@
         const isFuture = isFutureTrip(trip);
         const config = transportConfig['plane'];
         const color = isFuture ? '#6B6B6B' : (config.color || route.color);
-        const dashArray = isFuture ? '2, 6' : (config.dashArray || '10, 5');
-        const opacity = 0.7;
+        const dashArray = isFuture ? '2, 4' : '4, 6';
+        const opacity = isFuture ? 0.5 : 0.6;
         
         // Simple straight line (much faster than Bézier curves)
         const latLngs = coords.map(function(c) { return [c[1], c[0]]; });
         
         const layer = L.polyline(latLngs, {
             color: color,
-            weight: isFuture ? 3 : 3,
+            weight: 2,
             opacity: opacity,
             dashArray: dashArray
         });
