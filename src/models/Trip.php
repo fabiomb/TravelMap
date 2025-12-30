@@ -97,27 +97,33 @@ class Trip {
      * Actualizar un viaje existente
      * 
      * @param int $id ID del viaje
-     * @param array $data Datos a actualizar
+     * @param array $data Datos a actualizar (solo los campos proporcionados)
      * @return bool True si se actualizó correctamente
      */
     public function update($id, $data) {
         try {
-            $stmt = $this->db->prepare('
-                UPDATE trips 
-                SET title = ?, description = ?, start_date = ?, 
-                    end_date = ?, color_hex = ?, status = ?
-                WHERE id = ?
-            ');
+            // Build dynamic update query based on provided fields
+            $allowedFields = ['title', 'description', 'start_date', 'end_date', 'color_hex', 'status'];
+            $setClauses = [];
+            $values = [];
             
-            return $stmt->execute([
-                $data['title'],
-                $data['description'] ?? null,
-                $data['start_date'] ?? null,
-                $data['end_date'] ?? null,
-                $data['color_hex'] ?? '#3388ff',
-                $data['status'] ?? 'draft',
-                $id
-            ]);
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $data)) {
+                    $setClauses[] = "$field = ?";
+                    $values[] = $data[$field];
+                }
+            }
+            
+            if (empty($setClauses)) {
+                return false; // Nothing to update
+            }
+            
+            $values[] = $id; // Add ID for WHERE clause
+            
+            $sql = 'UPDATE trips SET ' . implode(', ', $setClauses) . ' WHERE id = ?';
+            $stmt = $this->db->prepare($sql);
+            
+            return $stmt->execute($values);
         } catch (PDOException $e) {
             error_log('Error al actualizar viaje: ' . $e->getMessage());
             return false;

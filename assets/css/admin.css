@@ -14,6 +14,39 @@ main {
     margin-top: auto;
 }
 
+/* Navbar dropdown hover */
+@media (min-width: 992px) {
+    .navbar .nav-item.dropdown:hover > .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+    
+    .navbar .nav-item.dropdown > .dropdown-toggle::after {
+        transition: transform 0.2s ease;
+    }
+    
+    .navbar .nav-item.dropdown:hover > .dropdown-toggle::after {
+        transform: rotate(180deg);
+    }
+    
+    .navbar .dropdown-menu {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        animation: dropdownFadeIn 0.2s ease;
+    }
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Animaciones suaves */
 .card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;

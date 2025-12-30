@@ -17,7 +17,7 @@ define('ROOT_PATH', dirname(__DIR__));
 // Detectar automáticamente o configurar manualmente
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$folder = '/TravelMap'; // Cambiar si tu carpeta tiene otro nombre
+$folder = ''; // Cambiar si tu carpeta tiene otro nombre
 
 define('BASE_URL', $protocol . '://' . $host . $folder);
 
