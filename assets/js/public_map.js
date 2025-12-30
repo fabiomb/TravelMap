@@ -12,6 +12,8 @@
     let tripsData = [];
     let routesLayers = {}; // { tripId: [layers] }
     let flightRoutesLayers = {}; // { tripId: [flightLayers] } - Rutas en avión separadas
+    let flightRoutesData = {}; // { tripId: [routeData] } - Raw data for deferred creation
+    let flightRoutesCreated = false; // Flag to track if flight layers have been created
     let pointsClusters = {}; // { tripId: clusterGroup }
     let allPointsCluster; // Cluster global para todos los puntos
     let appConfig = null; // Configuración cargada desde el servidor
@@ -52,7 +54,6 @@
                 selectedTrips: getSelectedTripIds()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-            console.log('Preferences saved:', prefs);
         } catch (e) {
             console.warn('Error saving preferences to localStorage:', e);
         }
@@ -80,7 +81,6 @@
         $('#togglePoints').prop('checked', prefs.showPoints);
         $('#toggleFlightRoutes').prop('checked', prefs.showFlightRoutes);
         
-        console.log('Preferences applied to controls:', prefs);
     }
 
     /**
@@ -112,7 +112,6 @@
             }
         });
         
-        console.log('Trip selection preferences applied');
     }
 
     /**
@@ -124,6 +123,11 @@
         
         // Handle flight routes visibility based on saved preference
         if (prefs.showFlightRoutes) {
+            // Create flight layers on demand
+            if (!flightRoutesCreated) {
+                createFlightRouteLayers();
+            }
+            
             $('.trip-checkbox:checked').each(function() {
                 const tripId = parseInt($(this).val());
                 if (flightRoutesLayers[tripId]) {
@@ -154,7 +158,6 @@
             });
         }
         
-        console.log('Initial toggle states applied:', prefs);
     }
 
     // SVG icons for transport types
@@ -191,29 +194,20 @@
             method: 'GET',
             dataType: 'json'
         }).done(function(response) {
-            console.log('Respuesta de configuración:', response);
-            
             if (response.success && response.data) {
                 appConfig = response.data;
                 
                 // Actualizar colores de transporte con la configuración del servidor
                 if (appConfig.transportColors) {
-                    console.log('Colores recibidos:', appConfig.transportColors);
-                    
                     transportConfig.plane.color = appConfig.transportColors.plane || transportConfig.plane.color;
                     transportConfig.ship.color = appConfig.transportColors.ship || transportConfig.ship.color;
                     transportConfig.car.color = appConfig.transportColors.car || transportConfig.car.color;
                     transportConfig.train.color = appConfig.transportColors.train || transportConfig.train.color;
                     transportConfig.walk.color = appConfig.transportColors.walk || transportConfig.walk.color;
-                    
-                    console.log('transportConfig actualizado:', transportConfig);
                 }
-                
-                console.log('Configuración cargada:', appConfig);
             }
         }).fail(function(xhr, status, error) {
-            console.error('Error al cargar configuración:', error, xhr.responseText);
-            console.warn('No se pudo cargar la configuración, usando valores por defecto');
+            console.warn('Config load failed, using defaults');
         });
     }
 
@@ -270,20 +264,14 @@
             map.addLayer(allPointsCluster);
         }
 
-        console.log('Mapa público inicializado con clustering:', clusterEnabled);
     }
 
     /**
      * Renderiza la leyenda de transporte con los colores configurados
      */
     function renderLegend() {
-        console.log('Renderizando leyenda...');
         const legendItems = $('#legendItems');
-        
-        if (legendItems.length === 0) {
-            console.error('No se encontró el elemento #legendItems');
-            return;
-        }
+        if (legendItems.length === 0) return;
         
         legendItems.empty();
         
@@ -298,8 +286,6 @@
         
         transportOrder.forEach(function(item) {
             const config = transportConfig[item.type];
-            console.log(`Leyenda ${item.type}:`, config);
-            
             if (config) {
                 const legendItem = $(`
                     <div class="legend-item">
@@ -320,8 +306,6 @@
             </div>
         `);
         legendItems.append(futureLegendItem);
-        
-        console.log('Leyenda renderizada con colores configurados');
     }
 
     /**
@@ -335,7 +319,6 @@
             success: function(response) {
                 if (response.success && response.data && response.data.trips) {
                     tripsData = response.data.trips;
-                    console.log('Datos cargados:', tripsData.length, 'viajes');
                     
                     // Order is important: render trips first (populates layers), 
                     // then panel (applies saved selections)
@@ -430,13 +413,10 @@
     function renderTrip(trip) {
         const tripId = trip.id;
 
-        // Inicializar arrays de layers
+        // Inicializar arrays de layers (simple arrays, no cluster groups)
         routesLayers[tripId] = [];
-        flightRoutesLayers[tripId] = []; // Inicializar array para rutas en avión
-        pointsClusters[tripId] = L.markerClusterGroup({
-            showCoverageOnHover: false,
-            maxClusterRadius: 60
-        });
+        flightRoutesLayers[tripId] = [];
+        pointsClusters[tripId] = []; // Simple array to track markers
 
         // Renderizar rutas
         if (trip.routes && trip.routes.length > 0) {
@@ -451,11 +431,6 @@
                 renderPoint(point, trip);
             });
         }
-
-        // Agregar cluster de puntos al cluster global
-        pointsClusters[tripId].eachLayer(function(layer) {
-            allPointsCluster.addLayer(layer);
-        });
     }
 
     /**
@@ -478,94 +453,138 @@
         }
 
         const transportType = route.transport_type || 'car';
-        const config = transportConfig[transportType] || transportConfig['car'];
         
-        // Si el viaje es futuro, usar color gris oscuro con línea punteada para distinguirlo
+        // For plane routes, defer creation until user enables them
+        if (transportType === 'plane') {
+            if (!flightRoutesData[trip.id]) {
+                flightRoutesData[trip.id] = [];
+            }
+            flightRoutesData[trip.id].push({ route: route, trip: trip });
+            return;
+        }
+        
+        // For other transport types, create layers immediately
+        const config = transportConfig[transportType] || transportConfig['car'];
         const isFuture = isFutureTrip(trip);
         const color = isFuture ? '#6B6B6B' : (config.color || route.color);
-        const dashArray = isFuture ? '2, 6' : config.dashArray; // Future trips get dotted lines
-        const opacity = isFuture ? 0.7 : 0.7;
+        const dashArray = isFuture ? '2, 6' : config.dashArray;
+        const opacity = 0.7;
 
-        let layer;
+        const layer = L.geoJSON(route.geojson, {
+            style: {
+                color: color,
+                weight: isFuture ? 3 : 4,
+                opacity: opacity,
+                dashArray: dashArray
+            },
+            onEachFeature: function(feature, lyr) {
+                const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+                const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
+                lyr.bindPopup(`
+                    <div class="route-popup">
+                        <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
+                        <small class="text-muted">Transporte: ${transportType}</small>
+                    </div>
+                `);
+            }
+        });
+
+        layer.addTo(map);
+        routesLayers[trip.id].push(layer);
+    }
+
+    /**
+     * Creates flight route layers on demand (deferred creation with batching)
+     */
+    function createFlightRouteLayers(callback) {
+        if (flightRoutesCreated) {
+            if (callback) callback();
+            return;
+        }
         
-        // Para vuelos, usar curvas de Bézier para una apariencia más elegante
-        if (transportType === 'plane' && route.geojson.geometry.type === 'LineString') {
-            const coords = route.geojson.geometry.coordinates;
-            
-            // Obtener punto de inicio y fin
-            const start = [coords[0][1], coords[0][0]];
-            const end = [coords[coords.length - 1][1], coords[coords.length - 1][0]];
-            
-            // Calcular punto de control para la curva (punto medio elevado)
-            const midLat = (start[0] + end[0]) / 2;
-            const midLng = (start[1] + end[1]) / 2;
-            
-            // Calcular el offset vertical basado en la distancia
-            const distance = Math.sqrt(
-                Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2)
-            );
-            const curveHeight = distance * 0.2; // 20% de la distancia para la altura de la curva
-            
-            // Punto de control elevado
-            const controlPoint = [midLat + curveHeight, midLng];
-            
-            // Crear curva cuadrática de Bézier
-            layer = L.curve(
-                ['M', start, 'Q', controlPoint, end],
-                {
-                    color: color,
-                    weight: isFuture ? 3 : 4,
-                    opacity: opacity,
-                    dashArray: dashArray,
-                    fill: false
-                }
-            );
-            
-            // Agregar popup
-            const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
-            const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
-            const popupContent = `
-                <div class="route-popup">
-                    <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
-                    <small class="text-muted">Transporte: ${transportType}</small>
-                </div>
-            `;
-            layer.bindPopup(popupContent);
-        } else {
-            // Para otros transportes, usar el estilo estándar
-            layer = L.geoJSON(route.geojson, {
-                style: {
-                    color: color,
-                    weight: isFuture ? 3 : 4,
-                    opacity: opacity,
-                    dashArray: dashArray
-                },
-                onEachFeature: function(feature, layer) {
-                    const futureIconSvg2 = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
-                    const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg2} Próximo</span>` : '';
-                    const popupContent = `
-                        <div class="route-popup">
-                            <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
-                            <small class="text-muted">Transporte: ${transportType}</small>
-                        </div>
-                    `;
-                    layer.bindPopup(popupContent);
-                }
+        // Flatten all flight data into a single array for batch processing
+        const allFlightData = [];
+        Object.keys(flightRoutesData).forEach(function(tripId) {
+            if (!flightRoutesLayers[tripId]) {
+                flightRoutesLayers[tripId] = [];
+            }
+            flightRoutesData[tripId].forEach(function(data) {
+                allFlightData.push({ tripId: tripId, route: data.route, trip: data.trip });
             });
-        }
-
-        // Separar rutas en avión de las demás
-        const isFlightRoute = transportType === 'plane';
+        });
         
-        if (isFlightRoute) {
-            // No agregar al mapa por defecto (toggle está desmarcado)
-            // Solo almacenar en el array
-            flightRoutesLayers[trip.id].push(layer);
-        } else {
-            // Rutas normales se agregan al mapa
-            layer.addTo(map);
-            routesLayers[trip.id].push(layer);
+        // Process in batches (polylines are fast, can do more per batch)
+        const BATCH_SIZE = 50;
+        let index = 0;
+        
+        function processBatch() {
+            const end = Math.min(index + BATCH_SIZE, allFlightData.length);
+            
+            for (let i = index; i < end; i++) {
+                const item = allFlightData[i];
+                const layer = createFlightLayer(item.route, item.trip);
+                if (layer) {
+                    flightRoutesLayers[item.tripId].push(layer);
+                    // Add to map if flight toggle is enabled
+                    if ($('#toggleFlightRoutes').is(':checked') && 
+                        $('#trip-' + item.tripId).is(':checked')) {
+                        layer.addTo(map);
+                    }
+                }
+            }
+            
+            index = end;
+            
+            if (index < allFlightData.length) {
+                // More to process - schedule next batch
+                requestAnimationFrame(processBatch);
+            } else {
+                // Done
+                flightRoutesCreated = true;
+                if (callback) callback();
+            }
         }
+        
+        // Start processing
+        processBatch();
+    }
+
+    /**
+     * Creates a single flight layer (simple polyline - fast)
+     */
+    function createFlightLayer(route, trip) {
+        if (!route.geojson || !route.geojson.geometry || route.geojson.geometry.type !== 'LineString') {
+            return null;
+        }
+        
+        const coords = route.geojson.geometry.coordinates;
+        const isFuture = isFutureTrip(trip);
+        const config = transportConfig['plane'];
+        const color = isFuture ? '#6B6B6B' : (config.color || route.color);
+        const dashArray = isFuture ? '2, 6' : (config.dashArray || '10, 5');
+        const opacity = 0.7;
+        
+        // Simple straight line (much faster than Bézier curves)
+        const latLngs = coords.map(function(c) { return [c[1], c[0]]; });
+        
+        const layer = L.polyline(latLngs, {
+            color: color,
+            weight: isFuture ? 3 : 3,
+            opacity: opacity,
+            dashArray: dashArray
+        });
+        
+        // Popup
+        const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+        const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
+        layer.bindPopup(`
+            <div class="route-popup">
+                <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
+                <small class="text-muted">Transporte: plane</small>
+            </div>
+        `);
+        
+        return layer;
     }
 
     /**
@@ -597,7 +616,9 @@
             className: 'custom-popup'
         });
 
-        pointsClusters[trip.id].addLayer(marker);
+        // Add to global cluster and track in simple array
+        allPointsCluster.addLayer(marker);
+        pointsClusters[trip.id].push(marker);
     }
 
     /**
@@ -669,21 +690,35 @@
         const bounds = L.latLngBounds();
         let hasContent = false;
 
-        // Agregar rutas a los bounds
+        // Agregar rutas a los bounds (solo rutas con getBounds, skip curves)
         Object.values(routesLayers).forEach(function(layers) {
             layers.forEach(function(layer) {
-                bounds.extend(layer.getBounds());
-                hasContent = true;
+                try {
+                    if (layer.getBounds && typeof layer.getBounds === 'function') {
+                        const layerBounds = layer.getBounds();
+                        if (layerBounds && layerBounds.isValid()) {
+                            bounds.extend(layerBounds);
+                            hasContent = true;
+                        }
+                    }
+                } catch (e) {
+                    // Skip layers that don't support getBounds
+                }
             });
         });
 
         // Agregar puntos a los bounds
-        if (allPointsCluster.getLayers().length > 0) {
-            bounds.extend(allPointsCluster.getBounds());
-            hasContent = true;
+        try {
+            const clusterLayers = allPointsCluster.getLayers();
+            if (clusterLayers && clusterLayers.length > 0) {
+                bounds.extend(allPointsCluster.getBounds());
+                hasContent = true;
+            }
+        } catch (e) {
+            // Skip if cluster bounds fail
         }
 
-        if (hasContent) {
+        if (hasContent && bounds.isValid()) {
             map.fitBounds(bounds, { padding: [50, 50] });
         }
     }
@@ -716,17 +751,24 @@
         }
 
         // Mostrar rutas en avión solo si el toggle está activado
-        if (flightRoutesLayers[tripId] && $('#toggleFlightRoutes').is(':checked')) {
-            flightRoutesLayers[tripId].forEach(function(layer) {
-                if (!map.hasLayer(layer)) {
-                    layer.addTo(map);
-                }
-            });
+        if ($('#toggleFlightRoutes').is(':checked')) {
+            // Create flight layers on demand if not yet created
+            if (!flightRoutesCreated) {
+                createFlightRouteLayers();
+            }
+            
+            if (flightRoutesLayers[tripId]) {
+                flightRoutesLayers[tripId].forEach(function(layer) {
+                    if (!map.hasLayer(layer)) {
+                        layer.addTo(map);
+                    }
+                });
+            }
         }
 
         // Mostrar puntos
         if (pointsClusters[tripId]) {
-            pointsClusters[tripId].eachLayer(function(marker) {
+            pointsClusters[tripId].forEach(function(marker) {
                 if (!allPointsCluster.hasLayer(marker)) {
                     allPointsCluster.addLayer(marker);
                 }
@@ -758,7 +800,7 @@
 
         // Ocultar puntos
         if (pointsClusters[tripId]) {
-            pointsClusters[tripId].eachLayer(function(marker) {
+            pointsClusters[tripId].forEach(function(marker) {
                 if (allPointsCluster.hasLayer(marker)) {
                     allPointsCluster.removeLayer(marker);
                 }
@@ -908,7 +950,6 @@
         $('#publicSearchResults').hide();
         $('#publicPlaceSearch').val('');
 
-        console.log('Navegado a:', lat, lng);
     }
 
     /**
@@ -957,18 +998,30 @@
         // Toggle de rutas en avión
         $('#toggleFlightRoutes').on('change', function() {
             const show = $(this).is(':checked');
-            $('.trip-checkbox:checked').each(function() {
-                const tripId = parseInt($(this).val());
-                if (flightRoutesLayers[tripId]) {
-                    flightRoutesLayers[tripId].forEach(function(layer) {
-                        if (show) {
-                            if (!map.hasLayer(layer)) layer.addTo(map);
-                        } else {
-                            if (map.hasLayer(layer)) map.removeLayer(layer);
+            
+            if (show) {
+                // Create flight layers on first enable (batched creation handles adding to map)
+                if (!flightRoutesCreated) {
+                    createFlightRouteLayers();
+                } else {
+                    // Already created, just show them
+                    $('.trip-checkbox:checked').each(function() {
+                        const tripId = parseInt($(this).val());
+                        if (flightRoutesLayers[tripId]) {
+                            flightRoutesLayers[tripId].forEach(function(layer) {
+                                if (!map.hasLayer(layer)) layer.addTo(map);
+                            });
                         }
                     });
                 }
-            });
+            } else {
+                // Hide all flight routes
+                Object.values(flightRoutesLayers).forEach(function(layers) {
+                    layers.forEach(function(layer) {
+                        if (map.hasLayer(layer)) map.removeLayer(layer);
+                    });
+                });
+            }
             savePreferences();
         });
 
@@ -999,8 +1052,6 @@
             savePreferences();
         });
 
-        console.log('Public Map inicializado completamente');
-        
         // Inicializar lightbox
         initLightbox();
     }

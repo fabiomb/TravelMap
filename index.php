@@ -185,7 +185,7 @@ require_once __DIR__ . '/config/config.php';
     </script>
     
     <!-- Public Map JS -->
-    <script src="<?= ASSETS_URL ?>/js/public_map.js"></script>
+    <script src="<?= ASSETS_URL ?>/js/public_map.js?v=2"></script>
     
     <!-- Lightbox para imágenes -->
     <div id="imageLightbox" class="lightbox" style="display: none;">
