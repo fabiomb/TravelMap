@@ -149,7 +149,7 @@ try {
                 <p class="lead">Panel de administración de TravelMap</p>
                 <p>Desde aquí puedes gestionar todos tus viajes, rutas y puntos de interés. Utiliza el menú superior para navegar entre las diferentes secciones.</p>
                 
-                <div class="alert alert-info border-0 mt-3" role="alert">
+                <div class="alert alert-info alert-permanent border-0 mt-3" role="alert">
                     <h5 class="alert-heading">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
