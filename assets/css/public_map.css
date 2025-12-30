@@ -124,6 +124,16 @@ body {
     margin-right: 12px;
 }
 
+/* Future trips styling */
+.trip-filter-item.trip-future {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
+    border-left: 3px dotted #6B6B6B;
+}
+
+.trip-filter-item.trip-future:hover {
+    background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+}
+
 /* ========== Leyenda flotante ========== */
 .legend-card {
     position: fixed;
@@ -164,6 +174,17 @@ body {
 
 .legend-item svg {
     flex-shrink: 0;
+}
+
+.legend-future-separator {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #ddd;
+}
+
+.legend-future {
+    height: 3px !important;
+    opacity: 0.6;
 }
 
 /* ========== Clusters personalizados ========== */

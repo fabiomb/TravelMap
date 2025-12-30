@@ -311,6 +311,16 @@
             }
         });
         
+        // Add future trips indicator to legend
+        const futureLegendIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+        const futureLegendItem = $(`
+            <div class="legend-item legend-future-separator">
+                <div class="legend-line legend-future" style="background: repeating-linear-gradient(90deg, #6B6B6B, #6B6B6B 2px, transparent 2px, transparent 8px);"></div>
+                <small>${futureLegendIcon} Próximo viaje</small>
+            </div>
+        `);
+        legendItems.append(futureLegendItem);
+        
         console.log('Leyenda renderizada con colores configurados');
     }
 
@@ -359,9 +369,14 @@
         tripsData.forEach(function(trip) {
             const routesCount = trip.routes ? trip.routes.length : 0;
             const pointsCount = trip.points ? trip.points.length : 0;
+            const isFuture = isFutureTrip(trip);
+            const futureIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+            const futureBadge = isFuture ? `<span class="badge bg-light text-secondary border ms-2" style="font-size: 0.65rem;">${futureIcon} Próximo</span>` : '';
+            const itemClass = isFuture ? 'trip-filter-item trip-future' : 'trip-filter-item';
+            const colorIndicator = isFuture ? '#6B6B6B' : trip.color;
             
             const $tripItem = $(`
-                <div class="trip-filter-item">
+                <div class="${itemClass}">
                     <div class="form-check">
                         <input class="form-check-input trip-checkbox" 
                                type="checkbox" 
@@ -370,9 +385,9 @@
                                checked>
                         <label class="form-check-label w-100" for="trip-${trip.id}">
                             <div class="d-flex align-items-start">
-                                <div class="trip-color-indicator" style="background-color: ${trip.color};"></div>
+                                <div class="trip-color-indicator" style="background-color: ${colorIndicator};"></div>
                                 <div class="flex-grow-1">
-                                    <strong class="d-block">${escapeHtml(trip.title)}</strong>
+                                    <strong class="d-block">${escapeHtml(trip.title)}${futureBadge}</strong>
                                     <small class="text-muted d-block">
                                         ${formatDateRange(trip.start_date, trip.end_date)}
                                     </small>
@@ -444,6 +459,17 @@
     }
 
     /**
+     * Determina si un viaje es futuro basándose en su fecha de inicio
+     */
+    function isFutureTrip(trip) {
+        if (!trip.start_date) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tripStart = new Date(trip.start_date + 'T00:00:00');
+        return tripStart > today;
+    }
+
+    /**
      * Renderiza una ruta en el mapa
      */
     function renderRoute(route, trip) {
@@ -454,10 +480,11 @@
         const transportType = route.transport_type || 'car';
         const config = transportConfig[transportType] || transportConfig['car'];
         
-        // Priorizar colores de configuración sobre los guardados en BD
-        // Si el viaje está planificado, usar color gris independientemente del tipo de transporte
-        const color = trip.status === 'planned' ? '#999999' : (config.color || route.color);
-        const dashArray = config.dashArray;
+        // Si el viaje es futuro, usar color gris oscuro con línea punteada para distinguirlo
+        const isFuture = isFutureTrip(trip);
+        const color = isFuture ? '#6B6B6B' : (config.color || route.color);
+        const dashArray = isFuture ? '2, 6' : config.dashArray; // Future trips get dotted lines
+        const opacity = isFuture ? 0.7 : 0.7;
 
         let layer;
         
@@ -487,17 +514,19 @@
                 ['M', start, 'Q', controlPoint, end],
                 {
                     color: color,
-                    weight: 4,
-                    opacity: 0.7,
+                    weight: isFuture ? 3 : 4,
+                    opacity: opacity,
                     dashArray: dashArray,
                     fill: false
                 }
             );
             
             // Agregar popup
+            const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+            const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
             const popupContent = `
                 <div class="route-popup">
-                    <strong>${config.icon} ${escapeHtml(trip.title)}</strong><br>
+                    <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
                     <small class="text-muted">Transporte: ${transportType}</small>
                 </div>
             `;
@@ -507,14 +536,16 @@
             layer = L.geoJSON(route.geojson, {
                 style: {
                     color: color,
-                    weight: 4,
-                    opacity: 0.7,
+                    weight: isFuture ? 3 : 4,
+                    opacity: opacity,
                     dashArray: dashArray
                 },
                 onEachFeature: function(feature, layer) {
+                    const futureIconSvg2 = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
+                    const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg2} Próximo</span>` : '';
                     const popupContent = `
                         <div class="route-popup">
-                            <strong>${config.icon} ${escapeHtml(trip.title)}</strong><br>
+                            <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
                             <small class="text-muted">Transporte: ${transportType}</small>
                         </div>
                     `;
