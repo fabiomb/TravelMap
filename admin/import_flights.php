@@ -390,13 +390,6 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="row mb-4">
     <div class="col-md-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/">Inicio</a></li>
-                <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/trips.php">Viajes</a></li>
-                <li class="breadcrumb-item active">Importar Vuelos</li>
-            </ol>
-        </nav>
         <h1 class="h3">
             <i class="bi bi-cloud-upload"></i> Importar Vuelos desde FlightRadar (ex FlightDiary)
         </h1>
