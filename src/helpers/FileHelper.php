@@ -98,9 +98,36 @@ class FileHelper {
                 error_log('Advertencia: Error al procesar imagen: ' . $e->getMessage());
             }
             
+            // Generar thumbnail
+            $thumbnail_path = null;
+            try {
+                $thumbs_folder = $destination_folder . '/thumbs';
+                $full_thumbs_folder = ROOT_PATH . '/' . $thumbs_folder;
+                
+                // Crear carpeta de thumbnails si no existe
+                if (!is_dir($full_thumbs_folder)) {
+                    mkdir($full_thumbs_folder, 0755, true);
+                }
+                
+                $thumb_file_path = $full_thumbs_folder . '/' . $unique_name;
+                $thumb_relative_path = $thumbs_folder . '/' . $unique_name;
+                
+                // Obtener configuración de thumbnail
+                $thumb_width = (int)$settingsModel->get('thumbnail_max_width', 400);
+                $thumb_height = (int)$settingsModel->get('thumbnail_max_height', 300);
+                $thumb_quality = (int)$settingsModel->get('thumbnail_quality', 80);
+                
+                if (self::createThumbnail($file_path, $thumb_file_path, $thumb_width, $thumb_height, $thumb_quality)) {
+                    $thumbnail_path = $thumb_relative_path;
+                }
+            } catch (Exception $e) {
+                error_log('Advertencia: Error al crear thumbnail: ' . $e->getMessage());
+            }
+            
             return [
                 'success' => true,
                 'path' => $relative_path,
+                'thumbnail_path' => $thumbnail_path,
                 'filename' => $unique_name
             ];
         } else {
@@ -120,12 +147,22 @@ class FileHelper {
         }
 
         $full_path = ROOT_PATH . '/' . $file_path;
+        $result = false;
         
         if (file_exists($full_path)) {
-            return @unlink($full_path);
+            $result = @unlink($full_path);
         }
         
-        return false;
+        // También intentar eliminar el thumbnail si existe
+        $thumb_path = self::getThumbnailPath($file_path);
+        if ($thumb_path) {
+            $full_thumb_path = ROOT_PATH . '/' . $thumb_path;
+            if (file_exists($full_thumb_path)) {
+                @unlink($full_thumb_path);
+            }
+        }
+        
+        return $result;
     }
 
     /**
@@ -350,6 +387,158 @@ class FileHelper {
         }
         
         return true;
+    }
+    
+    /**
+     * Crear thumbnail de una imagen
+     * 
+     * @param string $source_path Ruta de la imagen original
+     * @param string $dest_path Ruta de destino del thumbnail
+     * @param int $max_width Ancho máximo del thumbnail
+     * @param int $max_height Alto máximo del thumbnail
+     * @param int $quality Calidad JPEG (0-100)
+     * @return bool True si se creó correctamente
+     */
+    public static function createThumbnail($source_path, $dest_path, $max_width = 400, $max_height = 300, $quality = 80) {
+        // Verificar que la extensión GD esté disponible
+        if (!extension_loaded('gd')) {
+            error_log('Error: La extensión GD no está disponible para crear thumbnail');
+            return false;
+        }
+        
+        // Verificar que el archivo existe
+        if (!file_exists($source_path)) {
+            error_log('Error: Archivo fuente no existe para thumbnail: ' . $source_path);
+            return false;
+        }
+        
+        // Obtener información de la imagen
+        $image_info = @getimagesize($source_path);
+        if ($image_info === false) {
+            error_log('Error: No se pudo obtener información de la imagen para thumbnail');
+            return false;
+        }
+        
+        list($orig_width, $orig_height, $image_type) = $image_info;
+        
+        // Calcular nuevas dimensiones manteniendo la proporción
+        $ratio = min($max_width / $orig_width, $max_height / $orig_height);
+        
+        // Si la imagen es más pequeña que el thumbnail, usar dimensiones originales
+        if ($ratio >= 1) {
+            $new_width = $orig_width;
+            $new_height = $orig_height;
+        } else {
+            $new_width = round($orig_width * $ratio);
+            $new_height = round($orig_height * $ratio);
+        }
+        
+        // Cargar imagen original según el tipo
+        $source_image = null;
+        switch ($image_type) {
+            case IMAGETYPE_JPEG:
+                $source_image = @imagecreatefromjpeg($source_path);
+                break;
+            case IMAGETYPE_PNG:
+                $source_image = @imagecreatefrompng($source_path);
+                break;
+            case IMAGETYPE_GIF:
+                $source_image = @imagecreatefromgif($source_path);
+                break;
+            default:
+                error_log('Error: Tipo de imagen no soportado para thumbnail: ' . $image_type);
+                return false;
+        }
+        
+        if ($source_image === false) {
+            error_log('Error: No se pudo cargar la imagen para thumbnail');
+            return false;
+        }
+        
+        // Crear imagen de destino
+        $dest_image = imagecreatetruecolor($new_width, $new_height);
+        
+        if ($dest_image === false) {
+            imagedestroy($source_image);
+            error_log('Error: No se pudo crear la imagen de destino para thumbnail');
+            return false;
+        }
+        
+        // Preservar transparencia para PNG
+        if ($image_type === IMAGETYPE_PNG) {
+            imagealphablending($dest_image, false);
+            imagesavealpha($dest_image, true);
+            $transparent = imagecolorallocatealpha($dest_image, 0, 0, 0, 127);
+            imagefilledrectangle($dest_image, 0, 0, $new_width, $new_height, $transparent);
+        }
+        
+        // Redimensionar imagen
+        $result = imagecopyresampled(
+            $dest_image, 
+            $source_image, 
+            0, 0, 0, 0, 
+            $new_width, $new_height, 
+            $orig_width, $orig_height
+        );
+        
+        if ($result === false) {
+            imagedestroy($source_image);
+            imagedestroy($dest_image);
+            error_log('Error: No se pudo redimensionar para thumbnail');
+            return false;
+        }
+        
+        // Guardar thumbnail como JPEG para mejor compresión (excepto PNG con transparencia)
+        $save_result = false;
+        switch ($image_type) {
+            case IMAGETYPE_JPEG:
+            case IMAGETYPE_GIF:
+                $save_result = imagejpeg($dest_image, $dest_path, $quality);
+                break;
+            case IMAGETYPE_PNG:
+                // PNG: calidad va de 0 a 9
+                $png_quality = 9 - round(($quality / 100) * 9);
+                $save_result = imagepng($dest_image, $dest_path, $png_quality);
+                break;
+        }
+        
+        // Liberar memoria
+        imagedestroy($source_image);
+        imagedestroy($dest_image);
+        
+        if ($save_result === false) {
+            error_log('Error: No se pudo guardar el thumbnail');
+            return false;
+        }
+        
+        // Establecer permisos
+        chmod($dest_path, 0644);
+        
+        return true;
+    }
+    
+    /**
+     * Obtener la ruta del thumbnail a partir de la ruta de la imagen
+     * 
+     * @param string $image_path Ruta de la imagen original
+     * @return string|null Ruta del thumbnail o null si no existe
+     */
+    public static function getThumbnailPath($image_path) {
+        if (empty($image_path)) {
+            return null;
+        }
+        
+        // Construir ruta del thumbnail
+        $path_parts = pathinfo($image_path);
+        $thumb_path = $path_parts['dirname'] . '/thumbs/' . $path_parts['basename'];
+        
+        // Verificar si existe el thumbnail
+        $full_thumb_path = ROOT_PATH . '/' . $thumb_path;
+        if (file_exists($full_thumb_path)) {
+            return $thumb_path;
+        }
+        
+        return null;
     }
     
     /**

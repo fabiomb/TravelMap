@@ -12,6 +12,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/models/Trip.php';
 require_once __DIR__ . '/../src/models/Route.php';
 require_once __DIR__ . '/../src/models/Point.php';
+require_once __DIR__ . '/../src/helpers/FileHelper.php';
 
 try {
     $tripModel = new Trip();
@@ -49,6 +50,13 @@ try {
         // Procesar puntos
         $processedPoints = [];
         foreach ($points as $point) {
+            // Obtener thumbnail si existe
+            $thumbnail_url = null;
+            if (!empty($point['image_path'])) {
+                $thumb_path = FileHelper::getThumbnailPath($point['image_path']);
+                $thumbnail_url = $thumb_path ? BASE_URL . '/' . $thumb_path : null;
+            }
+            
             $processedPoints[] = [
                 'id' => (int) $point['id'],
                 'title' => $point['title'],
@@ -56,6 +64,7 @@ try {
                 'type' => $point['type'],
                 'icon' => $point['icon'],
                 'image_url' => !empty($point['image_path']) ? BASE_URL . '/' . $point['image_path'] : null,
+                'thumbnail_url' => $thumbnail_url,
                 'latitude' => (float) $point['latitude'],
                 'longitude' => (float) $point['longitude'],
                 'visit_date' => $point['visit_date']

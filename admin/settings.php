@@ -108,6 +108,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
         }
         
+        // Configuraciones de thumbnails
+        if (isset($_POST['thumbnail_max_width'])) {
+            $updates['thumbnail_max_width'] = [
+                'value' => (int)$_POST['thumbnail_max_width'],
+                'type' => 'number'
+            ];
+        }
+        
+        if (isset($_POST['thumbnail_max_height'])) {
+            $updates['thumbnail_max_height'] = [
+                'value' => (int)$_POST['thumbnail_max_height'],
+                'type' => 'number'
+            ];
+        }
+        
+        if (isset($_POST['thumbnail_quality'])) {
+            $updates['thumbnail_quality'] = [
+                'value' => (int)$_POST['thumbnail_quality'],
+                'type' => 'number'
+            ];
+        }
+        
         // Configuraciones del sitio público
         if (isset($_POST['site_title'])) {
             $updates['site_title'] = [
@@ -373,9 +395,78 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
+            <hr class="my-4">
+            
+            <h6 class="text-muted mb-3">
+                <i class="bi bi-card-image"></i> <?= __('settings.thumbnail_configuration') ?? 'Thumbnails (Miniaturas)' ?>
+            </h6>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="thumbnail_max_width" class="form-label">
+                        <?= __('settings.thumbnail_max_width') ?? 'Ancho máximo thumbnail (px)' ?>
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="thumbnail_max_width" 
+                        name="thumbnail_max_width" 
+                        value="<?= htmlspecialchars($currentSettings['thumbnail_max_width'] ?? 400) ?>"
+                        min="100" 
+                        max="800"
+                        step="1"
+                        required
+                    >
+                    <small class="form-text text-muted">
+                        <?= __('settings.thumbnail_width_description') ?? 'Ancho máximo para miniaturas en popups del mapa' ?>
+                    </small>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="thumbnail_max_height" class="form-label">
+                        <?= __('settings.thumbnail_max_height') ?? 'Alto máximo thumbnail (px)' ?>
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="thumbnail_max_height" 
+                        name="thumbnail_max_height" 
+                        value="<?= htmlspecialchars($currentSettings['thumbnail_max_height'] ?? 300) ?>"
+                        min="100" 
+                        max="600"
+                        step="1"
+                        required
+                    >
+                    <small class="form-text text-muted">
+                        <?= __('settings.thumbnail_height_description') ?? 'Alto máximo para miniaturas en popups del mapa' ?>
+                    </small>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="thumbnail_quality" class="form-label">
+                        <?= __('settings.thumbnail_quality') ?? 'Calidad thumbnail (%)' ?>
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="thumbnail_quality" 
+                        name="thumbnail_quality" 
+                        value="<?= htmlspecialchars($currentSettings['thumbnail_quality'] ?? 80) ?>"
+                        min="50" 
+                        max="100"
+                        step="5"
+                        required
+                    >
+                    <small class="form-text text-muted">
+                        <?= __('settings.thumbnail_quality_description') ?? 'Calidad de compresión para miniaturas' ?>
+                    </small>
+                </div>
+            </div>
+            
             <div class="alert alert-info mb-0" role="alert">
                 <strong><i class="bi bi-info-circle"></i> <?= __('common.info') ?>:</strong> 
                 <?= __('settings.image_processing_note') ?>
+                <br><small><?= __('settings.thumbnail_note') ?? 'Los thumbnails se generan automáticamente al subir imágenes y se usan en los popups del mapa para carga más rápida.' ?></small>
             </div>
         </div>
     </div>

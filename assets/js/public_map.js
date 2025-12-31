@@ -880,8 +880,10 @@
         let html = '<div class="point-popup">';
         
         // Imagen si existe (clicable para abrir lightbox)
+        // Usar thumbnail para mostrar en popup, full image para lightbox
         if (point.image_url) {
-            html += `<img src="${point.image_url}" alt="${escapeHtml(point.title)}" class="popup-image" onclick="openLightbox('${point.image_url}', '${escapeHtml(point.title)}')" title="${__('map.click_to_view_full')}">`;
+            const displayImage = point.thumbnail_url || point.image_url;
+            html += `<img src="${displayImage}" alt="${escapeHtml(point.title)}" class="popup-image" onclick="openLightbox('${point.image_url}', '${escapeHtml(point.title)}')" title="${__('map.click_to_view_full')}">`;
         }
         
         // Contenido
