@@ -57,21 +57,23 @@ $trips = $tripModel->getAll('title ASC');
 $point_types = Point::getTypes();
 ?>
 
-<div class="row mb-4">
-    <div class="col-md-6">
-        <h1 class="mb-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-geo-alt me-2" viewBox="0 0 16 16">
-                <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
-                <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 9C14.5 10.3807 13.3807 11.5 12 11.5C10.6193 11.5 9.5 10.3807 9.5 9C9.5 7.61929 10.6193 6.5 12 6.5C13.3807 6.5 14.5 7.61929 14.5 9Z"/>
+                <path d="M13.2574 17.4936C12.9201 17.8184 12.4693 18 12.0002 18C11.531 18 11.0802 17.8184 10.7429 17.4936C7.6543 14.5008 3.51519 11.1575 5.53371 6.30373C6.6251 3.67932 9.24494 2 12.0002 2C14.7554 2 17.3752 3.67933 18.4666 6.30373C20.4826 11.1514 16.3536 14.5111 13.2574 17.4936Z"/>
+                <path d="M7 18C5.17107 18.4117 4 19.0443 4 19.7537C4 20.9943 7.58172 22 12 22C16.4183 22 20 20.9943 20 19.7537C20 19.0443 18.8289 18.4117 17 18"/>
             </svg>
             <?= __('points.title') ?>
         </h1>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="page-actions">
         <a href="point_form.php<?= $filter_trip_id ? '?trip_id=' . $filter_trip_id : '' ?>" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
             <?= __('points.new_point') ?>
         </a>
@@ -79,155 +81,149 @@ $point_types = Point::getTypes();
 </div>
 
 <?php if ($message): ?>
-    <div class="alert alert-<?= $message_type ?> alert-dismissible fade show" role="alert">
-        <?= htmlspecialchars($message) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-<?= $message_type ?>">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <?php if ($message_type === 'success'): ?>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            <?php else: ?>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            <?php endif; ?>
+        </svg>
+        <span><?= htmlspecialchars($message) ?></span>
     </div>
 <?php endif; ?>
 
-<!-- Filtro por viaje -->
-<div class="row mb-3">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-2">
-                <form method="GET" action="" class="row g-2 align-items-center">
-                    <div class="col-auto">
-                        <label class="col-form-label">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filter me-1" viewBox="0 0 16 16">
-                                <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/>
-                            </svg>
-                            <?= __('points.filter_by_trip') ?>
-                        </label>
-                    </div>
-                    <div class="col">
-                        <select name="trip_id" class="form-select" onchange="this.form.submit()">
-                            <option value=""><?= __('points.all_trips') ?></option>
-                            <?php foreach ($trips as $trip): ?>
-                                <option value="<?= $trip['id'] ?>" <?= $filter_trip_id == $trip['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($trip['title']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php if ($filter_trip_id): ?>
-                        <div class="col-auto">
-                            <a href="points.php" class="btn btn-sm btn-outline-secondary"><?= __('points.clear_filter') ?></a>
-                        </div>
-                    <?php endif; ?>
-                </form>
-            </div>
-        </div>
+<!-- Filter Card -->
+<div class="admin-card" style="margin-bottom: 20px;">
+    <div class="admin-card-body" style="padding: 12px 20px;">
+        <form method="GET" action="" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <label class="form-label" style="margin: 0; display: flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <?= __('points.filter_by_trip') ?>
+            </label>
+            <select name="trip_id" class="form-control form-select" style="width: auto; min-width: 250px;" onchange="this.form.submit()">
+                <option value=""><?= __('points.all_trips') ?></option>
+                <?php foreach ($trips as $trip): ?>
+                    <option value="<?= $trip['id'] ?>" <?= $filter_trip_id == $trip['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($trip['title']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ($filter_trip_id): ?>
+                <a href="points.php" class="btn btn-secondary btn-sm"><?= __('points.clear_filter') ?></a>
+            <?php endif; ?>
+        </form>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <?php if (empty($points)): ?>
-                    <div class="text-center py-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-geo text-muted mb-3" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6M4 4a4 4 0 1 1 4.5 3.969V13.5a.5.5 0 0 1-1 0V7.97A4 4 0 0 1 4 4"/>
-                        </svg>
-                        <h4 class="text-muted"><?= __('points.no_points') ?></h4>
-                        <p class="text-muted">
-                            <?= $filter_trip_id ? __('common.info') : __('messages.processing') ?>
-                        </p>
-                        <a href="point_form.php<?= $filter_trip_id ? '?trip_id=' . $filter_trip_id : '' ?>" class="btn btn-primary"><?= __('points.new_point') ?></a>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 80px;"><?= __('points.image') ?></th>
-                                    <th><?= __('points.title_field') ?></th>
-                                    <th><?= __('points.trip') ?></th>
-                                    <th><?= __('points.type') ?></th>
-                                    <th><?= __('points.coordinates') ?></th>
-                                    <th><?= __('common.date') ?></th>
-                                    <th style="width: 150px;" class="text-end"><?= __('common.actions') ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($points as $point): ?>
-                                    <tr>
-                                        <td>
-                                            <?php if ($point['image_path']): ?>
-                                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>" 
-                                                     alt="<?= htmlspecialchars($point['title']) ?>" 
-                                                     class="img-thumbnail" 
-                                                     style="width: 60px; height: 60px; object-fit: cover;">
-                                            <?php else: ?>
-                                                <div class="bg-light d-flex align-items-center justify-content-center" 
-                                                     style="width: 60px; height: 60px; border-radius: 4px;">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-image text-muted" viewBox="0 0 16 16">
-                                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
-                                                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
-                                                    </svg>
-                                                </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <strong><?= htmlspecialchars($point['title']) ?></strong>
-                                            <?php if ($point['description']): ?>
-                                                <br><small class="text-muted"><?= htmlspecialchars(mb_substr($point['description'], 0, 50)) ?><?= mb_strlen($point['description']) > 50 ? '...' : '' ?></small>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <span class="badge" style="background-color: <?= htmlspecialchars($point['trip_color']) ?>;">
-                                                <?= htmlspecialchars($point['trip_title']) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="d-flex align-items-center gap-1">
-                                                <?= Point::getSvgIcon($point['type'], 14) ?>
-                                                <?= htmlspecialchars($point_types[$point['type']] ?? $point['type']) ?>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted font-monospace">
-                                                <?= number_format($point['latitude'], 6) ?>,<br>
-                                                <?= number_format($point['longitude'], 6) ?>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <?php if ($point['visit_date']): ?>
-                                                <small><?= date('d/m/Y', strtotime($point['visit_date'])) ?></small>
-                                            <?php else: ?>
-                                                <small class="text-muted">-</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <a href="point_form.php?id=<?= $point['id'] ?>" class="btn btn-outline-primary" title="Editar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
-                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
-                                                    </svg>
-                                                </a>
-                                                <a href="?delete=<?= $point['id'] ?><?= $filter_trip_id ? '&trip_id=' . $filter_trip_id : '' ?>" class="btn btn-outline-danger btn-delete" title="Eliminar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            Mostrando <?= count($points) ?> punto(s) de interés
-                            <?= $filter_trip_id ? 'del viaje seleccionado' : 'en total' ?>
-                        </small>
-                    </div>
-                <?php endif; ?>
+<div class="admin-card">
+    <div class="admin-card-body" style="padding: 0;">
+        <?php if (empty($points)): ?>
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 9C14.5 10.3807 13.3807 11.5 12 11.5C10.6193 11.5 9.5 10.3807 9.5 9C9.5 7.61929 10.6193 6.5 12 6.5C13.3807 6.5 14.5 7.61929 14.5 9Z"/>
+                    <path d="M13.2574 17.4936C12.9201 17.8184 12.4693 18 12.0002 18C11.531 18 11.0802 17.8184 10.7429 17.4936C7.6543 14.5008 3.51519 11.1575 5.53371 6.30373C6.6251 3.67932 9.24494 2 12.0002 2C14.7554 2 17.3752 3.67933 18.4666 6.30373C20.4826 11.1514 16.3536 14.5111 13.2574 17.4936Z"/>
+                </svg>
+                <h4 class="empty-state-title"><?= __('points.no_points') ?></h4>
+                <p class="empty-state-text">
+                    <?= $filter_trip_id ? __('common.info') : __('messages.processing') ?>
+                </p>
+                <a href="point_form.php<?= $filter_trip_id ? '?trip_id=' . $filter_trip_id : '' ?>" class="btn btn-primary"><?= __('points.new_point') ?></a>
             </div>
-        </div>
+        <?php else: ?>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;"><?= __('points.image') ?></th>
+                            <th><?= __('points.title_field') ?></th>
+                            <th style="width: 180px;"><?= __('points.trip') ?></th>
+                            <th style="width: 140px;"><?= __('points.type') ?></th>
+                            <th style="width: 130px;"><?= __('points.coordinates') ?></th>
+                            <th style="width: 100px;"><?= __('common.date') ?></th>
+                            <th style="width: 100px;" class="table-actions"><?= __('common.actions') ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($points as $point): ?>
+                            <tr>
+                                <td>
+                                    <?php if ($point['image_path']): ?>
+                                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>" 
+                                             alt="<?= htmlspecialchars($point['title']) ?>" 
+                                             class="table-thumb">
+                                    <?php else: ?>
+                                        <div class="table-thumb-placeholder">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <polyline points="21 15 16 10 5 21"></polyline>
+                                            </svg>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <div class="cell-title"><?= htmlspecialchars($point['title']) ?></div>
+                                    <?php if ($point['description']): ?>
+                                        <div class="cell-subtitle"><?= htmlspecialchars(mb_substr($point['description'], 0, 50)) ?><?= mb_strlen($point['description']) > 50 ? '...' : '' ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge badge-trip" style="--trip-color: <?= htmlspecialchars($point['trip_color']) ?>;">
+                                        <?= htmlspecialchars($point['trip_title']) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--admin-text-muted);">
+                                        <?= Point::getSvgIcon($point['type'], 14) ?>
+                                        <?= htmlspecialchars($point_types[$point['type']] ?? $point['type']) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="cell-mono">
+                                        <?= number_format($point['latitude'], 6) ?>,<br>
+                                        <?= number_format($point['longitude'], 6) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($point['visit_date']): ?>
+                                        <span class="cell-date"><?= date('d/m/Y', strtotime($point['visit_date'])) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="table-actions">
+                                    <div class="btn-group">
+                                        <a href="point_form.php?id=<?= $point['id'] ?>" class="btn btn-icon btn-sm btn-outline-primary" title="<?= __('common.edit') ?>">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </a>
+                                        <a href="?delete=<?= $point['id'] ?><?= $filter_trip_id ? '&trip_id=' . $filter_trip_id : '' ?>" class="btn btn-icon btn-sm btn-outline-danger btn-delete" title="<?= __('common.delete') ?>">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-card-footer" style="font-size: 12px; color: var(--admin-text-muted);">
+                <?= count($points) ?> <?= __('points.title') ?>
+                <?= $filter_trip_id ? '(' . __('points.filter_by_trip') . ')' : '' ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

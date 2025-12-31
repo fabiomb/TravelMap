@@ -76,20 +76,21 @@ require_once __DIR__ . '/../includes/header.php';
 $trips = $tripModel->getAll('start_date DESC, created_at DESC');
 ?>
 
-<div class="row mb-4">
-    <div class="col-md-6">
-        <h1 class="mb-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-airplane me-2" viewBox="0 0 16 16">
-                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849"/>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233C19.5508 3.01055 19.844 3.01467 20.0792 3.10588C20.4524 3.2506 20.7494 3.54764 20.8941 3.92081C20.9853 4.15601 20.9894 4.4492 20.9977 5.03557C21.0136 6.16926 20.9681 7.20686 20.2196 8.13326C19.5893 8.91337 18.5059 9.32101 17.9846 10.1821C17.5866 10.8395 17.772 11.5203 17.943 12.2209L19.2228 17.4662C19.4779 18.5115 19.2838 19.1815 18.5529 19.9124C18.164 20.3013 17.8405 20.2816 17.5251 19.779L13.6627 13.6249L11.8181 15.0911C11.1493 15.6228 10.8149 15.8886 10.6392 16.2627C10.2276 17.1388 10.4889 18.4547 10.5022 19.4046C10.5096 19.9296 10.0559 20.9644 9.41391 20.9993C9.01756 21.0209 8.88283 20.5468 8.75481 20.2558L7.52234 17.4544C7.2276 16.7845 7.21552 16.7724 6.54556 16.4777L3.74415 15.2452C3.45318 15.1172 2.97914 14.9824 3.00071 14.5861C3.03565 13.9441 4.07036 13.4904 4.59536 13.4978C5.54532 13.5111 6.86122 13.7724 7.73734 13.3608C8.11142 13.1851 8.37724 12.8507 8.90888 12.1819L10.3751 10.3373L4.22103 6.47489C3.71845 6.15946 3.69872 5.83597 4.08755 5.44715C4.8185 4.7162 5.48851 4.52214 6.53377 4.77718L11.7791 6.05703C12.4797 6.22798 13.1605 6.41343 13.8179 6.0154C14.679 5.49411 15.0866 4.41074 15.8667 3.7804Z"/>
             </svg>
             <?= __('trips.management') ?>
         </h1>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="page-actions">
         <a href="trip_form.php" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
             <?= __('trips.new_trip') ?>
         </a>
@@ -97,178 +98,182 @@ $trips = $tripModel->getAll('start_date DESC, created_at DESC');
 </div>
 
 <?php if ($message): ?>
-    <div class="alert alert-<?= $message_type ?> alert-dismissible fade show" role="alert">
-        <?= htmlspecialchars($message) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-<?= $message_type ?>">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <?php if ($message_type === 'success'): ?>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            <?php else: ?>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            <?php endif; ?>
+        </svg>
+        <span><?= htmlspecialchars($message) ?></span>
     </div>
 <?php endif; ?>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0">
-            <div class="card-body">
-                <?php if (empty($trips)): ?>
-                    <div class="text-center py-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-inbox text-muted mb-3" viewBox="0 0 16 16">
-                            <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
-                        </svg>
-                        <h4 class="text-muted"><?= __('trips.no_trips') ?></h4>
-                        <p class="text-muted"><?= __('messages.please_wait') ?></p>
-                        <a href="trip_form.php" class="btn btn-primary"><?= __('trips.new_trip') ?></a>
-                    </div>
-                <?php else: ?>
-                    <form method="POST" id="bulkForm">
-                        <!-- Bulk Action Toolbar -->
-                        <div class="alert alert-light alert-permanent border mb-3 d-none" id="bulkToolbar">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                <div>
-                                    <strong><span id="selectedCount">0</span> <?= __('trips.select_trips') ?></strong>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button type="submit" name="bulk_action" value="publish" class="btn btn-success btn-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
-                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
-                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
-                                        </svg>
-                                        <?= __('trips.publish') ?>
-                                    </button>
-                                    <button type="submit" name="bulk_action" value="draft" class="btn btn-secondary btn-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16">
-                                            <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z"/>
-                                            <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829"/>
-                                            <path d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z"/>
-                                        </svg>
-                                        <?= __('trips.draft') ?>
-                                    </button>
-                                    <button type="submit" name="bulk_action" value="delete" class="btn btn-danger btn-sm" 
-                                            onclick="return confirm('<?= __('trips.confirm_delete') ?>')">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                        </svg>
-                                        <?= __('common.delete') ?>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 40px;">
-                                            <input type="checkbox" class="form-check-input" id="selectAll" title="<?= __('common.select_all') ?>">
-                                        </th>
-                                        <th style="width: 50px;"><?= __('trips.color') ?></th>
-                                        <th><?= __('trips.title_field') ?></th>
-                                        <th><?= __('common.date') ?></th>
-                                        <th><?= __('trips.status') ?></th>
-                                        <th><?= __('trips.points') ?></th>
-                                        <th style="width: 200px;" class="text-end"><?= __('common.actions') ?></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($trips as $trip): ?>
-                                        <tr>
-                                            <td>
-                                                <input type="checkbox" class="form-check-input trip-select" 
-                                                       name="trip_ids[]" value="<?= $trip['id'] ?>">
-                                            </td>
-                                            <td>
-                                                <div style="width: 30px; height: 30px; background-color: <?= htmlspecialchars($trip['color_hex']) ?>; border-radius: 4px; border: 1px solid #ddd;"></div>
-                                            </td>
-                                            <td>
-                                                <strong><?= htmlspecialchars($trip['title']) ?></strong>
-                                                <?php if ($trip['description']): ?>
-                                                    <br><small class="text-muted"><?= htmlspecialchars(mb_substr($trip['description'], 0, 60)) ?><?= mb_strlen($trip['description']) > 60 ? '...' : '' ?></small>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($trip['start_date'] && $trip['end_date']): ?>
-                                                    <small>
-                                                        <?= date('d/m/Y', strtotime($trip['start_date'])) ?><br>
-                                                        <?= date('d/m/Y', strtotime($trip['end_date'])) ?>
-                                                    </small>
-                                                <?php elseif ($trip['start_date']): ?>
-                                                    <small><?= date('d/m/Y', strtotime($trip['start_date'])) ?></small>
-                                                <?php else: ?>
-                                                    <small class="text-muted"><?= __('common.no') ?></small>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($trip['status'] === 'public'): ?>
-                                                    <span class="badge bg-success"><?= __('trips.public') ?></span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary"><?= __('trips.draft') ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    <?= $tripModel->countPoints($trip['id']) ?> <?= __('trips.points') ?>
-                                                </small>
-                                            </td>
-                                            <td class="text-end">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="trip_edit_map.php?id=<?= $trip['id'] ?>" class="btn btn-outline-success" title="<?= __('trips.map_editor') ?>">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">
-                                                            <path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.5.5 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103M10 1.91l-4-.8v12.98l4 .8zm1 12.98 4-.8V1.11l-4 .8zm-6-.8V1.11l-4 .8v12.98z"/>
-                                                        </svg>
-                                                    </a>
-                                                    <a href="trip_form.php?id=<?= $trip['id'] ?>" class="btn btn-outline-primary" title="<?= __('common.edit') ?>">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
-                                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
-                                                        </svg>
-                                                    </a>
-                                                    <a href="?delete=<?= $trip['id'] ?>" class="btn btn-outline-danger btn-delete" title="<?= __('common.delete') ?>">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                                        </svg>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </form>
-                    
-                    <script>
-                    (function() {
-                        const selectAll = document.getElementById('selectAll');
-                        const checkboxes = document.querySelectorAll('.trip-select');
-                        const toolbar = document.getElementById('bulkToolbar');
-                        const countSpan = document.getElementById('selectedCount');
-                        
-                        function updateToolbar() {
-                            const checked = document.querySelectorAll('.trip-select:checked').length;
-                            countSpan.textContent = checked;
-                            
-                            if (checked > 0) {
-                                toolbar.classList.remove('d-none');
-                            } else {
-                                toolbar.classList.add('d-none');
-                            }
-                            
-                            // Update select all state
-                            selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
-                            selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
-                        }
-                        
-                        selectAll.addEventListener('change', function() {
-                            checkboxes.forEach(cb => cb.checked = this.checked);
-                            updateToolbar();
-                        });
-                        
-                        checkboxes.forEach(cb => {
-                            cb.addEventListener('change', updateToolbar);
-                        });
-                    })();
-                    </script>
-                <?php endif; ?>
+<div class="admin-card">
+    <div class="admin-card-body" style="padding: 0;">
+        <?php if (empty($trips)): ?>
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                </svg>
+                <h4 class="empty-state-title"><?= __('trips.no_trips') ?></h4>
+                <p class="empty-state-text"><?= __('messages.please_wait') ?></p>
+                <a href="trip_form.php" class="btn btn-primary"><?= __('trips.new_trip') ?></a>
             </div>
-        </div>
+        <?php else: ?>
+            <form method="POST" id="bulkForm">
+                <!-- Bulk Action Toolbar -->
+                <div class="bulk-toolbar hidden" id="bulkToolbar">
+                    <div class="bulk-info">
+                        <strong><span id="selectedCount">0</span> <?= __('trips.select_trips') ?? 'selected' ?></strong>
+                    </div>
+                    <div class="bulk-actions">
+                        <button type="submit" name="bulk_action" value="publish" class="btn btn-success btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <?= __('trips.publish') ?>
+                        </button>
+                        <button type="submit" name="bulk_action" value="draft" class="btn btn-secondary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                            <?= __('trips.draft') ?>
+                        </button>
+                        <button type="submit" name="bulk_action" value="delete" class="btn btn-danger btn-sm" 
+                                onclick="return confirm('<?= __('trips.confirm_delete') ?>')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <?= __('common.delete') ?>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="selectAll" title="<?= __('common.select_all') ?>">
+                                </th>
+                                <th style="width: 50px;"><?= __('trips.color') ?></th>
+                                <th><?= __('trips.title_field') ?></th>
+                                <th style="width: 180px;"><?= __('common.date') ?></th>
+                                <th style="width: 100px;"><?= __('trips.status') ?></th>
+                                <th style="width: 90px;"><?= __('trips.points') ?></th>
+                                <th style="width: 130px;" class="table-actions"><?= __('common.actions') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($trips as $trip): ?>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input trip-select" 
+                                               name="trip_ids[]" value="<?= $trip['id'] ?>">
+                                    </td>
+                                    <td>
+                                        <div class="color-swatch" style="background-color: <?= htmlspecialchars($trip['color_hex']) ?>;"></div>
+                                    </td>
+                                    <td>
+                                        <div class="cell-title"><?= htmlspecialchars($trip['title']) ?></div>
+                                        <?php if ($trip['description']): ?>
+                                            <div class="cell-subtitle"><?= htmlspecialchars(mb_substr($trip['description'], 0, 60)) ?><?= mb_strlen($trip['description']) > 60 ? '...' : '' ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($trip['start_date'] && $trip['end_date']): ?>
+                                            <div class="cell-date-range">
+                                                <span><?= date('d/m/Y', strtotime($trip['start_date'])) ?></span>
+                                                <span class="arrow">→</span>
+                                                <span><?= date('d/m/Y', strtotime($trip['end_date'])) ?></span>
+                                            </div>
+                                        <?php elseif ($trip['start_date']): ?>
+                                            <span class="cell-date"><?= date('d/m/Y', strtotime($trip['start_date'])) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($trip['status'] === 'public'): ?>
+                                            <span class="badge badge-success"><?= __('trips.public') ?></span>
+                                        <?php else: ?>
+                                            <span class="badge badge-secondary"><?= __('trips.draft') ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted"><?= $tripModel->countPoints($trip['id']) ?></span>
+                                    </td>
+                                    <td class="table-actions">
+                                        <div class="btn-group">
+                                            <a href="trip_edit_map.php?id=<?= $trip['id'] ?>" class="btn btn-icon btn-sm btn-outline-success" title="<?= __('trips.map_editor') ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                                                    <line x1="8" y1="2" x2="8" y2="18"></line>
+                                                    <line x1="16" y1="6" x2="16" y2="22"></line>
+                                                </svg>
+                                            </a>
+                                            <a href="trip_form.php?id=<?= $trip['id'] ?>" class="btn btn-icon btn-sm btn-outline-primary" title="<?= __('common.edit') ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                </svg>
+                                            </a>
+                                            <a href="?delete=<?= $trip['id'] ?>" class="btn btn-icon btn-sm btn-outline-danger btn-delete" title="<?= __('common.delete') ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+            
+            <script>
+            (function() {
+                const selectAll = document.getElementById('selectAll');
+                const checkboxes = document.querySelectorAll('.trip-select');
+                const toolbar = document.getElementById('bulkToolbar');
+                const countSpan = document.getElementById('selectedCount');
+                
+                function updateToolbar() {
+                    const checked = document.querySelectorAll('.trip-select:checked').length;
+                    countSpan.textContent = checked;
+                    
+                    if (checked > 0) {
+                        toolbar.classList.remove('hidden');
+                    } else {
+                        toolbar.classList.add('hidden');
+                    }
+                    
+                    selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
+                    selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
+                }
+                
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                    updateToolbar();
+                });
+                
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', updateToolbar);
+                });
+            })();
+            </script>
+        <?php endif; ?>
     </div>
 </div>
 

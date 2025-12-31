@@ -46,12 +46,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="<?= ASSETS_URL ?>/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
+        :root {
+            --primary-dark-slate: #1e293b;
+            --hover-dark-slate: #334155;
+            --muted-text-light: #64748b;
+            --bg-light: #f1f5f9;
+            --border-medium: #cbd5e1;
+        }
         body {
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-dark-slate);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(51, 65, 85, 0.6) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(51, 65, 85, 0.4) 0%, transparent 50%);
         }
         .login-container {
             width: 100%;
@@ -60,9 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .login-card {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
             padding: 40px;
+            border: 1px solid var(--bg-light);
         }
         .login-logo {
             text-align: center;
@@ -71,12 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-logo svg {
             width: 64px;
             height: 64px;
-            color: #667eea;
+            color: var(--primary-dark-slate);
         }
         .login-logo h1 {
             font-size: 24px;
             font-weight: bold;
-            color: #333;
+            color: var(--primary-dark-slate);
             margin-top: 10px;
         }
         .btn-login {
@@ -84,16 +95,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 12px;
             font-size: 16px;
             font-weight: 600;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--primary-dark-slate);
             border: none;
+            transition: all 0.2s ease;
         }
         .btn-login:hover {
+            background-color: var(--hover-dark-slate);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.3);
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: var(--primary-dark-slate);
+            box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.2);
+        }
+        .input-group-text {
+            background-color: var(--bg-light);
+            border-color: var(--border-medium);
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--primary-dark-slate);
         }
     </style>
 </head>

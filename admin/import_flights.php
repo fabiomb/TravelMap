@@ -388,205 +388,276 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h1 class="h3">
-            <i class="bi bi-cloud-upload"></i> Importar Vuelos desde FlightRadar (ex FlightDiary)
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.0002 12H6.00024V19C6.00024 20.4142 6.00024 21.1213 6.43958 21.5607C6.87892 22 7.58603 22 9.00024 22H10.0002V12Z" />
+                <path d="M18.0002 15H10.0002V22H18.0002C19.4145 22 20.1216 22 20.5609 21.5607C21.0002 21.1213 21.0002 20.4142 21.0002 19V18C21.0002 16.5858 21.0002 15.8787 20.5609 15.4393C20.1216 15 19.4145 15 18.0002 15Z" />
+                <path d="M21 6L20 7M16.5 7H20M20 7L17 10H16M20 7V10.5" />
+                <path d="M12.2686 10.1181C11.9025 11.0296 11.7195 11.4854 11.3388 11.7427C10.9582 12 10.4671 12 9.4848 12H6.51178C5.5295 12 5.03836 12 4.65773 11.7427C4.27711 11.4854 4.09405 11.0296 3.72794 10.1181L3.57717 9.74278C3.07804 8.50009 2.82847 7.87874 3.12717 7.43937C3.42587 7 4.09785 7 5.44182 7H10.5548C11.8987 7 12.5707 7 12.8694 7.43937C13.1681 7.87874 12.9185 8.50009 12.4194 9.74278L12.2686 10.1181Z" />
+                <path d="M9.99616 7H6.00407C5.18904 5.73219 4.8491 5.09829 5.06258 4.59641C5.34685 4.13381 6.15056 4 7.61989 4H8.38063C9.84995 4 10.6537 4.13381 10.9379 4.59641C11.1514 5.09829 10.8112 5.73219 9.99616 7Z" />
+                <path d="M8 4V2" />
+            </svg>
+            <?= __('navigation.import_flights') ?>
         </h1>
-        <p class="text-muted">Sube tu exportación CSV de FlightRadar/FlightDiary para crear viajes automáticamente</p>
+        <p class="page-subtitle"><?= __('import.flights_description') ?? 'Upload your FlightRadar CSV export to create trips automatically' ?></p>
     </div>
 </div>
 
 <?php foreach ($errors as $error): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?= htmlspecialchars($error) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="alert alert-danger">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span><?= htmlspecialchars($error) ?></span>
     </div>
 <?php endforeach; ?>
 
 <?php if ($importResults && $importResults['success']): ?>
-    <!-- Resultados de Importación -->
-    <div class="card border-success mb-4">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Importación Completada</h5>
+    <!-- Import Results -->
+    <div class="admin-card">
+        <div class="admin-card-header" style="background: var(--admin-success); color: white; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+            <h3 class="admin-card-title" style="color: white;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <?= __('import.completed') ?? 'Import Completed' ?>
+            </h3>
         </div>
-        <div class="card-body">
-            <div class="row text-center">
-                <div class="col-md-6">
-                    <div class="display-4 text-success"><?= $importResults['trips_created'] ?></div>
-                    <p class="text-muted">Viajes creados</p>
+        <div class="admin-card-body" style="text-align: center; padding: 40px;">
+            <div class="stats-grid" style="max-width: 500px; margin: 0 auto 32px;">
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= __('trips.trips') ?? 'Trips Created' ?></div>
+                        <div class="stat-value"><?= $importResults['trips_created'] ?></div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="display-4 text-primary"><?= $importResults['routes_created'] ?></div>
-                    <p class="text-muted">Rutas de vuelo añadidas</p>
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= __('trips.routes') ?? 'Routes Added' ?></div>
+                        <div class="stat-value"><?= $importResults['routes_created'] ?></div>
+                    </div>
                 </div>
             </div>
-            <hr>
-            <div class="d-flex justify-content-center gap-3">
+            <div style="display: flex; justify-content: center; gap: 12px;">
                 <a href="<?= BASE_URL ?>/admin/trips.php" class="btn btn-primary">
-                    <i class="bi bi-airplane"></i> Ver Viajes
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233"/>
+                    </svg>
+                    <?= __('navigation.trips') ?>
                 </a>
-                <a href="<?= BASE_URL ?>/admin/import_flights.php" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-repeat"></i> Importar Más
+                <a href="<?= BASE_URL ?>/admin/import_flights.php" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    <?= __('import.import_more') ?? 'Import More' ?>
                 </a>
             </div>
         </div>
     </div>
 
 <?php elseif ($previewData): ?>
-    <!-- Vista Previa -->
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="bi bi-eye"></i> Vista Previa de Importación</h5>
+    <!-- Preview -->
+    <div class="admin-card">
+        <div class="admin-card-header" style="background: var(--admin-info); color: white; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+            <h3 class="admin-card-title" style="color: white;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <?= __('import.preview') ?? 'Import Preview' ?>
+            </h3>
         </div>
-        <div class="card-body">
-            <div class="row text-center mb-4">
-                <div class="col-md-4">
-                    <div class="display-5 text-info"><?= $previewData['total_flights'] ?></div>
-                    <p class="text-muted">Vuelos detectados</p>
-                </div>
-                <div class="col-md-4">
-                    <div class="display-5 text-success" id="tripCount"><?= $previewData['total_trips'] ?></div>
-                    <p class="text-muted">Viajes a crear</p>
-                </div>
-                <div class="col-md-4">
-                    <div class="display-5 <?= count($previewData['missing_airports']) > 0 ? 'text-warning' : 'text-success' ?>">
-                        <?= count($previewData['missing_airports']) ?>
+        <div class="admin-card-body">
+            <div class="stats-grid" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
                     </div>
-                    <p class="text-muted">Aeropuertos no encontrados</p>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= __('import.flights_detected') ?? 'Flights Detected' ?></div>
+                        <div class="stat-value"><?= $previewData['total_flights'] ?></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= __('import.trips_to_create') ?? 'Trips to Create' ?></div>
+                        <div class="stat-value" id="tripCount"><?= $previewData['total_trips'] ?></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon <?= count($previewData['missing_airports']) > 0 ? 'amber' : 'green' ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= __('import.missing_airports') ?? 'Missing Airports' ?></div>
+                        <div class="stat-value"><?= count($previewData['missing_airports']) ?></div>
+                    </div>
                 </div>
             </div>
             
             <?php if (!empty($previewData['missing_airports'])): ?>
                 <div class="alert alert-warning">
-                    <strong><i class="bi bi-exclamation-triangle"></i> Aeropuertos sin coordenadas:</strong>
-                    Los siguientes vuelos fueron omitidos porque no se encontraron las coordenadas:
-                    <ul class="mb-0 mt-2">
-                        <?php foreach ($previewData['missing_airports'] as $iata => $city): ?>
-                            <li><strong><?= htmlspecialchars($iata) ?></strong> - <?= htmlspecialchars($city) ?></li>
-                        <?php endforeach; ?>
-                    </ul>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <div>
+                        <strong><?= __('import.airports_without_coords') ?? 'Airports without coordinates:' ?></strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                            <?php foreach ($previewData['missing_airports'] as $iata => $city): ?>
+                                <li><strong><?= htmlspecialchars($iata) ?></strong> - <?= htmlspecialchars($city) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 </div>
             <?php endif; ?>
             
-            <!-- Controls - Sticky -->
-            <div class="alert alert-light alert-permanent border mb-3" id="mergeControls" 
-                 style="position: sticky; top: 56px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <!-- Trip Controls Row -->
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                    <div>
-                        <i class="bi bi-airplane text-primary"></i>
-                        <strong>Viajes:</strong> 
-                        <small class="text-muted">Selecciona viajes para unirlos · Clic en título para renombrar</small>
+            <!-- Merge Controls -->
+            <div class="admin-card" style="position: sticky; top: 0; z-index: 100; margin-bottom: 16px;">
+                <div class="admin-card-body" style="padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <span style="font-size: 13px; color: var(--admin-text-muted);">
+                            <?= __('import.select_trips_to_merge') ?? 'Select trips to merge · Click title to rename · Select flights to move' ?>
+                        </span>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-sm btn-secondary" id="selectAllBtn"><?= __('common.all') ?? 'All' ?></button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="deselectAllBtn"><?= __('common.none') ?? 'None' ?></button>
+                            <button type="button" class="btn btn-sm btn-primary" id="mergeBtn" disabled>
+                                <?= __('import.merge') ?? 'Merge' ?> (<span id="selectedCount">0</span>)
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="selectAllBtn">
-                            <i class="bi bi-check-all"></i> Todos
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="deselectAllBtn">
-                            <i class="bi bi-x"></i> Ninguno
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="mergeBtn" disabled>
-                            <i class="bi bi-union"></i> Unir (<span id="selectedCount">0</span>)
-                        </button>
-                    </div>
-                </div>
-                <hr class="my-2">
-                <!-- Flight Controls Row -->
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" id="flightControlsRow">
-                    <div class="d-flex align-items-center gap-1">
-                        <i class="bi bi-arrow-left-right text-success"></i>
-                        <strong>Vuelos:</strong> 
-                        <small class="text-muted d-none d-md-inline">Selecciona vuelos y muévelos</small>
-                    </div>
-                    <div class="d-flex gap-1 align-items-center flex-nowrap">
-                        <span class="badge bg-secondary text-nowrap" id="selectedFlightsCount">0</span>
-                        <select class="form-select form-select-sm" id="moveToTripSelect" style="width: 140px;" disabled>
-                            <option value="">Mover a...</option>
-                        </select>
-                        <button type="button" class="btn btn-success btn-sm text-nowrap" id="moveFlightsBtn" disabled>
-                            <i class="bi bi-arrow-right"></i>
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm text-nowrap" id="newTripFromFlightsBtn" disabled>
-                            <i class="bi bi-plus-circle"></i> Nuevo
-                        </button>
+                    <!-- Flight actions bar (hidden by default) -->
+                    <div id="flightActionsBar" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--admin-border);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <span style="font-size: 13px; color: var(--admin-accent); font-weight: 500;">
+                                <span id="selectedFlightsCount">0</span> <?= __('import.flights_selected') ?? 'flight(s) selected' ?>
+                            </span>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select id="moveToTripSelect" class="form-select form-select-sm" style="min-width: 200px;">
+                                    <option value=""><?= __('import.move_to') ?? 'Move to...' ?></option>
+                                    <option value="__new__"><?= __('import.new_trip') ?? '+ Create new trip' ?></option>
+                                </select>
+                                <button type="button" class="btn btn-sm btn-warning" id="moveFlightsBtn" disabled>
+                                    <?= __('import.move') ?? 'Move' ?>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="clearFlightSelectionBtn">
+                                    <?= __('common.cancel') ?? 'Cancel' ?>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <h5 class="mt-4 mb-3">Viajes que se crearán:</h5>
+            <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 16px;"><?= __('import.trips_to_be_created') ?? 'Trips to be created:' ?></h4>
             <div id="tripsContainer">
                 <?php foreach ($previewData['trips'] as $index => $trip): ?>
-                    <div class="card mb-2 trip-card" data-trip-index="<?= $index ?>">
-                        <div class="card-header d-flex align-items-center gap-2 py-2">
-                            <input type="checkbox" class="form-check-input trip-checkbox" 
-                                   data-trip-index="<?= $index ?>" style="margin: 0;">
-                            <span class="badge bg-primary trip-flight-count"><?= $trip['flights_count'] ?> vuelos</span>
-                            <span class="trip-title-display" data-trip-index="<?= $index ?>" 
-                                  style="cursor: pointer;" title="Clic para editar">
-                                <strong><?= htmlspecialchars($trip['title']) ?></strong>
-                                <i class="bi bi-pencil-fill text-muted ms-1" style="font-size: 0.7em;"></i>
-                            </span>
-                            <input type="text" class="form-control form-control-sm trip-title-input d-none" 
-                                   data-trip-index="<?= $index ?>" value="<?= htmlspecialchars($trip['title']) ?>"
-                                   style="max-width: 300px;">
-                            <small class="text-muted ms-auto trip-dates">
-                                <?= date('d/m/Y', strtotime($trip['start_date'])) ?> - <?= date('d/m/Y', strtotime($trip['end_date'])) ?>
-                            </small>
-                            <button type="button" class="btn btn-sm btn-outline-secondary toggle-flights-btn" 
-                                    data-target="flights-<?= $index ?>">
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
+                    <div class="admin-card trip-card" style="margin-bottom: 12px;" data-trip-index="<?= $index ?>">
+                        <div class="admin-card-header" style="padding: 10px 16px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <input type="checkbox" class="form-check-input trip-checkbox" data-trip-index="<?= $index ?>">
+                                <span class="badge badge-info"><?= $trip['flights_count'] ?> vuelos</span>
+                                <span class="trip-title-display" data-trip-index="<?= $index ?>" style="cursor: pointer; font-weight: 600;">
+                                    <?= htmlspecialchars($trip['title']) ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px; opacity: 0.5; margin-left: 4px;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </span>
+                                <input type="text" class="form-control trip-title-input" data-trip-index="<?= $index ?>" value="<?= htmlspecialchars($trip['title']) ?>" style="max-width: 300px; display: none;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="cell-date"><?= date('d/m/Y', strtotime($trip['start_date'])) ?> - <?= date('d/m/Y', strtotime($trip['end_date'])) ?></span>
+                                <button type="button" class="btn btn-sm btn-secondary toggle-flights-btn" data-target="flights-<?= $index ?>">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="card-body p-0 flights-detail" id="flights-<?= $index ?>" style="display: none;">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 30px;">
-                                            <input type="checkbox" class="form-check-input select-all-flights" 
-                                                   data-trip-index="<?= $index ?>" title="Seleccionar todos">
-                                        </th>
-                                        <th>Fecha</th>
-                                        <th>Origen</th>
-                                        <th>Destino</th>
-                                        <th>Vuelo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($trip['flights'] as $fIndex => $flight): ?>
+                        <div class="admin-card-body flights-detail" id="flights-<?= $index ?>" style="display: none; padding: 0;">
+                            <div class="admin-table-wrapper">
+                                <table class="admin-table">
+                                    <thead>
                                         <tr>
-                                            <td>
-                                                <input type="checkbox" class="form-check-input flight-checkbox" 
-                                                       data-trip-index="<?= $index ?>" data-flight-index="<?= $fIndex ?>">
-                                            </td>
-                                            <td><?= date('d/m/Y', strtotime($flight['date'])) ?></td>
-                                            <td>
-                                                <span class="badge bg-secondary"><?= htmlspecialchars($flight['from_iata']) ?></span>
-                                                <?= htmlspecialchars($flight['from_city']) ?>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-secondary"><?= htmlspecialchars($flight['to_iata']) ?></span>
-                                                <?= htmlspecialchars($flight['to_city']) ?>
-                                            </td>
-                                            <td><?= htmlspecialchars($flight['flight_number']) ?></td>
+                                            <th style="width: 40px;">
+                                                <input type="checkbox" class="form-check-input select-all-flights" data-trip-index="<?= $index ?>" title="<?= __('common.select_all') ?? 'Select all' ?>">
+                                            </th>
+                                            <th style="width: 100px;"><?= __('common.date') ?></th>
+                                            <th><?= __('import.origin') ?? 'Origin' ?></th>
+                                            <th><?= __('import.destination') ?? 'Destination' ?></th>
+                                            <th><?= __('import.flight') ?? 'Flight' ?></th>
                                         </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($trip['flights'] as $fIndex => $flight): ?>
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" class="form-check-input flight-checkbox" data-trip-index="<?= $index ?>" data-flight-index="<?= $fIndex ?>">
+                                                </td>
+                                                <td class="cell-date"><?= date('d/m/Y', strtotime($flight['date'])) ?></td>
+                                                <td>
+                                                    <span class="badge badge-secondary"><?= htmlspecialchars($flight['from_iata']) ?></span>
+                                                    <?= htmlspecialchars($flight['from_city']) ?>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-secondary"><?= htmlspecialchars($flight['to_iata']) ?></span>
+                                                    <?= htmlspecialchars($flight['to_city']) ?>
+                                                </td>
+                                                <td class="text-muted"><?= htmlspecialchars($flight['flight_number']) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
-            
-            <hr>
-            <form method="POST" id="importForm" class="d-flex justify-content-end gap-2">
+        </div>
+        <div class="admin-card-footer" style="display: flex; justify-content: flex-end; gap: 12px;">
+            <form method="POST" id="importForm">
                 <input type="hidden" name="action" value="import">
                 <input type="hidden" name="modified_trips" id="modifiedTripsInput" value="">
-                <a href="<?= BASE_URL ?>/admin/import_flights.php" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> Cancelar
+                <a href="<?= BASE_URL ?>/admin/import_flights.php" class="btn btn-secondary">
+                    <?= __('common.cancel') ?>
                 </a>
                 <button type="submit" class="btn btn-success" id="importBtn">
-                    <i class="bi bi-check-circle"></i> Importar <span id="importTripCount"><?= $previewData['total_trips'] ?></span> Viajes
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <?= __('import.import') ?? 'Import' ?> <span id="importTripCount"><?= $previewData['total_trips'] ?></span> <?= __('navigation.trips') ?>
                 </button>
             </form>
         </div>
@@ -594,7 +665,6 @@ require_once __DIR__ . '/../includes/header.php';
     
     <script>
     (function() {
-        // Store trips data in JavaScript
         let tripsData = <?= json_encode($previewData['trips']) ?>;
         
         const mergeBtn = document.getElementById('mergeBtn');
@@ -605,137 +675,180 @@ require_once __DIR__ . '/../includes/header.php';
         const selectAllBtn = document.getElementById('selectAllBtn');
         const deselectAllBtn = document.getElementById('deselectAllBtn');
         
-        // Update selected count
+        // Flight selection elements
+        const flightActionsBar = document.getElementById('flightActionsBar');
+        const selectedFlightsCountSpan = document.getElementById('selectedFlightsCount');
+        const moveToTripSelect = document.getElementById('moveToTripSelect');
+        const moveFlightsBtn = document.getElementById('moveFlightsBtn');
+        const clearFlightSelectionBtn = document.getElementById('clearFlightSelectionBtn');
+        
         function updateSelectedCount() {
             const checked = document.querySelectorAll('.trip-checkbox:checked').length;
             selectedCountSpan.textContent = checked;
             mergeBtn.disabled = checked < 2;
         }
         
-        // Generate trip title from flights
+        function updateFlightSelectionUI() {
+            const checkedFlights = document.querySelectorAll('.flight-checkbox:checked');
+            const count = checkedFlights.length;
+            selectedFlightsCountSpan.textContent = count;
+            
+            if (count > 0) {
+                flightActionsBar.style.display = 'block';
+                updateMoveToDropdown();
+            } else {
+                flightActionsBar.style.display = 'none';
+            }
+            
+            moveFlightsBtn.disabled = count === 0 || !moveToTripSelect.value;
+        }
+        
+        function updateMoveToDropdown() {
+            // Get current trips for dropdown
+            const currentValue = moveToTripSelect.value;
+            moveToTripSelect.innerHTML = '<option value=""><?= __('import.move_to') ?? 'Move to...' ?></option>';
+            moveToTripSelect.innerHTML += '<option value="__new__"><?= __('import.new_trip') ?? '+ Create new trip' ?></option>';
+            
+            tripsData.forEach((trip, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = trip.title;
+                moveToTripSelect.appendChild(opt);
+            });
+            
+            // Restore selection if still valid
+            if (currentValue && (currentValue === '__new__' || parseInt(currentValue) < tripsData.length)) {
+                moveToTripSelect.value = currentValue;
+            }
+        }
+        
         function generateTripTitle(flights) {
             const firstFlight = flights[0];
             const lastFlight = flights[flights.length - 1];
-            
             const startCity = firstFlight.from_city;
             const endCity = lastFlight.to_city;
-            
             const startDate = new Date(firstFlight.date);
             const endDate = new Date(lastFlight.date);
-            
-            const months = {0: 'Ene', 1: 'Feb', 2: 'Mar', 3: 'Abr', 4: 'May', 5: 'Jun',
-                           6: 'Jul', 7: 'Ago', 8: 'Sep', 9: 'Oct', 10: 'Nov', 11: 'Dic'};
-            
+            const months = {0: 'Ene', 1: 'Feb', 2: 'Mar', 3: 'Abr', 4: 'May', 5: 'Jun', 6: 'Jul', 7: 'Ago', 8: 'Sep', 9: 'Oct', 10: 'Nov', 11: 'Dic'};
             let dateRange;
             if (startDate.getFullYear() === endDate.getFullYear() && startDate.getMonth() === endDate.getMonth()) {
                 dateRange = months[startDate.getMonth()] + ' ' + startDate.getFullYear();
             } else if (startDate.getFullYear() === endDate.getFullYear()) {
                 dateRange = months[startDate.getMonth()] + '-' + months[endDate.getMonth()] + ' ' + startDate.getFullYear();
             } else {
-                dateRange = months[startDate.getMonth()] + ' ' + startDate.getFullYear() + ' - ' + 
-                           months[endDate.getMonth()] + ' ' + endDate.getFullYear();
+                dateRange = months[startDate.getMonth()] + ' ' + startDate.getFullYear() + ' - ' + months[endDate.getMonth()] + ' ' + endDate.getFullYear();
             }
-            
-            if (startCity === endCity) {
-                return startCity + ' (' + dateRange + ')';
-            }
+            if (startCity === endCity) return startCity + ' (' + dateRange + ')';
             return startCity + ' → ' + endCity + ' (' + dateRange + ')';
         }
         
-        // Format date for display
         function formatDate(dateStr) {
             const d = new Date(dateStr);
             return d.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
         }
         
-        // Render trips to DOM
+        function updateTripData(trip) {
+            trip.flights.sort((a, b) => new Date(a.date) - new Date(b.date));
+            trip.flights_count = trip.flights.length;
+            if (trip.flights.length > 0) {
+                trip.start_date = trip.flights[0].date;
+                trip.end_date = trip.flights[trip.flights.length - 1].date;
+                // Only auto-generate title if it wasn't manually set
+                if (!trip.titleManuallySet) {
+                    trip.title = generateTripTitle(trip.flights);
+                }
+            }
+        }
+        
+        function formatDateDisplay(dateStr) {
+            const d = new Date(dateStr);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
         function renderTrips() {
             const container = document.getElementById('tripsContainer');
             container.innerHTML = '';
             
             tripsData.forEach((trip, index) => {
-                const card = document.createElement('div');
-                card.className = 'card mb-2 trip-card';
-                card.dataset.tripIndex = index;
+                const tripCard = document.createElement('div');
+                tripCard.className = 'admin-card trip-card';
+                tripCard.style.marginBottom = '12px';
+                tripCard.dataset.tripIndex = index;
                 
-                let flightsHtml = '';
+                // Build flights table rows
+                let flightRows = '';
                 trip.flights.forEach((flight, fIndex) => {
-                    flightsHtml += `
+                    flightRows += `
                         <tr>
-                            <td>
-                                <input type="checkbox" class="form-check-input flight-checkbox" 
-                                       data-trip-index="${index}" data-flight-index="${fIndex}">
-                            </td>
-                            <td>${formatDate(flight.date)}</td>
-                            <td>
-                                <span class="badge bg-secondary">${flight.from_iata}</span>
-                                ${flight.from_city}
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">${flight.to_iata}</span>
-                                ${flight.to_city}
-                            </td>
-                            <td>${flight.flight_number || ''}</td>
+                            <td><input type="checkbox" class="form-check-input flight-checkbox" data-trip-index="${index}" data-flight-index="${fIndex}"></td>
+                            <td class="cell-date">${formatDateDisplay(flight.date)}</td>
+                            <td><span class="badge badge-secondary">${flight.from_iata}</span> ${flight.from_city}</td>
+                            <td><span class="badge badge-secondary">${flight.to_iata}</span> ${flight.to_city}</td>
+                            <td class="text-muted">${flight.flight_number || ''}</td>
                         </tr>
                     `;
                 });
                 
-                // Escape HTML in title for safe display
-                const escapedTitle = trip.title.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                
-                card.innerHTML = `
-                    <div class="card-header d-flex align-items-center gap-2 py-2">
-                        <input type="checkbox" class="form-check-input trip-checkbox" 
-                               data-trip-index="${index}" style="margin: 0;">
-                        <span class="badge bg-primary trip-flight-count">${trip.flights.length} vuelos</span>
-                        <span class="trip-title-display" data-trip-index="${index}" 
-                              style="cursor: pointer;" title="Clic para editar">
-                            <strong>${escapedTitle}</strong>
-                            <i class="bi bi-pencil-fill text-muted ms-1" style="font-size: 0.7em;"></i>
-                        </span>
-                        <input type="text" class="form-control form-control-sm trip-title-input d-none" 
-                               data-trip-index="${index}" value="${escapedTitle}"
-                               style="max-width: 300px;">
-                        <small class="text-muted ms-auto trip-dates">
-                            ${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}
-                        </small>
-                        <button type="button" class="btn btn-sm btn-outline-secondary toggle-flights-btn" 
-                                data-target="flights-${index}">
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
+                tripCard.innerHTML = `
+                    <div class="admin-card-header" style="padding: 10px 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                            <input type="checkbox" class="form-check-input trip-checkbox" data-trip-index="${index}">
+                            <span class="badge badge-info">${trip.flights.length} vuelos</span>
+                            <span class="trip-title-display" data-trip-index="${index}" style="cursor: pointer; font-weight: 600;">
+                                ${trip.title}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px; opacity: 0.5; margin-left: 4px;">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </span>
+                            <input type="text" class="form-control trip-title-input" data-trip-index="${index}" value="${trip.title}" style="max-width: 300px; display: none;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span class="cell-date">${formatDateDisplay(trip.start_date)} - ${formatDateDisplay(trip.end_date)}</span>
+                            <button type="button" class="btn btn-sm btn-secondary toggle-flights-btn" data-target="flights-${index}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="card-body p-0 flights-detail" id="flights-${index}" style="display: none;">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 30px;">
-                                        <input type="checkbox" class="form-check-input select-all-flights" 
-                                               data-trip-index="${index}" title="Seleccionar todos">
-                                    </th>
-                                    <th>Fecha</th>
-                                    <th>Origen</th>
-                                    <th>Destino</th>
-                                    <th>Vuelo</th>
-                                </tr>
-                            </thead>
-                            <tbody>${flightsHtml}</tbody>
-                        </table>
+                    <div class="admin-card-body flights-detail" id="flights-${index}" style="display: none; padding: 0;">
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;"><input type="checkbox" class="form-check-input select-all-flights" data-trip-index="${index}" title="<?= __('common.select_all') ?? 'Select all' ?>"></th>
+                                        <th style="width: 100px;"><?= __('common.date') ?></th>
+                                        <th><?= __('import.origin') ?? 'Origin' ?></th>
+                                        <th><?= __('import.destination') ?? 'Destination' ?></th>
+                                        <th><?= __('import.flight') ?? 'Flight' ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>${flightRows}</tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
                 
-                container.appendChild(card);
+                container.appendChild(tripCard);
             });
             
             // Update counts
             tripCountDisplay.textContent = tripsData.length;
             importTripCount.textContent = tripsData.length;
             
+            // Clear selections
+            flightActionsBar.style.display = 'none';
+            updateSelectedCount();
+            
             // Re-attach event listeners
             attachEventListeners();
-            updateSelectedCount();
+            updateMoveToDropdown();
         }
         
-        // Attach event listeners to checkboxes, toggle buttons, and title editing
         function attachEventListeners() {
             document.querySelectorAll('.trip-checkbox').forEach(cb => {
                 cb.addEventListener('change', updateSelectedCount);
@@ -745,280 +858,145 @@ require_once __DIR__ . '/../includes/header.php';
                 btn.addEventListener('click', function() {
                     const targetId = this.dataset.target;
                     const target = document.getElementById(targetId);
-                    const icon = this.querySelector('i');
-                    
+                    const svg = this.querySelector('svg');
                     if (target.style.display === 'none') {
                         target.style.display = 'block';
-                        icon.className = 'bi bi-chevron-up';
+                        svg.style.transform = 'rotate(180deg)';
                     } else {
                         target.style.display = 'none';
-                        icon.className = 'bi bi-chevron-down';
+                        svg.style.transform = '';
                     }
                 });
             });
             
-            // Title click to edit
             document.querySelectorAll('.trip-title-display').forEach(display => {
                 display.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const index = this.dataset.tripIndex;
                     const input = document.querySelector(`.trip-title-input[data-trip-index="${index}"]`);
-                    
-                    // Hide display, show input
-                    this.classList.add('d-none');
-                    input.classList.remove('d-none');
+                    this.style.display = 'none';
+                    input.style.display = 'block';
                     input.focus();
                     input.select();
                 });
             });
             
-            // Title input blur/enter to save
             document.querySelectorAll('.trip-title-input').forEach(input => {
                 const saveTitle = function() {
                     const index = parseInt(this.dataset.tripIndex);
                     const newTitle = this.value.trim();
                     const display = document.querySelector(`.trip-title-display[data-trip-index="${index}"]`);
-                    
                     if (newTitle) {
                         tripsData[index].title = newTitle;
-                        display.querySelector('strong').textContent = newTitle;
+                        tripsData[index].titleManuallySet = true;
+                        display.innerHTML = newTitle + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px; opacity: 0.5; margin-left: 4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
                     }
-                    
-                    // Hide input, show display
-                    this.classList.add('d-none');
-                    display.classList.remove('d-none');
+                    this.style.display = 'none';
+                    display.style.display = '';
                 };
-                
                 input.addEventListener('blur', saveTitle);
                 input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        this.blur();
-                    } else if (e.key === 'Escape') {
-                        // Revert to original
-                        const index = parseInt(this.dataset.tripIndex);
-                        this.value = tripsData[index].title;
-                        this.blur();
-                    }
+                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                    else if (e.key === 'Escape') { this.value = tripsData[parseInt(this.dataset.tripIndex)].title; this.blur(); }
                 });
             });
             
-            // Flight checkbox handlers
+            // Flight checkboxes
             document.querySelectorAll('.flight-checkbox').forEach(cb => {
-                cb.addEventListener('change', updateFlightSelection);
+                cb.addEventListener('change', updateFlightSelectionUI);
             });
             
             // Select all flights in a trip
             document.querySelectorAll('.select-all-flights').forEach(cb => {
                 cb.addEventListener('change', function() {
                     const tripIndex = this.dataset.tripIndex;
-                    const isChecked = this.checked;
-                    document.querySelectorAll(`.flight-checkbox[data-trip-index="${tripIndex}"]`)
-                        .forEach(fcb => fcb.checked = isChecked);
-                    updateFlightSelection();
+                    const flightCheckboxes = document.querySelectorAll(`.flight-checkbox[data-trip-index="${tripIndex}"]`);
+                    flightCheckboxes.forEach(fcb => fcb.checked = this.checked);
+                    updateFlightSelectionUI();
                 });
             });
         }
         
-        // Flight selection state
-        const moveToTripSelect = document.getElementById('moveToTripSelect');
-        const moveFlightsBtn = document.getElementById('moveFlightsBtn');
-        const newTripFromFlightsBtn = document.getElementById('newTripFromFlightsBtn');
-        const selectedFlightsCountSpan = document.getElementById('selectedFlightsCount');
-        
-        // Update flight selection UI
-        function updateFlightSelection() {
+        // Move to dropdown change
+        moveToTripSelect.addEventListener('change', function() {
             const checkedFlights = document.querySelectorAll('.flight-checkbox:checked');
-            const count = checkedFlights.length;
-            
-            selectedFlightsCountSpan.textContent = count;
-            
-            // Enable/disable buttons
-            moveFlightsBtn.disabled = count === 0;
-            newTripFromFlightsBtn.disabled = count === 0;
-            moveToTripSelect.disabled = count === 0;
-            
-            // Update move-to dropdown
-            updateMoveToDropdown();
-        }
-        
-        // Update the "Move to" dropdown with available trips
-        function updateMoveToDropdown() {
-            const checkedFlights = document.querySelectorAll('.flight-checkbox:checked');
-            
-            // Get which trips have selected flights
-            const tripsWithSelectedFlights = new Set();
-            checkedFlights.forEach(cb => {
-                tripsWithSelectedFlights.add(parseInt(cb.dataset.tripIndex));
-            });
-            
-            // Build dropdown options
-            moveToTripSelect.innerHTML = '<option value="">Mover a...</option>';
-            tripsData.forEach((trip, index) => {
-                // Only show trips that don't have ALL the selected flights
-                if (!tripsWithSelectedFlights.has(index) || tripsWithSelectedFlights.size > 1) {
-                    const opt = document.createElement('option');
-                    opt.value = index;
-                    opt.textContent = trip.title.substring(0, 40) + (trip.title.length > 40 ? '...' : '');
-                    moveToTripSelect.appendChild(opt);
-                }
-            });
-        }
-        
-        // Move flights to another trip
-        moveFlightsBtn.addEventListener('click', function() {
-            const targetTripIndex = parseInt(moveToTripSelect.value);
-            if (isNaN(targetTripIndex)) {
-                alert('Selecciona un viaje de destino');
-                return;
-            }
-            
-            moveSelectedFlightsToTrip(targetTripIndex);
+            moveFlightsBtn.disabled = checkedFlights.length === 0 || !this.value;
         });
         
-        // Create new trip from selected flights
-        newTripFromFlightsBtn.addEventListener('click', function() {
+        // Move flights button
+        moveFlightsBtn.addEventListener('click', function() {
             const checkedFlights = document.querySelectorAll('.flight-checkbox:checked');
             if (checkedFlights.length === 0) return;
             
-            // Collect selected flights
+            const targetValue = moveToTripSelect.value;
+            if (!targetValue) return;
+            
+            // Collect flights to move (group by source trip)
             const flightsToMove = [];
-            const sourceTrips = new Map(); // tripIndex -> [flightIndices]
+            const sourceTrips = {};
             
             checkedFlights.forEach(cb => {
-                const tripIndex = parseInt(cb.dataset.tripIndex);
-                const flightIndex = parseInt(cb.dataset.flightIndex);
-                
-                if (!sourceTrips.has(tripIndex)) {
-                    sourceTrips.set(tripIndex, []);
-                }
-                sourceTrips.get(tripIndex).push(flightIndex);
-                flightsToMove.push(tripsData[tripIndex].flights[flightIndex]);
+                const tripIdx = parseInt(cb.dataset.tripIndex);
+                const flightIdx = parseInt(cb.dataset.flightIndex);
+                if (!sourceTrips[tripIdx]) sourceTrips[tripIdx] = [];
+                sourceTrips[tripIdx].push(flightIdx);
+                flightsToMove.push(tripsData[tripIdx].flights[flightIdx]);
             });
             
-            // Sort flights by date
-            flightsToMove.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            // Create new trip
-            const newTrip = {
-                title: generateTripTitle(flightsToMove),
-                flights_count: flightsToMove.length,
-                start_date: flightsToMove[0].date,
-                end_date: flightsToMove[flightsToMove.length - 1].date,
-                flights: flightsToMove
-            };
-            
-            // Remove flights from source trips (in reverse order)
-            sourceTrips.forEach((flightIndices, tripIndex) => {
-                flightIndices.sort((a, b) => b - a); // Reverse order
-                flightIndices.forEach(fIndex => {
-                    tripsData[tripIndex].flights.splice(fIndex, 1);
+            // Remove flights from source trips (in reverse order to maintain indices)
+            Object.keys(sourceTrips).sort((a, b) => b - a).forEach(tripIdx => {
+                const indices = sourceTrips[tripIdx].sort((a, b) => b - a);
+                indices.forEach(flightIdx => {
+                    tripsData[tripIdx].flights.splice(flightIdx, 1);
                 });
-                // Update trip metadata
-                if (tripsData[tripIndex].flights.length > 0) {
-                    updateTripMetadata(tripIndex);
+                // Update source trip
+                if (tripsData[tripIdx].flights.length > 0) {
+                    updateTripData(tripsData[tripIdx]);
                 }
             });
             
             // Remove empty trips
             tripsData = tripsData.filter(trip => trip.flights.length > 0);
             
-            // Add new trip
-            tripsData.push(newTrip);
+            // Add to target trip or create new one
+            if (targetValue === '__new__') {
+                const newTrip = {
+                    title: generateTripTitle(flightsToMove),
+                    flights: flightsToMove,
+                    flights_count: flightsToMove.length,
+                    start_date: flightsToMove[0].date,
+                    end_date: flightsToMove[flightsToMove.length - 1].date
+                };
+                updateTripData(newTrip);
+                tripsData.push(newTrip);
+            } else {
+                const targetIdx = parseInt(targetValue);
+                if (targetIdx < tripsData.length) {
+                    tripsData[targetIdx].flights = tripsData[targetIdx].flights.concat(flightsToMove);
+                    updateTripData(tripsData[targetIdx]);
+                }
+            }
             
-            // Sort trips by start date
+            // Sort trips by first flight date
             tripsData.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
             
-            // Re-render
             renderTrips();
         });
         
-        // Move selected flights to a specific trip
-        function moveSelectedFlightsToTrip(targetTripIndex) {
-            const checkedFlights = document.querySelectorAll('.flight-checkbox:checked');
-            if (checkedFlights.length === 0) return;
-            
-            // Collect selected flights
-            const flightsToMove = [];
-            const sourceTrips = new Map();
-            
-            checkedFlights.forEach(cb => {
-                const tripIndex = parseInt(cb.dataset.tripIndex);
-                const flightIndex = parseInt(cb.dataset.flightIndex);
-                
-                if (tripIndex === targetTripIndex) return; // Skip if same trip
-                
-                if (!sourceTrips.has(tripIndex)) {
-                    sourceTrips.set(tripIndex, []);
-                }
-                sourceTrips.get(tripIndex).push(flightIndex);
-                flightsToMove.push(tripsData[tripIndex].flights[flightIndex]);
-            });
-            
-            if (flightsToMove.length === 0) {
-                alert('No hay vuelos para mover');
-                return;
-            }
-            
-            // Add flights to target trip
-            tripsData[targetTripIndex].flights = tripsData[targetTripIndex].flights.concat(flightsToMove);
-            
-            // Sort target trip flights by date
-            tripsData[targetTripIndex].flights.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            // Update target trip metadata
-            updateTripMetadata(targetTripIndex);
-            
-            // Remove flights from source trips
-            sourceTrips.forEach((flightIndices, tripIndex) => {
-                flightIndices.sort((a, b) => b - a);
-                flightIndices.forEach(fIndex => {
-                    tripsData[tripIndex].flights.splice(fIndex, 1);
-                });
-                if (tripsData[tripIndex].flights.length > 0) {
-                    updateTripMetadata(tripIndex);
-                }
-            });
-            
-            // Remove empty trips
-            tripsData = tripsData.filter(trip => trip.flights.length > 0);
-            
-            // Re-render
-            renderTrips();
-        }
+        // Clear flight selection
+        clearFlightSelectionBtn.addEventListener('click', function() {
+            document.querySelectorAll('.flight-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.select-all-flights').forEach(cb => cb.checked = false);
+            updateFlightSelectionUI();
+        });
         
-        // Update trip metadata (dates, count) after flight changes
-        function updateTripMetadata(tripIndex) {
-            const trip = tripsData[tripIndex];
-            if (!trip || trip.flights.length === 0) return;
-            
-            trip.flights.sort((a, b) => new Date(a.date) - new Date(b.date));
-            trip.flights_count = trip.flights.length;
-            trip.start_date = trip.flights[0].date;
-            trip.end_date = trip.flights[trip.flights.length - 1].date;
-            // Don't auto-regenerate title - keep user's custom title
-        }
-        
-        // Merge selected trips
         mergeBtn.addEventListener('click', function() {
             const checkedBoxes = document.querySelectorAll('.trip-checkbox:checked');
             if (checkedBoxes.length < 2) return;
-            
-            // Get indices of selected trips (sorted)
-            const indices = Array.from(checkedBoxes)
-                .map(cb => parseInt(cb.dataset.tripIndex))
-                .sort((a, b) => a - b);
-            
-            // Merge all selected trips into the first one
+            const indices = Array.from(checkedBoxes).map(cb => parseInt(cb.dataset.tripIndex)).sort((a, b) => a - b);
             let mergedFlights = [];
-            indices.forEach(idx => {
-                mergedFlights = mergedFlights.concat(tripsData[idx].flights);
-            });
-            
-            // Sort flights by date
+            indices.forEach(idx => { mergedFlights = mergedFlights.concat(tripsData[idx].flights); });
             mergedFlights.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            // Create merged trip
             const mergedTrip = {
                 title: generateTripTitle(mergedFlights),
                 flights_count: mergedFlights.length,
@@ -1026,119 +1004,118 @@ require_once __DIR__ . '/../includes/header.php';
                 end_date: mergedFlights[mergedFlights.length - 1].date,
                 flights: mergedFlights
             };
-            
-            // Remove old trips (in reverse order to preserve indices)
-            for (let i = indices.length - 1; i >= 0; i--) {
-                tripsData.splice(indices[i], 1);
-            }
-            
-            // Insert merged trip at the position of the first selected trip
+            for (let i = indices.length - 1; i >= 0; i--) { tripsData.splice(indices[i], 1); }
             tripsData.splice(indices[0], 0, mergedTrip);
-            
-            // Re-render
             renderTrips();
         });
         
-        // Select all
         selectAllBtn.addEventListener('click', function() {
             document.querySelectorAll('.trip-checkbox').forEach(cb => cb.checked = true);
             updateSelectedCount();
         });
         
-        // Deselect all
         deselectAllBtn.addEventListener('click', function() {
             document.querySelectorAll('.trip-checkbox').forEach(cb => cb.checked = false);
             updateSelectedCount();
         });
         
-        // Before form submit, save the modified trips data
         document.getElementById('importForm').addEventListener('submit', function(e) {
             modifiedTripsInput.value = JSON.stringify(tripsData);
         });
         
-        // Initial event listeners
         attachEventListeners();
+        updateMoveToDropdown();
     })();
     </script>
 
 <?php else: ?>
-    <!-- Formulario de Subida -->
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet"></i> Subir Archivo CSV</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="action" value="preview">
-                        
-                        <div class="mb-4">
-                            <label for="csv_file" class="form-label">
-                                Archivo CSV de FlightRadar/FlightDiary <span class="text-danger">*</span>
-                            </label>
-                            <input type="file" class="form-control form-control-lg" id="csv_file" 
-                                   name="csv_file" accept=".csv" required>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-upload"></i> Analizar Archivo
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <!-- Upload Form -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    <?= __('import.upload_csv') ?? 'Upload CSV File' ?>
+                </h3>
+            </div>
+            <div class="admin-card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="preview">
+                    
+                    <div class="form-group">
+                        <label for="csv_file" class="form-label">
+                            <?= __('import.flightradar_csv') ?? 'FlightRadar CSV File' ?> <span class="required">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required style="padding: 12px;">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <?= __('import.analyze_file') ?? 'Analyze File' ?>
+                    </button>
+                </form>
             </div>
         </div>
         
-        <div class="col-md-4">
-            <div class="card bg-light">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Cómo funciona</h6>
+        <div>
+            <div class="admin-card" style="margin-bottom: 16px;">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <?= __('import.how_it_works') ?? 'How it works' ?>
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <ol class="mb-0">
-                        <li class="mb-2">
-                            <strong>Exporta y Sube tu CSV</strong><br>
-                            <small class="text-muted">
-                                <a href="https://my.flightradar24.com/settings/export" target="_blank">Exportar desde FlightRadar</a> <i class="bi bi-box-arrow-up-right text-primary" style="font-size: 0.8em;"></i> 
-                            </small>
+                <div class="admin-card-body">
+                    <ol style="font-size: 13px; color: var(--admin-text-muted); padding-left: 20px; margin: 0;">
+                        <li style="margin-bottom: 8px;">
+                            <strong><?= __('import.step1') ?? 'Export your CSV' ?></strong><br>
+                            <a href="https://my.flightradar24.com/settings/export" target="_blank" style="color: var(--admin-info);">
+                                FlightRadar Export
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </a>
                         </li>
-                        <li class="mb-2">
-                            <strong>Vista previa</strong><br>
-                            <small class="text-muted">Revisa los viajes que se crearán antes de confirmar</small>
-                        </li>
-                        <li class="mb-2">
-                            <strong>Importar</strong><br>
-                            <small class="text-muted">Los vuelos se agrupan automáticamente en viajes (separados por más de 7 días)</small>
-                        </li>
-                        <li>
-                            <strong>Revisar</strong><br>
-                            <small class="text-muted">Los viajes se crean como "Borrador" para que puedas editarlos</small>
-                        </li>
+                        <li style="margin-bottom: 8px;"><strong><?= __('import.step2') ?? 'Preview' ?></strong><br><small>Review trips before confirming</small></li>
+                        <li style="margin-bottom: 8px;"><strong><?= __('import.step3') ?? 'Import' ?></strong><br><small>Flights grouped by gaps > 7 days</small></li>
+                        <li><strong><?= __('import.step4') ?? 'Review' ?></strong><br><small>Trips created as drafts</small></li>
                     </ol>
                 </div>
             </div>
             
-            <div class="card mt-3">
-                <div class="card-header bg-warning">
-                    <h6 class="mb-0"><i class="bi bi-airplane"></i> Aeropuertos soportados</h6>
+            <div class="admin-card">
+                <div class="admin-card-header" style="background: #fef3c7;">
+                    <h3 class="admin-card-title" style="color: #92400e;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #92400e;">
+                            <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233"/>
+                        </svg>
+                        <?= __('import.supported_airports') ?? 'Supported Airports' ?>
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <p class="small text-muted mb-2">
-                        Se incluyen <?= count($airports) ?> aeropuertos con coordenadas.
-                        Si tu archivo tiene aeropuertos no reconocidos, esos vuelos se omitirán.
+                <div class="admin-card-body">
+                    <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 8px;">
+                        <?= count($airports) ?> <?= __('import.airports_with_coords') ?? 'airports with coordinates included.' ?>
                     </p>
                     <details>
-                        <summary class="text-primary" style="cursor: pointer;">Ver lista de aeropuertos</summary>
-                        <div class="mt-2" style="max-height: 200px; overflow-y: auto;">
-                            <small>
-                                <?php 
-                                $codes = array_keys($airports);
-                                sort($codes);
-                                echo implode(', ', $codes);
-                                ?>
-                            </small>
+                        <summary style="font-size: 12px; color: var(--admin-info); cursor: pointer;"><?= __('import.view_list') ?? 'View list' ?></summary>
+                        <div style="max-height: 150px; overflow-y: auto; margin-top: 8px; font-size: 11px; font-family: monospace;">
+                            <?php 
+                            $codes = array_keys($airports);
+                            sort($codes);
+                            echo implode(', ', $codes);
+                            ?>
                         </div>
                     </details>
                 </div>
@@ -1146,8 +1123,5 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 <?php endif; ?>
-
-<!-- Bootstrap Icons (inline for this page) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
