@@ -45,6 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
         }
         
+        if (isset($_POST['default_language'])) {
+            $updates['default_language'] = [
+                'value' => $_POST['default_language'],
+                'type' => 'string'
+            ];
+        }
+        
         // Configuraciones del mapa
         if (isset($_POST['map_cluster_enabled'])) {
             $updates['map_cluster_enabled'] = [
@@ -267,6 +274,31 @@ require_once __DIR__ . '/../includes/header.php';
                     </select>
                     <small class="form-text text-muted">
                         Zona horaria utilizada para fechas y horas del sistema
+                    </small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="default_language" class="form-label">
+                        Idioma por Defecto
+                    </label>
+                    <select class="form-select" id="default_language" name="default_language" required>
+                        <?php 
+                        $currentLanguage = $currentSettings['default_language'] ?? 'en';
+                        $languages = [
+                            'en' => 'English',
+                            'es' => 'Español'
+                        ];
+                        foreach ($languages as $code => $name): 
+                        ?>
+                            <option value="<?= htmlspecialchars($code) ?>" <?= $code === $currentLanguage ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">
+                        Idioma predeterminado del sitio para nuevos visitantes
                     </small>
                 </div>
             </div>

@@ -14,6 +14,14 @@ Aplicación web completa para crear y visualizar mapas interactivos de viajes co
 - **Mapas Interactivos**: Selección de coordenadas mediante click o arrastrar marcadores
 - **Gestión Multimedia**: Subida y validación de imágenes con almacenamiento organizado
 - **Panel de Configuración**: Sistema centralizado para personalizar opciones globales
+  - **Sistema Multi-Idioma (i18n)**: 🌍 **NUEVO**
+    - Soporte completo para múltiples idiomas (PHP y JavaScript)
+    - Idiomas disponibles: Inglés (predeterminado) y Español
+    - Configuración de idioma por defecto desde el panel de administración
+    - Selector de idioma para usuarios en el frontend
+    - Persistencia de preferencia en localStorage
+    - Detección automática del idioma del navegador
+    - Archivos de traducción independientes y fáciles de editar (JSON)
   - Tamaño máximo de carga de archivos
   - Tiempo de vida de sesiones
   - Zona horaria del sistema
@@ -34,6 +42,7 @@ Aplicación web completa para crear y visualizar mapas interactivos de viajes co
 
 ### Visualizador Público
 - **Mapa a Pantalla Completa**: Interfaz responsive con todos los viajes y puntos publicados
+- **Selector de Idioma**: 🌍 **NUEVO** - Los usuarios pueden cambiar el idioma de la interfaz
 - **Clustering Inteligente Configurable**: Agrupación automática de puntos cercanos con Leaflet.markercluster, con opciones personalizables desde el panel de administración
 - **Filtrado por Viaje**: Panel lateral con lista de viajes y filtros en tiempo real
 - **Popups Detallados**: Información completa de cada punto con imágenes y descripción
@@ -159,6 +168,7 @@ Esto creará el usuario administrador:
 
 1. Inicia sesión en el panel de administración con las credenciales creadas
 2. (Opcional) Personaliza la configuración global desde el menú "Configuración"
+   - **Configura el idioma por defecto del sitio** 🌍
    - Ajusta el tamaño máximo de carga de imágenes
    - Configura el tiempo de vida de sesiones
    - Establece tu zona horaria
@@ -170,6 +180,38 @@ Esto creará el usuario administrador:
 5. Añade puntos de interés con coordenadas (click en el mapa), descripción y fotos
 6. Marca el viaje como "publicado" para que aparezca en el mapa público
 7. Visualiza todos tus viajes en el mapa público con clustering y filtros
+8. Los usuarios pueden cambiar el idioma del sitio usando el selector en el panel lateral
+
+## 🌍 Sistema Multi-Idioma (i18n)
+
+TravelMap incluye un sistema completo de internacionalización:
+
+### Características
+- ✅ Soporte para múltiples idiomas (PHP y JavaScript)
+- ✅ Idiomas disponibles: **Inglés** (predeterminado) y **Español**
+- ✅ Configuración de idioma por defecto desde el panel de administración
+- ✅ Selector de idioma para usuarios en el frontend
+- ✅ Persistencia de preferencia en localStorage
+- ✅ Detección automática del idioma del navegador
+- ✅ Archivos de traducción JSON independientes y fáciles de editar
+
+### Instalación del Sistema i18n
+
+El sistema i18n requiere una migración de base de datos. Ver instrucciones completas en:
+- **Guía de instalación**: [install/MULTILANGUAGE_INSTALLATION.md](install/MULTILANGUAGE_INSTALLATION.md)
+- **Ejecutar migración**: Navegar a `install/migrate_language.php`
+
+### Para Usuarios
+- Cambiar idioma desde el selector en el panel lateral del mapa
+- La preferencia se guarda automáticamente
+
+### Para Desarrolladores
+- **Documentación completa**: [docs/I18N.md](docs/I18N.md)
+- **Guía rápida**: [docs/I18N_README.md](docs/I18N_README.md)
+- **Agregar traducciones**: Editar archivos en `lang/`
+
+### Agregar un Nuevo Idioma
+¿Quieres contribuir traduciendo TravelMap a tu idioma? Ver [docs/I18N.md](docs/I18N.md) para instrucciones detalladas.
 
 ## 🔐 Seguridad
 
@@ -188,7 +230,9 @@ Ver [ESTRUCTURA.md](ESTRUCTURA.md) para detalles completos de la organización d
 
 ## A futuro
 
-* Agregar traducciones en archivos de idioma para ampliar la base de usuarios
+* ~~Agregar traducciones en archivos de idioma para ampliar la base de usuarios~~ ✅ **IMPLEMENTADO**
+* Traducir completamente el panel de administración
+* Agregar más idiomas (Francés, Alemán, Portugués, etc.)
 * Permitir enlazar viajes en particular pasando parámetros
 * Incrustar el mapa en sitios de terceros para compartir
 * Se aceptan ideas! Siempre manteniendo la simplicidad

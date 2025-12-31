@@ -102,3 +102,7 @@ define('SITE_ANALYTICS_CODE', $siteAnalyticsCode);
 // Configuración de sesión
 define('SESSION_LIFETIME', $sessionLifetime);
 
+// Cargar sistema de internacionalización (i18n)
+require_once SRC_PATH . '/helpers/Language.php';
+$lang = Language::getInstance();
+
