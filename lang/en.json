@@ -64,6 +64,7 @@
     "transport_car": "Car",
     "transport_train": "Train",
     "transport_walk": "Walk",
+    "transport": "Transport",
     "upcoming_trip": "Upcoming trip",
     "upcoming_trips": "Upcoming trips",
     "point_type_stay": "Accommodation",

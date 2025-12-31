@@ -735,7 +735,7 @@
                 lyr.bindPopup(`
                     <div class="route-popup">
                         <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
-                        <small class="text-muted">Transporte: ${transportType}</small>
+                        <small class="text-muted">${__('map.transport')}: ${__('map.transport_' + transportType)}</small>
                     </div>
                 `);
             }
@@ -832,7 +832,7 @@
         layer.bindPopup(`
             <div class="route-popup">
                 <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
-                <small class="text-muted">Transporte: plane</small>
+                <small class="text-muted">${__('map.transport')}: ${__('map.transport_plane')}</small>
             </div>
         `);
         

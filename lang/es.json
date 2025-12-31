@@ -64,6 +64,7 @@
     "transport_car": "Auto",
     "transport_train": "Tren",
     "transport_walk": "Caminata",
+    "transport": "Transporte",
     "upcoming_trip": "Próximo viaje",
     "upcoming_trips": "Próximos viajes",
     "point_type_stay": "Alojamiento",
