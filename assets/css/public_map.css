@@ -51,6 +51,74 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* ========== Floating Controls Panel ========== */
+.floating-controls {
+    position: fixed;
+    top: 75px;
+    left: 60px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.floating-controls .card-body {
+    padding: 10px 14px;
+}
+
+.floating-controls .form-check.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 0;
+    min-height: auto;
+}
+
+.floating-controls .form-check-input {
+    cursor: pointer;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.floating-controls .form-check-input:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.floating-controls .form-check-input:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 0.15rem rgba(30, 41, 59, 0.15);
+}
+
+.floating-controls .form-check-label {
+    cursor: pointer;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    font-size: 13px;
+}
+
+.floating-controls .form-check-label svg {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .floating-controls {
+        top: 65px;
+        left: 50px;
+    }
+    
+    .floating-controls .card-body {
+        padding: 8px 10px;
+    }
+}
+
 /* ========== Panel Lateral (Offcanvas) ========== */
 .offcanvas {
     width: 380px !important;
@@ -204,6 +272,138 @@ body {
 
 .offcanvas .border-top a:hover {
     color: #1e293b;
+}
+
+/* ========== Year Groups ========== */
+.year-group {
+    margin-bottom: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.year-group.year-future {
+    border-left: 3px solid #94a3b8;
+    background: #f8fafc;
+}
+
+.year-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #e2e8f0;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.year-future .year-header {
+    background: #f1f5f9;
+}
+
+.year-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-header .year-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.year-header .year-checkbox:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.year-header .year-checkbox:indeterminate {
+    background-color: #64748b;
+    border-color: #64748b;
+}
+
+.year-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.year-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.year-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    color: #475569;
+    transition: transform 0.2s ease;
+}
+
+.year-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.year-label svg {
+    color: #64748b;
+}
+
+.year-count {
+    font-size: 10px;
+    font-weight: 500;
+    background: #475569;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.year-future .year-count {
+    background: #64748b;
+}
+
+.year-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.year-stats span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.year-stats svg {
+    opacity: 0.7;
+}
+
+.year-trips {
+    padding: 6px;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+    opacity: 1;
+}
+
+.year-trips.collapsed {
+    max-height: 0;
+    padding: 0 6px;
+    opacity: 0;
 }
 
 /* ========== Items de viajes ========== */
