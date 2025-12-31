@@ -1098,8 +1098,12 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="admin-card">
                 <div class="admin-card-header" style="background: #fef3c7;">
                     <h3 class="admin-card-title" style="color: #92400e;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #92400e;">
-                            <path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none" stroke="#92400e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.1228 6H3.87715C3.39271 6 3 6.39271 3 6.87715C3 6.95865 3.01136 7.03976 3.03375 7.11812L4.17111 11.0989C4.57006 12.4952 4.76954 13.1934 5.30421 13.5967C5.83888 14 6.56499 14 8.01721 14H15.9828C17.435 14 18.1611 14 18.6958 13.5967C19.2305 13.1934 19.4299 12.4952 19.8289 11.0989L20.9663 7.11812C20.9886 7.03976 21 6.95865 21 6.87715C21 6.39271 20.6073 6 20.1228 6Z" />
+                            <path d="M16 6L15 14M9 14L8 6" />
+                            <path d="M15 14V22M9 14V22" />
+                            <path d="M10 2H14" />
+                            <path d="M12 2V6" />
                         </svg>
                         <?= __('import.supported_airports') ?? 'Supported Airports' ?>
                     </h3>

@@ -451,7 +451,9 @@
     "error_updating": "Error updating",
     "error_creating": "Error creating",
     "you": "You",
-    "note": "Note"
+    "note": "Note",
+    "copy": "Copy",
+    "copied": "Copied!"
   },
   "messages": {
     "confirm_delete": "Are you sure you want to delete this item?",
@@ -503,6 +505,10 @@
     "click_pink_button": "Click the pink button that appears",
     "paste_here": "Paste the CSV here",
     "view_script": "View extraction script",
+    "extraction_script": "Airbnb Extraction Script",
+    "copy_script_below": "Copy the script below",
+    "paste_in_console": "Paste in browser console (F12 → Console)",
+    "click_button_appears": "Click the pink button that appears",
     "select_trip_confirm": "Select Trip & Confirm",
     "stays_auto_matched": "stays have auto-detected trips by date.",
     "use_auto_detected": "Use auto-detected trips by date",

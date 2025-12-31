@@ -470,7 +470,9 @@
     "error_updating": "Error al actualizar",
     "error_creating": "Error al crear",
     "you": "Tú",
-    "note": "Nota"
+    "note": "Nota",
+    "copy": "Copiar",
+    "copied": "¡Copiado!"
   },
   "messages": {
     "confirm_delete": "¿Estás seguro de que deseas eliminar este elemento?",
@@ -522,6 +524,10 @@
     "click_pink_button": "Haz clic en el botón rosa que aparece",
     "paste_here": "Pega el CSV aquí",
     "view_script": "Ver script de extracción",
+    "extraction_script": "Script de Extracción de Airbnb",
+    "copy_script_below": "Copia el script de abajo",
+    "paste_in_console": "Pega en la consola del navegador (F12 → Console)",
+    "click_button_appears": "Haz clic en el botón rosa que aparece",
     "select_trip_confirm": "Seleccionar Viaje y Confirmar",
     "stays_auto_matched": "estadías tienen viajes auto-detectados por fecha.",
     "use_auto_detected": "Usar viajes auto-detectados por fecha",

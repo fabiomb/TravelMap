@@ -340,16 +340,68 @@ require_once __DIR__ . '/../includes/header.php';
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                             </svg>
-                            Copy
+                            <?= __('common.copy') ?>
                         </button>
                     </li>
                     <li style="margin-bottom: 8px;"><?= __('import.click_pink_button') ?? 'Click the pink button that appears' ?></li>
                     <li><?= __('import.paste_here') ?? 'Paste the CSV here' ?></li>
                 </ol>
                 
-                <details>
-                    <summary style="font-size: 12px; color: var(--admin-text-muted); cursor: pointer;"><?= __('import.view_script') ?? 'View extraction script' ?></summary>
-                    <pre id="extraction-script" style="background: var(--admin-primary); color: white; padding: 12px; border-radius: var(--radius-md); margin-top: 8px; font-size: 10px; overflow-x: auto; max-height: 150px;">(function() {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="view-script-btn" style="margin-top: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <?= __('import.view_script') ?? 'View extraction script' ?>
+                </button>
+                
+                <!-- Script Modal -->
+                <div id="script-modal" class="script-modal-overlay" style="display: none;">
+                    <div class="script-modal">
+                        <div class="script-modal-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#FF5A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px;">
+                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                </svg>
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 600;"><?= __('import.extraction_script') ?? 'Airbnb Extraction Script' ?></h3>
+                            </div>
+                            <button type="button" class="script-modal-close" id="close-script-modal">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="script-modal-body">
+                            <div class="script-instructions">
+                                <div class="script-step" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="step-number">1</span>
+                                        <span><?= __('import.copy_script_below') ?? 'Copy the script below' ?></span>
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="step-number">2</span>
+                                        <span><?= __('import.paste_in_console') ?? 'Paste in browser console (F12 → Console)' ?></span>
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="step-number">3</span>
+                                        <span><?= __('import.click_button_appears') ?? 'Click the pink button that appears' ?></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="script-code-container">
+                                <div class="script-code-header">
+                                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7;">JavaScript</span>
+                                    <button type="button" class="btn-copy-code" id="copy-modal-script">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                        <span><?= __('common.copy') ?? 'Copy' ?></span>
+                                    </button>
+                                </div>
+                                <pre id="extraction-script" class="script-code"><code>(function() {
   const btn = document.createElement('button');
   btn.textContent = '📋 Copy Trips CSV';
   btn.style.cssText = `position:fixed;top:20px;right:20px;z-index:99999;padding:12px 24px;background:#FF385C;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
@@ -381,21 +433,216 @@ require_once __DIR__ . '/../includes/header.php';
       setTimeout(() => { btn.textContent = '📋 Copy Trips CSV'; btn.style.background = '#FF385C'; }, 2000);
     });
   });
-})();</pre>
-                </details>
+})();</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <style>
+                .script-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(4px);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    animation: fadeIn 0.2s ease;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .script-modal {
+                    background: var(--admin-card-bg, #fff);
+                    border-radius: 16px;
+                    width: 100%;
+                    max-width: 640px;
+                    max-height: 85vh;
+                    overflow: hidden;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    animation: slideUp 0.25s ease;
+                }
+                .script-modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 20px 24px;
+                    border-bottom: 1px solid var(--admin-border, #e5e7eb);
+                    background: linear-gradient(135deg, rgba(255, 90, 95, 0.05) 0%, transparent 100%);
+                }
+                .script-modal-close {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    border: none;
+                    background: var(--admin-bg-alt, #f3f4f6);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.15s ease;
+                }
+                .script-modal-close:hover {
+                    background: var(--admin-danger, #ef4444);
+                    color: white;
+                }
+                .script-modal-close svg {
+                    width: 18px;
+                    height: 18px;
+                }
+                .script-modal-body {
+                    padding: 24px;
+                    overflow-y: auto;
+                    max-height: calc(85vh - 80px);
+                }
+                .script-instructions {
+                    display: flex;
+                    gap: 16px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                }
+                .script-step {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 13px;
+                    color: var(--admin-text-muted, #6b7280);
+                }
+                .step-number {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #FF5A5F 0%, #FF385C 100%);
+                    color: white;
+                    font-size: 12px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .script-code-container {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid var(--admin-border, #e5e7eb);
+                }
+                .script-code-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 16px;
+                    background: #1e293b;
+                    color: #94a3b8;
+                }
+                .btn-copy-code {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    border: 1px solid #475569;
+                    background: transparent;
+                    color: #e2e8f0;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                }
+                .btn-copy-code:hover {
+                    background: #334155;
+                    border-color: #64748b;
+                }
+                .btn-copy-code.copied {
+                    background: #059669;
+                    border-color: #059669;
+                    color: white;
+                }
+                .script-code {
+                    margin: 0;
+                    padding: 16px;
+                    background: #0f172a;
+                    color: #e2e8f0;
+                    font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+                    font-size: 12px;
+                    line-height: 1.6;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    max-height: 300px;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                    word-break: break-all;
+                }
+                .script-code code {
+                    color: inherit;
+                }
+                </style>
             </div>
         </div>
     </div>
     
     <script>
+    // Script Modal
+    const scriptModal = document.getElementById('script-modal');
+    const viewScriptBtn = document.getElementById('view-script-btn');
+    const closeModalBtn = document.getElementById('close-script-modal');
+    const copyModalScript = document.getElementById('copy-modal-script');
+    
+    viewScriptBtn?.addEventListener('click', function() {
+        scriptModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    });
+    
+    closeModalBtn?.addEventListener('click', function() {
+        scriptModal.style.display = 'none';
+        document.body.style.overflow = '';
+    });
+    
+    scriptModal?.addEventListener('click', function(e) {
+        if (e.target === scriptModal) {
+            scriptModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && scriptModal?.style.display === 'flex') {
+            scriptModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+    
+    copyModalScript?.addEventListener('click', function() {
+        const script = document.getElementById('extraction-script').textContent;
+        const btn = this;
+        navigator.clipboard.writeText(script).then(() => {
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><polyline points="20 6 9 17 4 12"></polyline></svg><span><?= __('common.copied') ?? 'Copied!' ?></span>';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span><?= __('common.copy') ?? 'Copy' ?></span>';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    });
+    
+    // Quick copy button (outside modal)
     document.getElementById('copy-script-btn')?.addEventListener('click', function() {
         const script = document.getElementById('extraction-script').textContent;
         navigator.clipboard.writeText(script).then(() => {
-            this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+            this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg> <?= __('common.copied') ?>';
             this.classList.remove('btn-outline-primary');
             this.classList.add('btn-success');
             setTimeout(() => {
-                this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+                this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> <?= __('common.copy') ?>';
                 this.classList.remove('btn-success');
                 this.classList.add('btn-outline-primary');
             }, 2000);
