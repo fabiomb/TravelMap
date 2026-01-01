@@ -396,7 +396,20 @@
     "map_style_dark_matter": "Dark Matter",
     "map_style_dark_matter_desc": "Dark theme for night mode",
     "map_style_osm_liberty": "OSM Liberty",
-    "map_style_osm_liberty_desc": "OpenStreetMap classic style"
+    "map_style_osm_liberty_desc": "OpenStreetMap classic style",
+    "map_renderer": "Map Renderer",
+    "map_renderer_label": "Rendering Engine",
+    "map_renderer_description": "MapLibre uses WebGL for curved flight arcs but may be heavy on some devices (AMD/Intel Windows). Leaflet is lighter and works better on older devices.",
+    "renderer_maplibre_desc": "Curved flight arcs, modern effects",
+    "renderer_leaflet_desc": "Lighter, better compatibility",
+    "maplibre_feature_1": "Curved 3D flight arcs",
+    "maplibre_feature_2": "Smooth WebGL rendering",
+    "maplibre_feature_3": "Modern visual effects",
+    "maplibre_warning": "Heavy on AMD/Intel Windows",
+    "leaflet_feature_1": "Lightweight DOM rendering",
+    "leaflet_feature_2": "Works on all devices",
+    "leaflet_feature_3": "Lower memory usage",
+    "leaflet_note": "Straight flight lines only"
   },
   "auth": {
     "login": "Login",

@@ -2,6 +2,12 @@
 // Cargar configuración para las constantes
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/version.php';
+
+// Load settings to get map renderer preference
+require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/src/models/Settings.php';
+$settingsModel = new Settings(getDB());
+$mapRenderer = $settingsModel->get('map_renderer', 'maplibre');
 ?>
 <!DOCTYPE html>
 <html lang="<?= current_lang() ?>">
@@ -19,11 +25,19 @@ require_once __DIR__ . '/version.php';
     <!-- Bootstrap 5 CSS -->
     <link href="<?= ASSETS_URL ?>/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     
+    <?php if ($mapRenderer === 'leaflet'): ?>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/leaflet/css/leaflet.css">
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/leaflet/plugins/MarkerCluster.css">
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/leaflet/plugins/MarkerCluster.Default.css">
+    <!-- Custom Leaflet CSS -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map_leaflet.css?v=<?php echo $version; ?>">
+    <?php else: ?>
     <!-- MapLibre GL CSS -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/maplibre/maplibre-gl.css">
-    
-    <!-- Custom CSS -->
+    <!-- Custom MapLibre CSS -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map.css?v=<?php echo $version; ?>">
+    <?php endif; ?>
     
     <?php 
     // Insertar código de analytics u otros scripts personalizados
@@ -169,13 +183,17 @@ require_once __DIR__ . '/version.php';
     <!-- Bootstrap 5 JS -->
     <script src="<?= ASSETS_URL ?>/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     
+    <?php if ($mapRenderer === 'leaflet'): ?>
+    <!-- Leaflet JS -->
+    <script src="<?= ASSETS_URL ?>/vendor/leaflet/js/leaflet.js"></script>
+    <script src="<?= ASSETS_URL ?>/vendor/leaflet/plugins/leaflet.markercluster.js"></script>
+    <?php else: ?>
     <!-- MapLibre GL JS -->
     <script src="<?= ASSETS_URL ?>/vendor/maplibre/maplibre-gl.js"></script>
-    
     <!-- deck.gl is loaded on-demand when flight routes are enabled -->
-    
     <!-- Supercluster for point clustering -->
     <script src="<?= ASSETS_URL ?>/vendor/supercluster/supercluster.min.js"></script>
+    <?php endif; ?>
     
     <!-- API URL Config -->
     <script>
@@ -239,7 +257,11 @@ require_once __DIR__ . '/version.php';
     </script>
     
     <!-- Public Map JS -->
+    <?php if ($mapRenderer === 'leaflet'): ?>
+    <script src="<?= ASSETS_URL ?>/js/public_map_leaflet.js?v=<?php echo $version; ?>"></script>
+    <?php else: ?>
     <script src="<?= ASSETS_URL ?>/js/public_map.js?v=<?php echo $version; ?>"></script>
+    <?php endif; ?>
     
     <!-- Lightbox para imágenes -->
     <div id="imageLightbox" class="lightbox" style="display: none;">

@@ -60,6 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
         }
         
+        if (isset($_POST['map_renderer'])) {
+            $updates['map_renderer'] = [
+                'value' => $_POST['map_renderer'],
+                'type' => 'string'
+            ];
+        }
+        
         // Checkbox: always process (unchecked = not sent in POST)
         $updates['map_cluster_enabled'] = [
             'value' => isset($_POST['map_cluster_enabled']) && $_POST['map_cluster_enabled'] === '1',
@@ -175,7 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_SESSION['error_message'] = __('common.error') . ': ' . $e->getMessage();
     }
     
-    header('Location: settings.php');
+    // Preserve active tab after redirect
+    $activeTab = isset($_POST['active_tab']) ? $_POST['active_tab'] : 'general';
+    header('Location: settings.php#' . $activeTab);
     exit;
 }
 
@@ -300,8 +309,9 @@ require_once __DIR__ . '/../includes/header.php';
     </li>
 </ul>
 
-<form method="POST" action="settings.php">
+<form method="POST" action="settings.php" id="settingsForm">
     <input type="hidden" name="action" value="update">
+    <input type="hidden" name="active_tab" id="active_tab" value="general">
     
     <!-- General Tab -->
     <div class="tab-content active" id="tab-general">
@@ -443,6 +453,71 @@ require_once __DIR__ . '/../includes/header.php';
     
     <!-- Map Tab -->
     <div class="tab-content" id="tab-map">
+        <!-- Map Renderer Selection -->
+        <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title"><?= __('settings.map_renderer') ?? 'Map Renderer' ?></h3>
+            </div>
+            <div class="admin-card-body">
+                <?php $currentRenderer = $currentSettings['map_renderer'] ?? 'maplibre'; ?>
+                <!-- Hidden select for form submission -->
+                <input type="hidden" id="map_renderer" name="map_renderer" value="<?= htmlspecialchars($currentRenderer) ?>">
+                
+                <p class="form-hint" style="margin-bottom: 16px;"><?= __('settings.map_renderer_description') ?? 'MapLibre uses WebGL for curved flight arcs but may be heavy on some devices (AMD/Intel Windows). Leaflet is lighter and works better on older devices.' ?></p>
+                
+                <div class="renderer-cards" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- MapLibre Card -->
+                    <label class="renderer-card <?= $currentRenderer === 'maplibre' ? 'active' : '' ?>" data-renderer="maplibre" style="cursor: pointer; padding: 16px; border-radius: 10px; border: 2px solid var(--admin-border); background: transparent; transition: all 0.2s ease; display: block;">
+                        <input type="radio" name="renderer_radio" value="maplibre" <?= $currentRenderer === 'maplibre' ? 'checked' : '' ?> style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <svg width="28" height="28" viewBox="0 0 110.14971 110.14971" xmlns="http://www.w3.org/2000/svg">
+                                <rect style="fill:#295daa" width="110.14971" height="110.14971" x="0" y="0" ry="23.5"/>
+                                <path fill="#82b4fe" d="m 55.27037,15.88644 c -13.050838,-0.0847 -23.732067,9.79276 -23.811706,22.0173 -0.07038,10.82464 5.282141,16.10916 11.078368,21.83157 4.040982,3.98939 8.297338,8.1915 11.082068,14.63199 0.18786,0.15266 0.31354,0.25453 0.36751,0.30268 a 1.3663083,1.3663083 0 0 0 0.89906,0.34025 1.368425,1.368425 0 0 0 0.90381,-0.32834 c 0.0145,-0.013 0.0413,-0.0244 0.0741,-0.0384 0.09,-0.0386 0.22675,-0.0974 0.29739,-0.26008 2.77548,-6.37911 7.09242,-10.5246 11.21516,-14.4833 5.87084,-5.63747 11.34745,-10.8966 11.41757,-21.68842 0.0796,-12.22481 -10.47221,-22.24008 -23.52331,-22.32528 z m -0.22754,35.01734 c 6.46218,0.0421 11.73586,-5.24139 11.77845,-11.80094 0.0426,-6.55955 -5.16175,-11.91128 -11.6242,-11.95335 -6.462448,-0.0421 -11.735858,5.2414 -11.778721,11.80095 -0.0426,6.55955 5.161757,11.91127 11.624201,11.95334 z"/>
+                                <path fill="#ffffff" d="m 46.583899,78.79378 c -1.078177,-0.007 -1.960033,1.18533 -1.969558,2.66303 l -0.04868,7.4795 c -0.0098,1.4777 0.856457,2.68129 1.934898,2.68843 l 16.506031,0.10743 c 1.07818,0.007 1.96003,-1.18534 1.96956,-2.66304 l 0.0487,-7.4795 c 0.01,-1.47796 -0.85646,-2.68155 -1.9349,-2.68843 z"/>
+                            </svg>
+                            <strong style="font-size: 15px;">MapLibre GL</strong>
+                        </div>
+                        <ul style="font-size: 12px; margin: 0; padding-left: 20px; color: var(--admin-text-muted); line-height: 1.8;">
+                            <li><?= __('settings.maplibre_feature_1') ?? 'Curved 3D flight arcs' ?></li>
+                            <li><?= __('settings.maplibre_feature_2') ?? 'Smooth WebGL rendering' ?></li>
+                            <li><?= __('settings.maplibre_feature_3') ?? 'Modern visual effects' ?></li>
+                            <li style="color: #f59e0b;"><?= __('settings.maplibre_warning') ?? 'Heavy on AMD/Intel Windows' ?></li>
+                        </ul>
+                    </label>
+                    
+                    <!-- Leaflet Card -->
+                    <label class="renderer-card <?= $currentRenderer === 'leaflet' ? 'active' : '' ?>" data-renderer="leaflet" style="cursor: pointer; padding: 16px; border-radius: 10px; border: 2px solid var(--admin-border); background: transparent; transition: all 0.2s ease; display: block;">
+                        <input type="radio" name="renderer_radio" value="leaflet" <?= $currentRenderer === 'leaflet' ? 'checked' : '' ?> style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#3d9970" d="M22.938 2.076l-11.522 26.974-0.717-0.721z"/>
+                                <path fill="#3d9970" d="M23.11 1.004c-0.444 0.717-10.537 5.923-13.566 10.808-3.029 4.886-3.894 8.732-2.795 12.349 1.098 3.615 3.198 3.453 4.394 4.645 1.026 1.314 2.609 2.151 4.389 2.151 0.362 0 0.716-0.035 1.059-0.101l-0.035 0.006c3.395-0.766 6.667-3.032 8.295-9.382 0.533-2.171 0.839-4.664 0.839-7.228 0-2.755-0.353-5.427-1.017-7.974l0.049 0.219c-0.492-2.18-1.046-4.016-1.712-5.798l0.1 0.305z"/>
+                            </svg>
+                            <strong style="font-size: 15px;">Leaflet</strong>
+                        </div>
+                        <ul style="font-size: 12px; margin: 0; padding-left: 20px; color: var(--admin-text-muted); line-height: 1.8;">
+                            <li><?= __('settings.leaflet_feature_1') ?? 'Lightweight DOM rendering' ?></li>
+                            <li><?= __('settings.leaflet_feature_2') ?? 'Works on all devices' ?></li>
+                            <li><?= __('settings.leaflet_feature_3') ?? 'Lower memory usage' ?></li>
+                            <li style="color:rgb(137, 24, 54);"><?= __('settings.leaflet_note') ?? 'Straight flight lines only' ?></li>
+                        </ul>
+                    </label>
+                </div>
+                
+                <style>
+                    .renderer-card:hover {
+                        border-color: var(--admin-primary) !important;
+                        background: rgba(37, 99, 235, 0.03) !important;
+                    }
+                    .renderer-card.active {
+                        border-color: var(--admin-primary) !important;
+                        background: rgba(37, 99, 235, 0.08) !important;
+                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+                    }
+                </style>
+            </div>
+        </div>
+        
         <div class="admin-card" style="margin-bottom: 24px;">
             <div class="admin-card-header">
                 <h3 class="admin-card-title"><?= __('settings.map_style') ?? 'Map Style' ?></h3>
@@ -469,58 +544,32 @@ require_once __DIR__ . '/../includes/header.php';
                 ];
                 $currentMapStyle = $currentSettings['map_style'] ?? 'voyager';
                 ?>
-                <div class="form-group">
-                    <label for="map_style" class="form-label"><?= __('settings.map_basemap_style') ?? 'Basemap Style' ?></label>
-                    <select class="form-control form-select" id="map_style" name="map_style" required>
-                        <?php foreach ($mapStyles as $styleKey => $styleInfo): ?>
-                        <option value="<?= htmlspecialchars($styleKey) ?>" <?= $styleKey === $currentMapStyle ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($styleInfo['name']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="form-hint" id="map_style_description">
-                        <?= htmlspecialchars($mapStyles[$currentMapStyle]['description'] ?? '') ?>
-                    </div>
-                </div>
+                <!-- Hidden input for form submission -->
+                <input type="hidden" id="map_style" name="map_style" value="<?= htmlspecialchars($currentMapStyle) ?>">
                 
-                <div class="map-style-preview" style="margin-top: 16px;">
-                    <div class="map-style-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
-                        <?php foreach ($mapStyles as $styleKey => $styleInfo): 
-                            $isActive = $styleKey === $currentMapStyle;
-                        ?>
-                        <label class="map-style-card <?= $isActive ? 'active' : '' ?>" for="style_<?= $styleKey ?>" data-style="<?= $styleKey ?>">
-                            <input type="radio" name="map_style_radio" id="style_<?= $styleKey ?>" value="<?= $styleKey ?>" <?= $isActive ? 'checked' : '' ?> style="display: none;">
-                            <div class="style-preview-box style-<?= $styleKey ?>"></div>
-                            <span class="style-name"><?= htmlspecialchars($styleInfo['name']) ?></span>
-                        </label>
-                        <?php endforeach; ?>
-                    </div>
+                <div class="map-style-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <?php foreach ($mapStyles as $styleKey => $styleInfo): 
+                        $isActive = $styleKey === $currentMapStyle;
+                    ?>
+                    <label class="map-style-card <?= $isActive ? 'active' : '' ?>" data-style="<?= $styleKey ?>" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 12px; border: 2px solid var(--admin-border); border-radius: 10px; transition: all 0.2s;">
+                        <div class="style-preview-box style-<?= $styleKey ?>" style="width: 100%; height: 70px; border-radius: 6px; margin-bottom: 10px;"></div>
+                        <span style="font-size: 13px; font-weight: 500; text-align: center;"><?= htmlspecialchars($styleInfo['name']) ?></span>
+                    </label>
+                    <?php endforeach; ?>
                 </div>
                 
                 <style>
-                    .map-style-card {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        padding: 10px;
-                        border: 2px solid var(--admin-border);
-                        border-radius: 8px;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
                     .map-style-card:hover {
-                        border-color: var(--admin-primary);
-                        background: rgba(37, 99, 235, 0.05);
+                        border-color: var(--admin-primary) !important;
+                        background: rgba(37, 99, 235, 0.03);
                     }
                     .map-style-card.active {
-                        border-color: var(--admin-primary);
-                        background: rgba(37, 99, 235, 0.1);
+                        border-color: var(--admin-primary) !important;
+                        background: rgba(37, 99, 235, 0.08);
+                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
                     }
                     .style-preview-box {
-                        width: 100%;
-                        height: 60px;
-                        border-radius: 4px;
-                        margin-bottom: 8px;
+                        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
                     }
                     .style-voyager {
                         background: linear-gradient(135deg, #a8d5a2 0%, #f5deb3 50%, #87ceeb 100%);
@@ -533,11 +582,6 @@ require_once __DIR__ . '/../includes/header.php';
                     }
                     .style-osm-liberty {
                         background: linear-gradient(135deg, #c5e8b7 0%, #fff2cc 50%, #b3d9ff 100%);
-                    }
-                    .style-name {
-                        font-size: 12px;
-                        font-weight: 500;
-                        text-align: center;
                     }
                 </style>
             </div>
@@ -927,17 +971,39 @@ require_once __DIR__ . '/../includes/header.php';
 
 <script>
 // Tab functionality
+function activateTab(tabName) {
+    // Remove active from all tabs
+    document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    // Find and activate the target tab
+    const tabButton = document.querySelector(`.tab-link[data-tab="${tabName}"]`);
+    const tabContent = document.getElementById('tab-' + tabName);
+    
+    if (tabButton && tabContent) {
+        tabButton.classList.add('active');
+        tabContent.classList.add('active');
+        document.getElementById('active_tab').value = tabName;
+    }
+}
+
+// Handle tab clicks
 document.querySelectorAll('.tab-link').forEach(tab => {
     tab.addEventListener('click', function() {
-        // Remove active from all tabs
-        document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        // Add active to clicked tab
-        this.classList.add('active');
-        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        const tabName = this.dataset.tab;
+        activateTab(tabName);
+        // Update URL hash without scrolling
+        history.replaceState(null, null, '#' + tabName);
     });
 });
+
+// On page load, check for hash and activate that tab
+(function() {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.querySelector(`.tab-link[data-tab="${hash}"]`)) {
+        activateTab(hash);
+    }
+})();
 
 // Sync color inputs
 document.querySelectorAll('input[type="color"]').forEach(colorInput => {
@@ -949,40 +1015,31 @@ document.querySelectorAll('input[type="color"]').forEach(colorInput => {
     }
 });
 
-// Map style card selection
-const mapStyleDescriptions = {
-    'voyager': '<?= addslashes(__('settings.map_style_voyager_desc') ?? 'Classic look with green vegetation, brown terrain, blue water') ?>',
-    'positron': '<?= addslashes(__('settings.map_style_positron_desc') ?? 'Light grey minimal style') ?>',
-    'dark-matter': '<?= addslashes(__('settings.map_style_dark_matter_desc') ?? 'Dark theme for night mode') ?>',
-    'osm-liberty': '<?= addslashes(__('settings.map_style_osm_liberty_desc') ?? 'OpenStreetMap classic style') ?>'
-};
-
-document.querySelectorAll('.map-style-card').forEach(card => {
+// Renderer card selection
+document.querySelectorAll('.renderer-card').forEach(card => {
     card.addEventListener('click', function() {
-        const style = this.dataset.style;
+        const renderer = this.dataset.renderer;
         
-        // Update select
-        document.getElementById('map_style').value = style;
-        
-        // Update description
-        document.getElementById('map_style_description').textContent = mapStyleDescriptions[style] || '';
+        // Update hidden input
+        document.getElementById('map_renderer').value = renderer;
         
         // Update active state on cards
-        document.querySelectorAll('.map-style-card').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.renderer-card').forEach(c => c.classList.remove('active'));
         this.classList.add('active');
     });
 });
 
-// Sync select with cards
-document.getElementById('map_style').addEventListener('change', function() {
-    const style = this.value;
-    
-    // Update description
-    document.getElementById('map_style_description').textContent = mapStyleDescriptions[style] || '';
-    
-    // Update active state on cards
-    document.querySelectorAll('.map-style-card').forEach(c => {
-        c.classList.toggle('active', c.dataset.style === style);
+// Map style card selection
+document.querySelectorAll('.map-style-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const style = this.dataset.style;
+        
+        // Update hidden input
+        document.getElementById('map_style').value = style;
+        
+        // Update active state on cards
+        document.querySelectorAll('.map-style-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
     });
 });
 
