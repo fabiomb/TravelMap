@@ -1,0 +1,1036 @@
+/**
+ * Public Map Styles
+ * 
+ * Estilos personalizados para el mapa público interactivo
+ */
+
+/* ========== Layout General ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* Mapa a pantalla completa */
+#map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* ========== Botón flotante para abrir panel ========== */
+.floating-menu-toggle {
+    position: fixed;
+    top: 20px;
+    left: 60px;
+    z-index: 1000;
+    background: #1e293b;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    color: white;
+}
+
+.floating-menu-toggle:hover {
+    background: #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== Floating Controls Panel ========== */
+.floating-controls {
+    position: fixed;
+    top: 75px;
+    left: 60px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.floating-controls .card-body {
+    padding: 10px 14px;
+}
+
+.floating-controls .form-check.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 0;
+    min-height: auto;
+}
+
+.floating-controls .form-check-input {
+    cursor: pointer;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.floating-controls .form-check-input:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.floating-controls .form-check-input:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 0.15rem rgba(30, 41, 59, 0.15);
+}
+
+.floating-controls .form-check-label {
+    cursor: pointer;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    font-size: 13px;
+}
+
+.floating-controls .form-check-label svg {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .floating-controls {
+        top: 65px;
+        left: 50px;
+    }
+    
+    .floating-controls .card-body {
+        padding: 8px 10px;
+    }
+}
+
+/* ========== Panel Lateral (Offcanvas) ========== */
+.offcanvas {
+    width: 380px !important;
+    max-width: 90vw;
+}
+
+.offcanvas-header {
+    background: #1e293b;
+    color: white;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #334155;
+}
+
+.offcanvas-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.offcanvas-header .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+}
+
+.offcanvas-header .btn-close:hover {
+    opacity: 1;
+}
+
+.offcanvas-body {
+    padding: 1.5rem;
+}
+
+/* ========== Bootstrap Overrides ========== */
+/* Toggle switches */
+.offcanvas .form-check-input:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.offcanvas .form-check-input:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.15);
+}
+
+.offcanvas .form-switch .form-check-input:checked {
+    background-color: #1e293b;
+}
+
+/* Buttons */
+.offcanvas .btn-outline-primary {
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+.offcanvas .btn-outline-primary:hover {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    color: white;
+}
+
+.offcanvas .btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.15);
+}
+
+.offcanvas .btn-outline-secondary {
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.offcanvas .btn-outline-secondary:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.offcanvas .btn-sm {
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
+/* Search button */
+.btn-search {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    color: white;
+}
+
+.btn-search:hover {
+    background-color: #334155;
+    border-color: #334155;
+    color: white;
+}
+
+.btn-search:focus {
+    box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.25);
+}
+
+/* Input styling */
+.offcanvas .form-control {
+    border-color: #e2e8f0;
+    font-size: 13px;
+}
+
+.offcanvas .form-control:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.1);
+}
+
+.offcanvas .input-group-text {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    color: #64748b;
+}
+
+/* Badges */
+.offcanvas .badge {
+    font-weight: 500;
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+.offcanvas .badge.bg-secondary {
+    background-color: #e2e8f0 !important;
+    color: #475569;
+}
+
+.offcanvas .badge.bg-light {
+    background-color: #f1f5f9 !important;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+/* Section headers */
+.offcanvas h6.text-muted {
+    color: #94a3b8 !important;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+/* Dividers */
+.offcanvas hr {
+    border-color: #e2e8f0;
+    opacity: 1;
+}
+
+/* Panel footer link */
+.offcanvas .border-top a {
+    color: #64748b;
+}
+
+.offcanvas .border-top a:hover {
+    color: #1e293b;
+}
+
+/* ========== Year Groups ========== */
+.year-group {
+    margin-bottom: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.year-group.year-future {
+    border-left: 3px solid #94a3b8;
+    background: #f8fafc;
+}
+
+.year-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #e2e8f0;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.year-future .year-header {
+    background: #f1f5f9;
+}
+
+.year-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-header .year-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.year-header .year-checkbox:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.year-header .year-checkbox:indeterminate {
+    background-color: #64748b;
+    border-color: #64748b;
+}
+
+.year-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.year-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.year-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    color: #475569;
+    transition: transform 0.2s ease;
+}
+
+.year-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.year-label svg {
+    color: #64748b;
+}
+
+.year-count {
+    font-size: 10px;
+    font-weight: 500;
+    background: #475569;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.year-future .year-count {
+    background: #64748b;
+}
+
+.year-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.year-stats span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.year-stats svg {
+    opacity: 0.7;
+}
+
+.year-trips {
+    padding: 6px;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+    opacity: 1;
+}
+
+.year-trips.collapsed {
+    max-height: 0;
+    padding: 0 6px;
+    opacity: 0;
+}
+
+/* ========== Items de viajes ========== */
+.trip-filter-item {
+    background: #f8fafc;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    transition: background 0.15s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.trip-filter-item:hover {
+    background: #f1f5f9;
+}
+
+.trip-filter-item .form-check {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+.trip-filter-item .form-check-input {
+    margin: 0;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.trip-filter-item .form-check-input:checked {
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+.trip-filter-item .form-check-label {
+    cursor: pointer;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.trip-color-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 50%;
+}
+
+.trip-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    display: block;
+    line-height: 1.3;
+}
+
+.trip-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.trip-counts {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.trip-counts span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.trip-counts svg {
+    opacity: 0.7;
+}
+
+/* Future trips styling */
+.trip-filter-item.trip-future {
+    background: #f1f5f9;
+    border-left: 2px dotted #94a3b8;
+}
+
+.trip-filter-item.trip-future:hover {
+    background: #e2e8f0;
+}
+
+.trip-filter-item.trip-future .trip-title {
+    color: #64748b;
+}
+
+.trip-filter-item .badge {
+    font-size: 9px;
+    padding: 2px 5px;
+    font-weight: 400;
+}
+
+/* Trips header with filters */
+.trips-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.trips-filters {
+    display: flex;
+    gap: 4px;
+}
+
+.filter-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.filter-btn.active {
+    background: #1e293b;
+    border-color: #1e293b;
+    color: white;
+}
+
+/* ========== Leyenda flotante ========== */
+.legend-card {
+    position: fixed;
+    bottom: 50px;
+    right: 20px;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    border-radius: 6px;
+    min-width: 170px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.legend-card .card-body {
+    padding: 10px 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.legend-line {
+    width: 30px;
+    height: 4px;
+    border-radius: 2px;
+    margin-right: 8px;
+}
+
+.legend-item small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-item svg {
+    flex-shrink: 0;
+}
+
+.legend-future-separator {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #ddd;
+}
+
+.legend-future {
+    height: 3px !important;
+    opacity: 0.6;
+}
+
+/* ========== Clusters personalizados ========== */
+.custom-cluster-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+.marker-cluster-custom {
+    background: #1e293b;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    color: white;
+    font-size: 13px;
+}
+
+/* ========== Marcadores de puntos ========== */
+.custom-point-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.point-marker-inner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50% 50% 50% 0;
+    border: 2px solid;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transform: rotate(-45deg);
+}
+
+.point-marker-inner span {
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.point-marker-inner svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ========== MapLibre GL Popups ========== */
+.maplibregl-popup-content {
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    padding: 0;
+    overflow: hidden;
+    min-width: 250px;
+}
+
+.maplibregl-popup-close-button {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+    color: #666;
+    right: 4px;
+    top: 4px;
+}
+
+.maplibregl-popup-close-button:hover {
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.point-popup {
+    font-size: 14px;
+}
+
+.popup-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.popup-content {
+    padding: 16px;
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.badge svg {
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.popup-trip {
+    font-size: 13px;
+    color: #555;
+}
+
+.popup-date {
+    font-size: 12px;
+    color: #777;
+}
+
+.popup-description {
+    font-size: 13px;
+    color: #555;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.popup-coords {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 0;
+    font-family: 'Courier New', monospace;
+}
+
+.route-popup {
+    padding: 8px 12px;
+}
+
+/* ========== MapLibre GL Controls ========== */
+.maplibregl-ctrl-group {
+    border-radius: 6px !important;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.maplibregl-ctrl-group button {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px);
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    width: 32px !important;
+    height: 32px !important;
+    transition: all 0.15s ease !important;
+}
+
+.maplibregl-ctrl-group button:last-child {
+    border-bottom: none !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+    background-color: #f1f5f9 !important;
+}
+
+.maplibregl-ctrl-group button:active {
+    background-color: #e2e8f0 !important;
+}
+
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    filter: brightness(0.4);
+}
+
+/* Attribution */
+.maplibregl-ctrl-attrib {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(4px);
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+    padding: 2px 6px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+    color: #64748b !important;
+}
+
+.maplibregl-ctrl-attrib a:hover {
+    color: #1e293b !important;
+}
+
+/* MapLibre popup tip */
+.maplibregl-popup-tip {
+    border-top-color: white !important;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .floating-menu-toggle {
+        top: 16px;
+        left: 50px;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .floating-menu-toggle span {
+        display: none;
+    }
+    
+    .legend-card {
+        bottom: 45px;
+        right: 10px;
+        font-size: 11px;
+    }
+    
+    .legend-card .card-body {
+        padding: 8px 10px;
+    }
+    
+    .legend-line {
+        width: 20px;
+    }
+    
+    .offcanvas {
+        width: 300px !important;
+    }
+    
+    .popup-image {
+        height: 150px;
+    }
+}
+
+/* ========== Animaciones ========== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ========== Estilos para búsqueda de lugares ========== */
+#publicSearchResults {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 6px;
+    margin-top: 4px;
+}
+
+#publicSearchResults .list-group-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    padding: 10px 12px;
+}
+
+#publicSearchResults .list-group-item:hover {
+    background-color: #f1f5f9;
+    border-left-color: #1e293b;
+    transform: translateX(3px);
+}
+
+#publicSearchResults .list-group-item:active {
+    background-color: #e0e0e0;
+}
+
+#publicPlaceSearch:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 0.2rem rgba(30, 41, 59, 0.15);
+}
+
+/* ========== Utilidades ========== */
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+    transition: background-color 0.5s ease;
+}
+
+/* ========== Print styles ========== */
+@media print {
+    .floating-menu-toggle,
+    .offcanvas,
+    .legend-card,
+    .leaflet-control-zoom {
+        display: none !important;
+    }
+    
+    #map {
+        position: relative;
+        height: 100vh;
+    }
+}
+
+/* ========== Footer ========== */
+.map-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #64748b;
+    border-top: 1px solid #e2e8f0;
+    z-index: 999;
+}
+
+.map-footer span {
+    font-weight: 400;
+}
+
+.map-footer .github-link {
+    display: flex;
+    align-items: center;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    padding: 4px;
+}
+
+.map-footer .github-link:hover {
+    color: #1e293b;
+}
+
+@media print {
+    .map-footer {
+        display: none !important;
+    }
+}
+
+/* ========== Lightbox para imágenes ========== */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10001;
+    backdrop-filter: blur(4px);
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.lightbox-close:active {
+    transform: scale(0.95);
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 95vh;
+    object-fit: contain;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    animation: zoomIn 0.3s ease;
+}
+
+.lightbox-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Estilo para imágenes clicables en popups */
+.popup-image {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.popup-image:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+@media print {
+    .lightbox {
+        display: none !important;
+    }
+}
+

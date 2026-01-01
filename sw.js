@@ -77,9 +77,12 @@ async function handleTileRequest(request) {
         
         return response;
     } catch (error) {
-        console.warn('[SW] Fetch failed:', error);
-        // Return a fallback or let it fail
-        throw error;
+        // Network error - return transparent fallback for tiles
+        // This prevents console spam when offline or DNS fails
+        return new Response('', {
+            status: 408,
+            statusText: 'Request Timeout'
+        });
     }
 }
 

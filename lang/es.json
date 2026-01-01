@@ -373,7 +373,20 @@
     "map_style_dark_matter": "Dark Matter",
     "map_style_dark_matter_desc": "Tema oscuro para modo nocturno",
     "map_style_osm_liberty": "OSM Liberty",
-    "map_style_osm_liberty_desc": "Estilo clásico de OpenStreetMap"
+    "map_style_osm_liberty_desc": "Estilo clásico de OpenStreetMap",
+    "map_renderer": "Motor de Renderizado",
+    "map_renderer_label": "Motor de Renderizado",
+    "map_renderer_description": "MapLibre usa WebGL para arcos de vuelo curvos pero puede ser pesado en algunos dispositivos (AMD/Intel Windows). Leaflet es más ligero y funciona mejor en dispositivos antiguos.",
+    "renderer_maplibre_desc": "Arcos de vuelo curvos, efectos modernos",
+    "renderer_leaflet_desc": "Más ligero, mejor compatibilidad",
+    "maplibre_feature_1": "Arcos de vuelo 3D curvos",
+    "maplibre_feature_2": "Renderizado WebGL fluido",
+    "maplibre_feature_3": "Efectos visuales modernos",
+    "maplibre_warning": "Pesado en AMD/Intel Windows",
+    "leaflet_feature_1": "Renderizado DOM ligero",
+    "leaflet_feature_2": "Funciona en todos los dispositivos",
+    "leaflet_feature_3": "Menor uso de memoria",
+    "leaflet_note": "Solo líneas de vuelo rectas"
   },
   "original_settings": {
     "title": "Configuración del Sistema",
