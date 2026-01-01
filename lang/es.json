@@ -18,7 +18,8 @@
     "import": "Importar",
     "import_export": "Importar / Exportar",
     "import_flights": "Importar Vuelos",
-    "import_airbnb": "Importar Airbnb"
+    "import_airbnb": "Importar Airbnb",
+    "backup": "Respaldo"
   },
   "admin": {
     "title": "Panel de Administración",
@@ -578,5 +579,41 @@
     "move_to": "Mover a...",
     "new_trip": "+ Crear nuevo viaje",
     "move": "Mover"
+  },
+  "backup": {
+    "title": "Respaldo y Restauración",
+    "description": "Exporta e importa tus datos de viaje",
+    "create_backup": "Crear Respaldo",
+    "restore_backup": "Restaurar Respaldo",
+    "saved_backups": "Respaldos Guardados",
+    "include_data": "Incluir en el respaldo:",
+    "include_images": "Incluir Imágenes",
+    "images_note": "Crea archivo ZIP con imágenes",
+    "settings_note": "Configuración del sistema (opcional)",
+    "save_to_server": "Guardar en Servidor",
+    "upload_file": "Subir Archivo de Respaldo",
+    "accepted_formats": "Formatos aceptados: .json, .zip",
+    "restore_mode": "Modo de Restauración",
+    "mode_merge_skip": "Fusionar (omitir existentes)",
+    "mode_merge_skip_desc": "Importar solo elementos nuevos, mantener datos existentes",
+    "mode_merge_update": "Fusionar (actualizar existentes)",
+    "mode_merge_update_desc": "Importar nuevos elementos y actualizar los existentes",
+    "mode_replace": "Reemplazar todo",
+    "mode_replace_desc": "Eliminar datos existentes e importar desde el respaldo",
+    "restore": "Restaurar Respaldo",
+    "no_backups": "No hay respaldos guardados en el servidor",
+    "type": "Tipo",
+    "size": "Tamaño",
+    "created_success": "Respaldo creado correctamente",
+    "deleted_success": "Respaldo eliminado correctamente",
+    "restored_success": "Respaldo restaurado correctamente",
+    "error_creating": "Error al crear el respaldo",
+    "error_deleting": "Error al eliminar el respaldo",
+    "error_restoring": "Error al restaurar el respaldo",
+    "invalid_file": "Archivo de respaldo inválido",
+    "confirm_restore": "¿Estás seguro de que deseas restaurar este respaldo?",
+    "confirm_delete": "¿Estás seguro de que deseas eliminar este respaldo?",
+    "transfer_tip_title": "Transferir a Otro Servidor",
+    "transfer_tip_text": "Para mover tus datos a un servidor remoto: 1) Crea un respaldo sin configuración (para mantener la config del servidor destino). 2) Descarga el archivo. 3) En el servidor destino, sube y restaura con modo \"Fusionar (omitir existentes)\". Para imágenes, usa la opción ZIP con \"Incluir Imágenes\" marcado."
   }
 }

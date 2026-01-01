@@ -18,7 +18,8 @@
     "import": "Import",
     "import_export": "Import / Export",
     "import_flights": "Import Flights",
-    "import_airbnb": "Import Airbnb"
+    "import_airbnb": "Import Airbnb",
+    "backup": "Backup"
   },
   "admin": {
     "title": "Admin Panel",
@@ -559,5 +560,41 @@
     "move_to": "Move to...",
     "new_trip": "+ Create new trip",
     "move": "Move"
+  },
+  "backup": {
+    "title": "Backup & Restore",
+    "description": "Export and import your travel data",
+    "create_backup": "Create Backup",
+    "restore_backup": "Restore Backup",
+    "saved_backups": "Saved Backups",
+    "include_data": "Include in backup:",
+    "include_images": "Include Images",
+    "images_note": "Creates ZIP file with images",
+    "settings_note": "System configuration (optional)",
+    "save_to_server": "Save to Server",
+    "upload_file": "Upload Backup File",
+    "accepted_formats": "Accepted formats: .json, .zip",
+    "restore_mode": "Restore Mode",
+    "mode_merge_skip": "Merge (skip existing)",
+    "mode_merge_skip_desc": "Import only new items, keep existing data",
+    "mode_merge_update": "Merge (update existing)",
+    "mode_merge_update_desc": "Import new items and update existing ones",
+    "mode_replace": "Replace all",
+    "mode_replace_desc": "Delete existing data and import from backup",
+    "restore": "Restore Backup",
+    "no_backups": "No backups saved on server yet",
+    "type": "Type",
+    "size": "Size",
+    "created_success": "Backup created successfully",
+    "deleted_success": "Backup deleted successfully",
+    "restored_success": "Backup restored successfully",
+    "error_creating": "Error creating backup",
+    "error_deleting": "Error deleting backup",
+    "error_restoring": "Error restoring backup",
+    "invalid_file": "Invalid backup file",
+    "confirm_restore": "Are you sure you want to restore this backup?",
+    "confirm_delete": "Are you sure you want to delete this backup?",
+    "transfer_tip_title": "Transferring to Another Server",
+    "transfer_tip_text": "To move your data to a remote server: 1) Create a backup without settings (to keep target server config). 2) Download the backup file. 3) On the target server, upload and restore with \"Merge (skip existing)\" mode. For images, use the ZIP option with \"Include Images\" checked."
   }
 }
