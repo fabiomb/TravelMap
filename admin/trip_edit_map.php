@@ -183,13 +183,30 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
+        <!-- Routes List -->
+        <div class="card border-0 shadow-sm mb-3" id="routesListCard" style="display: none;">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ul me-1" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                    </svg>
+                    <?= __('map.routes') ?> <span id="routesCount">(0)</span>
+                </h6>
+                <small class="text-muted"><?= __('map.click_to_edit_routes') ?></small>
+            </div>
+            <div class="card-body p-2" id="routesList">
+                <!-- Routes list rendered by JavaScript -->
+            </div>
+        </div>
+
         <!-- Formulario para guardar -->
         <form method="POST" action="" id="routesForm">
             <input type="hidden" name="routes_data" id="routes_data">
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-save me-2" viewBox="0 0 16 16">
-                        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="19" r="3"></circle>
+                        <path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"></path>
                     </svg>
                     <?= __('map.save_trip_routes') ?>
                 </button>

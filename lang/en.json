@@ -61,6 +61,7 @@
     "transport_types": "Transport Types",
     "trip_points": "Trip Points",
     "transport_legend": "Transport Legend",
+    "click_to_edit_routes": "Hover to highlight | Click to focus on map",
     "transport_plane": "Plane",
     "transport_ship": "Ship",
     "transport_car": "Car",

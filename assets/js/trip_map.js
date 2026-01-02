@@ -117,6 +117,231 @@
     }
 
     /**
+     * Renderiza la lista de rutas con controles para editar
+     */
+    function renderRoutesList() {
+        const routesListContainer = $('#routesList');
+        const routesListCard = $('#routesListCard');
+        const routesCount = $('#routesCount');
+        
+        if (routesListContainer.length === 0) return;
+        
+        routesListContainer.empty();
+        const totalRoutes = routesData.length;
+        routesCount.text(`(${totalRoutes})`);
+        
+        if (totalRoutes === 0) {
+            routesListCard.hide();
+            return;
+        }
+        
+        routesListCard.show();
+        
+        // Create table layout for better horizontal display
+        const table = $(`
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th style="width: 60px;"></th>
+                            <th>Transport Type</th>
+                            <th style="width: 100px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routesTableBody"></tbody>
+                </table>
+            </div>
+        `);
+        
+        routesListContainer.append(table);
+        const tbody = $('#routesTableBody');
+        
+        routesData.forEach(function(route, index) {
+            const color = route.color || transportColors[route.transport_type];
+            const icon = transportIcons[route.transport_type] || '';
+            
+            // Build transport type selector
+            const transportOrder = ['plane', 'car', 'train', 'ship', 'walk', 'bus', 'aerial'];
+            let optionsHtml = '';
+            transportOrder.forEach(function(type) {
+                const typeLabel = (typeof transportTypes !== 'undefined' && transportTypes[type]) || type;
+                const selected = type === route.transport_type ? 'selected' : '';
+                optionsHtml += `<option value="${type}" ${selected}>${typeLabel}</option>`;
+            });
+            
+            const row = $(`
+                <tr data-route-index="${index}" style="cursor: pointer;" title="Click to focus on this route on the map">
+                    <td class="text-center">
+                        <div style="width: 30px; height: 4px; background-color: ${color}; margin: 0 auto;"></div>
+                    </td>
+                    <td class="text-center">${icon}</td>
+                    <td>
+                        <select class="form-select form-select-sm transport-type-selector" data-route-index="${index}">
+                            ${optionsHtml}
+                        </select>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger delete-route-btn" data-route-index="${index}" title="Delete route">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `);
+            
+            tbody.append(row);
+        });
+        
+        // Attach event handlers
+        $('.transport-type-selector').off('change').on('change', function() {
+            const index = parseInt($(this).data('route-index'));
+            const newType = $(this).val();
+            changeRouteTransportType(index, newType);
+        });
+        
+        $('.delete-route-btn').off('click').on('click', function() {
+            const index = parseInt($(this).data('route-index'));
+            deleteRoute(index);
+        });
+        
+        // Highlight route on hover
+        $('tr[data-route-index]').off('mouseenter mouseleave').hover(
+            function() {
+                const index = parseInt($(this).data('route-index'));
+                highlightRoute(index, true);
+            },
+            function() {
+                const index = parseInt($(this).data('route-index'));
+                highlightRoute(index, false);
+            }
+        );
+        
+        // Click to focus on route
+        $('tr[data-route-index]').off('click').on('click', function(e) {
+            // Don't trigger if clicking on select or button
+            if ($(e.target).closest('select, button').length > 0) return;
+            
+            const index = parseInt($(this).data('route-index'));
+            focusOnRoute(index);
+        });
+    }
+    
+    /**
+     * Destaca visualmente una ruta en el mapa
+     */
+    function highlightRoute(index, highlight) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        if (!route.layer) return;
+        
+        if (highlight) {
+            // Highlight: increase width and opacity
+            route.layer.setStyle({
+                weight: 8,
+                opacity: 1
+            });
+            route.layer.bringToFront();
+        } else {
+            // Reset to normal
+            route.layer.setStyle({
+                weight: 4,
+                opacity: 0.8
+            });
+        }
+    }
+    
+    /**
+     * Enfoca el mapa en una ruta específica
+     */
+    function focusOnRoute(index) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        if (!route.layer) return;
+        
+        // Fit map to route bounds
+        try {
+            const bounds = route.layer.getBounds();
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 12
+            });
+            
+            // Flash the route
+            let flashCount = 0;
+            const flashInterval = setInterval(function() {
+                if (flashCount >= 4) {
+                    clearInterval(flashInterval);
+                    route.layer.setStyle({
+                        weight: 4,
+                        opacity: 0.8
+                    });
+                    return;
+                }
+                
+                const isVisible = flashCount % 2 === 0;
+                route.layer.setStyle({
+                    weight: isVisible ? 8 : 4,
+                    opacity: isVisible ? 1 : 0.3
+                });
+                
+                flashCount++;
+            }, 200);
+        } catch (e) {
+            console.warn('No se pudo enfocar en la ruta:', e);
+        }
+    }
+
+    /**
+     * Cambia el tipo de transporte de una ruta
+     */
+    function changeRouteTransportType(index, newType) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        route.transport_type = newType;
+        route.color = transportColors[newType];
+        
+        // Update the layer on the map
+        if (route.layer) {
+            route.layer.setStyle({ color: route.color });
+            route.layer.transportType = newType;
+            route.layer.color = route.color;
+        }
+        
+        // Update the hidden form field with new data
+        updateRoutesData();
+        
+        console.log(`Route ${index} transport type changed to ${newType}`);
+    }
+
+    /**
+     * Elimina una ruta específica
+     */
+    function deleteRoute(index) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        
+        // Remove from map
+        if (route.layer && drawnItems.hasLayer(route.layer)) {
+            drawnItems.removeLayer(route.layer);
+        }
+        
+        // Remove from routesData
+        routesData.splice(index, 1);
+        
+        // Re-render the list
+        renderRoutesList();
+        
+        console.log(`Route ${index} deleted`);
+    }
+
+    /**
      * Inicializa el mapa
      */
     function initMap() {
@@ -285,12 +510,21 @@
             routesData.push({
                 transport_type: layer.transportType || 'car',
                 color: layer.color || transportColors['car'],
-                geojson: geojson
+                geojson: geojson,
+                layer: layer  // Keep reference to the layer
             });
         });
 
-        // Actualizar input hidden
-        document.getElementById('routes_data').value = JSON.stringify(routesData);
+        // Actualizar input hidden (sin las referencias a layers)
+        const routesDataForSave = routesData.map(route => ({
+            transport_type: route.transport_type,
+            color: route.color,
+            geojson: route.geojson
+        }));
+        document.getElementById('routes_data').value = JSON.stringify(routesDataForSave);
+
+        // Update routes list UI
+        renderRoutesList();
 
         console.log('Rutas actualizadas:', routesData.length);
     }

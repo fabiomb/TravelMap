@@ -61,6 +61,7 @@
     "transport_types": "Tipos de Transporte",
     "trip_points": "Puntos del Viaje",
     "transport_legend": "Leyenda de Transporte",
+    "click_to_edit_routes": "Pasa el cursor para resaltar | Clic para enfocar en el mapa",
     "transport_plane": "Avión",
     "transport_ship": "Barco",
     "transport_car": "Auto",
