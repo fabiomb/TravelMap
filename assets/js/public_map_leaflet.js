@@ -904,7 +904,7 @@
         // Popup con información completa
         const popupContent = createPointPopup(point, trip, typeConfig);
         marker.bindPopup(popupContent, {
-            maxWidth: 300,
+            maxWidth: 360,
             className: 'custom-popup'
         });
 
