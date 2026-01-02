@@ -48,6 +48,59 @@
     // LocalStorage key for user preferences
     const STORAGE_KEY = 'travelmap_preferences';
 
+    /**
+     * Parse URL parameters for map configuration
+     * Supported parameters:
+     * - center: lat,lng (e.g., ?center=40.4168,-3.7038)
+     * - zoom: number (e.g., ?zoom=10)
+     * - trips: comma-separated IDs (e.g., ?trips=1,2,3)
+     * - routes: 1/0 or true/false (e.g., ?routes=1)
+     * - points: 1/0 or true/false (e.g., ?points=0)
+     * - flights: 1/0 or true/false (e.g., ?flights=1)
+     */
+    function getURLParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const params = {};
+        
+        // Parse center parameter (lat,lng)
+        if (urlParams.has('center')) {
+            const centerStr = urlParams.get('center');
+            const parts = centerStr.split(',').map(s => parseFloat(s.trim()));
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                params.center = parts; // [lat, lng]
+            }
+        }
+        
+        // Parse zoom parameter
+        if (urlParams.has('zoom')) {
+            const zoomVal = parseFloat(urlParams.get('zoom'));
+            if (!isNaN(zoomVal) && zoomVal >= 1 && zoomVal <= 18) {
+                params.zoom = zoomVal;
+            }
+        }
+        
+        // Parse trips parameter (comma-separated IDs)
+        if (urlParams.has('trips')) {
+            const tripsStr = urlParams.get('trips');
+            const tripIds = tripsStr.split(',')
+                .map(s => parseInt(s.trim()))
+                .filter(id => !isNaN(id) && id > 0);
+            if (tripIds.length > 0) {
+                params.trips = tripIds;
+            }
+        }
+        
+        // Parse boolean parameters (routes, points, flights)
+        ['routes', 'points', 'flights'].forEach(function(key) {
+            if (urlParams.has(key)) {
+                const val = urlParams.get(key).toLowerCase();
+                params[key] = val === '1' || val === 'true';
+            }
+        });
+        
+        return params;
+    }
+
     // SVG icons for transport types
     const transportIcons = {
         plane: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233C19.5508 3.01055 19.844 3.01467 20.0792 3.10588C20.4524 3.2506 20.7494 3.54764 20.8941 3.92081C20.9853 4.15601 20.9894 4.4492 20.9977 5.03557C21.0136 6.16926 20.9681 7.20686 20.2196 8.13326C19.5893 8.91337 18.5059 9.32101 17.9846 10.1821C17.5866 10.8395 17.772 11.5203 17.943 12.2209L19.2228 17.4662C19.4779 18.5115 19.2838 19.1815 18.5529 19.9124C18.164 20.3013 17.8405 20.2816 17.5251 19.779L13.6627 13.6249L11.8181 15.0911C11.1493 15.6228 10.8149 15.8886 10.6392 16.2627C10.2276 17.1388 10.4889 18.4547 10.5022 19.4046C10.5096 19.9296 10.0559 20.9644 9.41391 20.9993C9.01756 21.0209 8.88283 20.5468 8.75481 20.2558L7.52234 17.4544C7.2276 16.7845 7.21552 16.7724 6.54556 16.4777L3.74415 15.2452C3.45318 15.1172 2.97914 14.9824 3.00071 14.5861C3.03565 13.9441 4.07036 13.4904 4.59536 13.4978C5.54532 13.5111 6.86122 13.7724 7.73734 13.3608C8.11142 13.1851 8.37724 12.8507 8.90888 12.1819L10.3751 10.3373L4.22103 6.47489C3.71845 6.15946 3.69872 5.83597 4.08755 5.44715C4.8185 4.7162 5.48851 4.52214 6.53377 4.77718L11.7791 6.05703C12.4797 6.22798 13.1605 6.41343 13.8179 6.0154C14.679 5.49411 15.0866 4.41074 15.8667 3.7804Z"/></svg>',
@@ -769,6 +822,25 @@
      * Fit map to content bounds
      */
     function fitMapToContent() {
+        const urlParams = getURLParams();
+        
+        // If URL has center and/or zoom parameters, use those
+        if (urlParams.center || urlParams.zoom) {
+            if (urlParams.center && urlParams.zoom) {
+                // Both center and zoom specified
+                map.setCenter([urlParams.center[1], urlParams.center[0]]); // [lng, lat]
+                map.setZoom(urlParams.zoom);
+            } else if (urlParams.center) {
+                // Only center specified
+                map.setCenter([urlParams.center[1], urlParams.center[0]]);
+            } else if (urlParams.zoom) {
+                // Only zoom specified
+                map.setZoom(urlParams.zoom);
+            }
+            return;
+        }
+        
+        // Otherwise, fit to content bounds
         const bounds = new maplibregl.LngLatBounds();
         let hasContent = false;
         
@@ -1081,7 +1153,23 @@
     }
 
     function applyTripSelectionPreferences() {
+        const urlParams = getURLParams();
         const prefs = loadPreferences();
+        
+        // If URL has trip parameters, use those instead of saved preferences
+        if (urlParams.trips && urlParams.trips.length > 0) {
+            $('.trip-checkbox').each(function() {
+                const tripId = parseInt($(this).val());
+                const shouldBeChecked = urlParams.trips.includes(tripId);
+                
+                $(this).prop('checked', shouldBeChecked);
+                if (shouldBeChecked) showTrip(tripId);
+                else hideTrip(tripId);
+            });
+            return;
+        }
+        
+        // Otherwise, use saved preferences
         if (prefs.selectedTrips === null) return;
         
         const knownTripIds = prefs.knownTripIds || [];
@@ -1098,17 +1186,29 @@
     }
 
     function applyInitialToggleStates() {
+        const urlParams = getURLParams();
         const prefs = loadPreferences();
         
-        if (prefs.showFlightRoutes) {
+        // Determine which values to use: URL params override preferences
+        const showFlightRoutes = urlParams.hasOwnProperty('flights') ? urlParams.flights : prefs.showFlightRoutes;
+        const showPoints = urlParams.hasOwnProperty('points') ? urlParams.points : prefs.showPoints;
+        const showRoutes = urlParams.hasOwnProperty('routes') ? urlParams.routes : prefs.showRoutes;
+        
+        // Update checkbox states to reflect what's being shown
+        $('#toggleFlightRoutes').prop('checked', showFlightRoutes);
+        $('#togglePoints').prop('checked', showPoints);
+        $('#toggleRoutes').prop('checked', showRoutes);
+        
+        // Apply the states
+        if (showFlightRoutes) {
             updateFlightArcs();
         }
         
-        if (!prefs.showPoints) {
+        if (!showPoints) {
             clearClusterMarkers();
         }
         
-        if (!prefs.showRoutes) {
+        if (!showRoutes) {
             toggleRoutes(false);
         }
     }
@@ -1146,6 +1246,130 @@
 
     function showError(message) {
         $('#tripsList').html(`<div class="alert alert-warning">${message}</div>`);
+    }
+
+    /**
+     * Generate shareable URL with current map state
+     */
+    function generateShareableLink() {
+        const params = new URLSearchParams();
+        
+        // Get current map center and zoom
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        
+        // Add center (lat,lng)
+        params.set('center', `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`);
+        
+        // Add zoom
+        params.set('zoom', Math.round(zoom).toString());
+        
+        // Add selected trips
+        const selectedTrips = [];
+        $('.trip-checkbox:checked').each(function() {
+            selectedTrips.push($(this).val());
+        });
+        if (selectedTrips.length > 0) {
+            params.set('trips', selectedTrips.join(','));
+        }
+        
+        // Add toggle states
+        if ($('#toggleRoutes').is(':checked')) {
+            params.set('routes', '1');
+        } else {
+            params.set('routes', '0');
+        }
+        
+        if ($('#togglePoints').is(':checked')) {
+            params.set('points', '1');
+        } else {
+            params.set('points', '0');
+        }
+        
+        if ($('#toggleFlightRoutes').is(':checked')) {
+            params.set('flights', '1');
+        } else {
+            params.set('flights', '0');
+        }
+        
+        // Generate full URL
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?${params.toString()}`;
+    }
+
+    /**
+     * Copy shareable link to clipboard
+     */
+    function shareMapLink() {
+        const url = generateShareableLink();
+        
+        // Try to use the modern Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                showShareSuccess();
+            }).catch(function(err) {
+                // Fallback to old method
+                fallbackCopyToClipboard(url);
+            });
+        } else {
+            // Fallback for older browsers
+            fallbackCopyToClipboard(url);
+        }
+    }
+
+    /**
+     * Fallback method to copy text to clipboard
+     */
+    function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showShareSuccess();
+            } else {
+                showShareError();
+            }
+        } catch (err) {
+            showShareError();
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    /**
+     * Show success message when link is copied
+     */
+    function showShareSuccess() {
+        const btn = $('#shareMapBtn');
+        const originalHtml = btn.html();
+        
+        btn.html(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+            </svg>
+            ${__('map.link_copied')}
+        `);
+        btn.addClass('btn-success').removeClass('btn-outline-primary');
+        
+        setTimeout(function() {
+            btn.html(originalHtml);
+            btn.removeClass('btn-success').addClass('btn-outline-primary');
+        }, 2000);
+    }
+
+    /**
+     * Show error message when copy fails
+     */
+    function showShareError() {
+        alert(__('map.copy_failed'));
     }
 
     // ==================== SEARCH ====================
@@ -1243,6 +1467,11 @@
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', false).trigger('change');
+        });
+
+        // Share map link button
+        $('#shareMapBtn').on('click', function() {
+            shareMapLink();
         });
 
         initLightbox();

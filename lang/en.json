@@ -100,6 +100,11 @@
     "show_past_trips": "Past trips only",
     "hide_all_trips": "Hide all trips",
     "trips_section": "Trips",
+    "share_link": "Share Link",
+    "link_copied": "Link copied to clipboard",
+    "copy_failed": "Failed to copy link",
+    "hide_all_trips": "Hide all trips",
+    "trips_section": "Trips",
     "loading_trips": "Loading trips..."
   },
   "forms": {

@@ -98,6 +98,9 @@
     "show_past_trips": "Solo viajes pasados",
     "hide_all_trips": "Ocultar todos",
     "trips_section": "Viajes",
+    "share_link": "Compartir Enlace",
+    "link_copied": "Enlace copiado al portapapeles",
+    "copy_failed": "No se pudo copiar el enlace",
     "loading_trips": "Cargando viajes..."
   },
   "forms": {

@@ -22,6 +22,59 @@
     const STORAGE_KEY = 'travelmap_preferences';
 
     /**
+     * Parse URL parameters for map configuration
+     * Supported parameters:
+     * - center: lat,lng (e.g., ?center=40.4168,-3.7038)
+     * - zoom: number (e.g., ?zoom=10)
+     * - trips: comma-separated IDs (e.g., ?trips=1,2,3)
+     * - routes: 1/0 or true/false (e.g., ?routes=1)
+     * - points: 1/0 or true/false (e.g., ?points=0)
+     * - flights: 1/0 or true/false (e.g., ?flights=1)
+     */
+    function getURLParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const params = {};
+        
+        // Parse center parameter (lat,lng)
+        if (urlParams.has('center')) {
+            const centerStr = urlParams.get('center');
+            const parts = centerStr.split(',').map(s => parseFloat(s.trim()));
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                params.center = parts; // [lat, lng]
+            }
+        }
+        
+        // Parse zoom parameter
+        if (urlParams.has('zoom')) {
+            const zoomVal = parseFloat(urlParams.get('zoom'));
+            if (!isNaN(zoomVal) && zoomVal >= 1 && zoomVal <= 18) {
+                params.zoom = zoomVal;
+            }
+        }
+        
+        // Parse trips parameter (comma-separated IDs)
+        if (urlParams.has('trips')) {
+            const tripsStr = urlParams.get('trips');
+            const tripIds = tripsStr.split(',')
+                .map(s => parseInt(s.trim()))
+                .filter(id => !isNaN(id) && id > 0);
+            if (tripIds.length > 0) {
+                params.trips = tripIds;
+            }
+        }
+        
+        // Parse boolean parameters (routes, points, flights)
+        ['routes', 'points', 'flights'].forEach(function(key) {
+            if (urlParams.has(key)) {
+                const val = urlParams.get(key).toLowerCase();
+                params[key] = val === '1' || val === 'true';
+            }
+        });
+        
+        return params;
+    }
+
+    /**
      * Load user preferences from localStorage
      */
     function loadPreferences() {
@@ -97,7 +150,30 @@
      * Apply trip selection preferences after trips are loaded
      */
     function applyTripSelectionPreferences() {
+        const urlParams = getURLParams();
         const prefs = loadPreferences();
+        
+        // If URL has trip parameters, use those instead of saved preferences
+        if (urlParams.trips && urlParams.trips.length > 0) {
+            $('.trip-checkbox').each(function() {
+                const tripId = parseInt($(this).val());
+                const shouldBeChecked = urlParams.trips.includes(tripId);
+                
+                $(this).prop('checked', shouldBeChecked);
+            });
+            
+            // Update map visibility based on URL selections
+            $('.trip-checkbox').each(function() {
+                const tripId = parseInt($(this).val());
+                const isChecked = $(this).is(':checked');
+                if (isChecked) {
+                    showTrip(tripId);
+                } else {
+                    hideTrip(tripId);
+                }
+            });
+            return;
+        }
         
         // If selectedTrips is null (first visit), leave all checked (default)
         if (prefs.selectedTrips === null) {
@@ -135,10 +211,21 @@
      * This ensures flight routes are shown if the user has that preference saved
      */
     function applyInitialToggleStates() {
+        const urlParams = getURLParams();
         const prefs = loadPreferences();
         
-        // Handle flight routes visibility based on saved preference
-        if (prefs.showFlightRoutes) {
+        // Determine which values to use: URL params override preferences
+        const showFlightRoutes = urlParams.hasOwnProperty('flights') ? urlParams.flights : prefs.showFlightRoutes;
+        const showPoints = urlParams.hasOwnProperty('points') ? urlParams.points : prefs.showPoints;
+        const showRoutes = urlParams.hasOwnProperty('routes') ? urlParams.routes : prefs.showRoutes;
+        
+        // Update checkbox states to reflect what's being shown
+        $('#toggleFlightRoutes').prop('checked', showFlightRoutes);
+        $('#togglePoints').prop('checked', showPoints);
+        $('#toggleRoutes').prop('checked', showRoutes);
+        
+        // Handle flight routes visibility
+        if (showFlightRoutes) {
             // Create flight layers on demand
             if (!flightRoutesCreated) {
                 createFlightRouteLayers();
@@ -156,15 +243,15 @@
             });
         }
         
-        // Handle points visibility based on saved preference
-        if (!prefs.showPoints) {
+        // Handle points visibility
+        if (!showPoints) {
             if (map.hasLayer(allPointsCluster)) {
                 map.removeLayer(allPointsCluster);
             }
         }
         
-        // Handle routes visibility based on saved preference
-        if (!prefs.showRoutes) {
+        // Handle routes visibility
+        if (!showRoutes) {
             Object.values(routesLayers).forEach(function(layers) {
                 layers.forEach(function(layer) {
                     if (map.hasLayer(layer)) {
@@ -979,6 +1066,24 @@
      * Ajusta la vista del mapa para mostrar todo el contenido
      */
     function fitMapToContent() {
+        const urlParams = getURLParams();
+        
+        // If URL has center and/or zoom parameters, use those
+        if (urlParams.center || urlParams.zoom) {
+            if (urlParams.center && urlParams.zoom) {
+                // Both center and zoom specified
+                map.setView([urlParams.center[0], urlParams.center[1]], urlParams.zoom);
+            } else if (urlParams.center) {
+                // Only center specified
+                map.setView([urlParams.center[0], urlParams.center[1]], map.getZoom());
+            } else if (urlParams.zoom) {
+                // Only zoom specified
+                map.setZoom(urlParams.zoom);
+            }
+            return;
+        }
+        
+        // Otherwise, fit to content bounds
         if (tripsData.length === 0) {
             return;
         }
@@ -1117,6 +1222,130 @@
                 ${message}
             </div>
         `);
+    }
+
+    /**
+     * Generate shareable URL with current map state
+     */
+    function generateShareableLink() {
+        const params = new URLSearchParams();
+        
+        // Get current map center and zoom
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        
+        // Add center (lat,lng)
+        params.set('center', `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`);
+        
+        // Add zoom
+        params.set('zoom', Math.round(zoom).toString());
+        
+        // Add selected trips
+        const selectedTrips = [];
+        $('.trip-checkbox:checked').each(function() {
+            selectedTrips.push($(this).val());
+        });
+        if (selectedTrips.length > 0) {
+            params.set('trips', selectedTrips.join(','));
+        }
+        
+        // Add toggle states
+        if ($('#toggleRoutes').is(':checked')) {
+            params.set('routes', '1');
+        } else {
+            params.set('routes', '0');
+        }
+        
+        if ($('#togglePoints').is(':checked')) {
+            params.set('points', '1');
+        } else {
+            params.set('points', '0');
+        }
+        
+        if ($('#toggleFlightRoutes').is(':checked')) {
+            params.set('flights', '1');
+        } else {
+            params.set('flights', '0');
+        }
+        
+        // Generate full URL
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?${params.toString()}`;
+    }
+
+    /**
+     * Copy shareable link to clipboard
+     */
+    function shareMapLink() {
+        const url = generateShareableLink();
+        
+        // Try to use the modern Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                showShareSuccess();
+            }).catch(function(err) {
+                // Fallback to old method
+                fallbackCopyToClipboard(url);
+            });
+        } else {
+            // Fallback for older browsers
+            fallbackCopyToClipboard(url);
+        }
+    }
+
+    /**
+     * Fallback method to copy text to clipboard
+     */
+    function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showShareSuccess();
+            } else {
+                showShareError();
+            }
+        } catch (err) {
+            showShareError();
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    /**
+     * Show success message when link is copied
+     */
+    function showShareSuccess() {
+        const btn = $('#shareMapBtn');
+        const originalHtml = btn.html();
+        
+        btn.html(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+            </svg>
+            ${__('map.link_copied')}
+        `);
+        btn.addClass('btn-success').removeClass('btn-outline-primary');
+        
+        setTimeout(function() {
+            btn.html(originalHtml);
+            btn.removeClass('btn-success').addClass('btn-outline-primary');
+        }, 2000);
+    }
+
+    /**
+     * Show error message when copy fails
+     */
+    function showShareError() {
+        alert(__('map.copy_failed'));
     }
 
     /**
@@ -1360,6 +1589,11 @@
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', false).trigger('change');
             savePreferences();
+        });
+
+        // Share map link button
+        $('#shareMapBtn').on('click', function() {
+            shareMapLink();
         });
 
         // Inicializar lightbox
