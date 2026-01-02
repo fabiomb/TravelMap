@@ -143,8 +143,8 @@
                 <table class="table table-sm table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 50px;">#</th>
-                            <th style="width: 60px;"></th>
+                            <th style="width: 50px; text-align: center;">#</th>
+                            <th style="width: 60px; text-align: center;"></th>
                             <th>Transport Type</th>
                             <th style="width: 100px; text-align: center;">Actions</th>
                         </tr>
@@ -172,16 +172,16 @@
             
             const row = $(`
                 <tr data-route-index="${index}" style="cursor: pointer;" title="Click to focus on this route on the map">
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         <div style="width: 30px; height: 4px; background-color: ${color}; margin: 0 auto;"></div>
                     </td>
-                    <td class="text-center">${icon}</td>
-                    <td>
+                    <td class="text-center align-middle">${icon}</td>
+                    <td class="align-middle">
                         <select class="form-select form-select-sm transport-type-selector" data-route-index="${index}">
                             ${optionsHtml}
                         </select>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         <button class="btn btn-sm btn-outline-danger delete-route-btn" data-route-index="${index}" title="Delete route">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
