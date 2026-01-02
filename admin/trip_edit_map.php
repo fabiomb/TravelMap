@@ -104,6 +104,7 @@ $transport_types = Route::getTransportTypes();
 
 // Ahora sí incluir header.php (después de procesar y posibles redirects)
 require_once __DIR__ . '/../includes/header.php';
+
 ?>
 
 <div class="row mb-3">
@@ -259,7 +260,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <!-- La leyenda se renderiza dinámicamente con JavaScript -->
             </div>
         </div>
-
+        
         <?php if (!empty($points)): ?>
             <div class="card border-0 shadow-sm mt-3">
                 <div class="card-header bg-light">
@@ -304,6 +305,6 @@ const transportTypes = <?= json_encode($transport_types) ?>;
 </script>
 
 <!-- Script del mapa -->
-<script src="<?= ASSETS_URL ?>/js/trip_map.js"></script>
+<script src="<?= ASSETS_URL ?>/js/trip_map.js?v=<?php echo $version; ?>"></script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

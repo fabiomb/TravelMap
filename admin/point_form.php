@@ -463,7 +463,7 @@ const initialLng = <?= !empty($form_data['longitude']) ? $form_data['longitude']
 </script>
 
 <!-- Script del mapa de puntos -->
-<script src="<?= ASSETS_URL ?>/js/point_map.js"></script>
+<script src="<?= ASSETS_URL ?>/js/point_map.js?v=<?php echo $version; ?>"></script>
 
 <!-- Script para Drag & Drop de imágenes -->
 <script>
