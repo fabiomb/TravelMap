@@ -21,7 +21,9 @@
         car: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 15.4222V18.5C22 18.9659 22 19.1989 21.9239 19.3827C21.8224 19.6277 21.6277 19.8224 21.3827 19.9239C21.1989 20 20.9659 20 20.5 20C20.0341 20 19.8011 20 19.6173 19.9239C19.3723 19.8224 19.1776 19.6277 19.0761 19.3827C19 19.1989 19 18.9659 19 18.5C19 18.0341 19 17.8011 18.9239 17.6173C18.8224 17.3723 18.6277 17.1776 18.3827 17.0761C18.1989 17 17.9659 17 17.5 17H6.5C6.03406 17 5.80109 17 5.61732 17.0761C5.37229 17.1776 5.17761 17.3723 5.07612 17.6173C5 17.8011 5 18.0341 5 18.5C5 18.9659 5 19.1989 4.92388 19.3827C4.82239 19.6277 4.62771 19.8224 4.38268 19.9239C4.19891 20 3.96594 20 3.5 20C3.03406 20 2.80109 20 2.61732 19.9239C2.37229 19.8224 2.17761 19.6277 2.07612 19.3827C2 19.1989 2 18.9659 2 18.5V15.4222C2 14.22 2 13.6188 2.17163 13.052C2.34326 12.4851 2.67671 11.9849 3.3436 10.9846L4 10L4.96154 7.69231C5.70726 5.90257 6.08013 5.0077 6.8359 4.50385C7.59167 4 8.56112 4 10.5 4H13.5C15.4389 4 16.4083 4 17.1641 4.50385C17.9199 5.0077 18.2927 5.90257 19.0385 7.69231L20 10L20.6564 10.9846C21.3233 11.9849 21.6567 12.4851 21.8284 13.052C22 13.6188 22 14.22 22 15.4222Z"/><path d="M2 8.5L4 10L5.76114 10.4403C5.91978 10.4799 6.08269 10.5 6.24621 10.5H17.7538C17.9173 10.5 18.0802 10.4799 18.2389 10.4403L20 10L22 8.5"/><path d="M18 14V14.01"/><path d="M6 14V14.01"/></svg>',
         train: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3H6.73259C9.34372 3 10.6493 3 11.8679 3.40119C13.0866 3.80239 14.1368 4.57795 16.2373 6.12907L19.9289 8.85517C19.9692 8.88495 19.9894 8.89984 20.0084 8.91416C21.2491 9.84877 21.985 11.307 21.9998 12.8603C22 12.8841 22 12.9091 22 12.9593C22 12.9971 22 13.016 21.9997 13.032C21.9825 14.1115 21.1115 14.9825 20.032 14.9997C20.016 15 19.9971 15 19.9593 15H2"/><path d="M2 11H6.095C8.68885 11 9.98577 11 11.1857 11.451C12.3856 11.9019 13.3983 12.77 15.4238 14.5061L16 15"/><path d="M10 7H17"/><path d="M2 19H22"/><path d="M18 19V21"/><path d="M12 19V21"/><path d="M6 19V21"/></svg>',
         ship: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 21.1932C2.68524 22.2443 3.57104 22.2443 4.27299 21.1932C6.52985 17.7408 8.67954 23.6764 10.273 21.2321C12.703 17.5694 14.4508 23.9218 16.273 21.1932C18.6492 17.5582 20.1295 23.5776 22 21.5842"/><path d="M3.57228 17L2.07481 12.6457C1.80373 11.8574 2.30283 11 3.03273 11H20.8582C23.9522 11 19.9943 17 17.9966 17"/><path d="M18 11L15.201 7.50122C14.4419 6.55236 13.2926 6 12.0775 6H8C6.89543 6 6 6.89543 6 8V11"/><path d="M10 6V3C10 2.44772 9.55228 2 9 2H8"/></svg>',
-        walk: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5L7.73811 9.89287C7.91034 9.63452 8.14035 9.41983 8.40993 9.26578L10.599 8.01487C11.1619 7.69323 11.8483 7.67417 12.4282 7.9641C13.0851 8.29255 13.4658 8.98636 13.7461 9.66522C14.2069 10.7814 15.3984 12 18 12"/><path d="M13 9L11.7772 14.5951M10.5 8.5L9.77457 11.7645C9.6069 12.519 9.88897 13.3025 10.4991 13.777L14 16.5L15.5 21"/><path d="M9.5 16L9 17.5L6.5 20.5"/><path d="M15 4.5C15 5.32843 14.3284 6 13.5 6C12.6716 6 12 5.32843 12 4.5C12 3.67157 12.6716 3 13.5 3C14.3284 3 15 3.67157 15 4.5Z"/></svg>'
+        walk: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5L7.73811 9.89287C7.91034 9.63452 8.14035 9.41983 8.40993 9.26578L10.599 8.01487C11.1619 7.69323 11.8483 7.67417 12.4282 7.9641C13.0851 8.29255 13.4658 8.98636 13.7461 9.66522C14.2069 10.7814 15.3984 12 18 12"/><path d="M13 9L11.7772 14.5951M10.5 8.5L9.77457 11.7645C9.6069 12.519 9.88897 13.3025 10.4991 13.777L14 16.5L15.5 21"/><path d="M9.5 16L9 17.5L6.5 20.5"/><path d="M15 4.5C15 5.32843 14.3284 6 13.5 6C12.6716 6 12 5.32843 12 4.5C12 3.67157 12.6716 3 13.5 3C14.3284 3 15 3.67157 15 4.5Z"/></svg>',
+        bus: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.00391 10V5M11.0039 10V5M16.0039 10V5.5"/><path d="M5.01609 17C3.59614 17 2.88616 17 2.44503 16.5607C2.00391 16.1213 2.00391 15.4142 2.00391 14V8C2.00391 6.58579 2.00391 5.87868 2.44503 5.43934C2.88616 5 3.59614 5 5.01609 5H12.1005C15.5742 5 17.311 5 18.6402 5.70624C19.619 6.22633 20.4346 7.0055 20.9971 7.95786C21.7609 9.25111 21.8332 10.9794 21.9779 14.436C22.0168 15.3678 22.0363 15.8337 21.8542 16.1862C21.7204 16.4454 21.5135 16.6601 21.2591 16.8041C20.913 17 20.4449 17 19.5085 17H19.0039M9.00391 17H15.0039"/><path d="M7.00391 19C8.10848 19 9.00391 18.1046 9.00391 17C9.00391 15.8954 8.10848 15 7.00391 15C5.89934 15 5.00391 15.8954 5.00391 17C5.00391 18.1046 5.89934 19 7.00391 19Z"/><path d="M17.0039 19C18.1085 19 19.0039 18.1046 19.0039 17C19.0039 15.8954 18.1085 15 17.0039 15C15.8993 15 15.0039 15.8954 15.0039 17C15.0039 18.1046 15.8993 19 17.0039 19Z"/><path d="M1.99609 10.0009H15.3641C15.9911 10.0009 16.2041 10.3681 16.6841 10.9441C17.2361 11.4841 17.6093 11.8628 18.1241 11.9401C18.8441 12.0481 21.5081 11.9941 21.5081 11.9941"/></svg>',
+        aerial: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 8.93333C20 14 14.4615 18 12 18C9.53846 18 4 14 4 8.93333C4 5.10416 7.58172 2 12 2C16.4183 2 20 5.10416 20 8.93333Z"/><path d="M15 8.93333C15 14 12.9231 18 12 18C11.0769 18 9 14 9 8.93333C9 5.10416 10.3431 2 12 2C13.6569 2 15 5.10416 15 8.93333Z"/><path d="M9 20C9 19.535 9 19.3025 9.05111 19.1118C9.18981 18.5941 9.59413 18.1898 10.1118 18.0511C10.3025 18 10.535 18 11 18H13C13.465 18 13.6975 18 13.8882 18.0511C14.4059 18.1898 14.8102 18.5941 14.9489 19.1118C15 19.3025 15 19.535 15 20C15 20.465 15 20.6975 14.9489 20.8882C14.8102 21.4059 14.4059 21.8102 13.8882 21.9489C13.6975 22 13.465 22 13 22H11C10.535 22 10.3025 22 10.1118 21.9489C9.59413 21.8102 9.18981 21.4059 9.05111 20.8882C9 20.6975 9 20.465 9 20Z"/></svg>'
     };
 
     // Colores por tipo de transporte (valores por defecto)
@@ -30,7 +32,9 @@
         'car': '#4444FF',
         'train': '#FF8800',
         'ship': '#00AAAA',
-        'walk': '#44FF44'
+        'walk': '#44FF44',
+        'bus': '#9C27B0',
+        'aerial': '#E91E63'
     };
 
     /**
@@ -56,7 +60,9 @@
                         'ship': appConfig.transportColors.ship || transportColors.ship,
                         'car': appConfig.transportColors.car || transportColors.car,
                         'train': appConfig.transportColors.train || transportColors.train,
-                        'walk': appConfig.transportColors.walk || transportColors.walk
+                        'walk': appConfig.transportColors.walk || transportColors.walk,
+                        'bus': appConfig.transportColors.bus || transportColors.bus,
+                        'aerial': appConfig.transportColors.aerial || transportColors.aerial
                     };
                     
                     console.log('transportColors actualizado (trip_map):', transportColors);
@@ -83,13 +89,15 @@
         
         legendContainer.empty();
         
-        // Orden de los tipos de transporte
+        // Orden de los tipos de transporte (use transportTypes from PHP if available)
         const transportOrder = [
-            { type: 'plane', icon: transportIcons.plane, label: 'Avión' },
-            { type: 'car', icon: transportIcons.car, label: 'Auto' },
-            { type: 'train', icon: transportIcons.train, label: 'Tren' },
-            { type: 'ship', icon: transportIcons.ship, label: 'Barco' },
-            { type: 'walk', icon: transportIcons.walk, label: 'Caminata' }
+            { type: 'plane', icon: transportIcons.plane, label: (typeof transportTypes !== 'undefined' && transportTypes.plane) || 'Avión' },
+            { type: 'car', icon: transportIcons.car, label: (typeof transportTypes !== 'undefined' && transportTypes.car) || 'Auto' },
+            { type: 'train', icon: transportIcons.train, label: (typeof transportTypes !== 'undefined' && transportTypes.train) || 'Tren' },
+            { type: 'ship', icon: transportIcons.ship, label: (typeof transportTypes !== 'undefined' && transportTypes.ship) || 'Barco' },
+            { type: 'walk', icon: transportIcons.walk, label: (typeof transportTypes !== 'undefined' && transportTypes.walk) || 'Caminata' },
+            { type: 'bus', icon: transportIcons.bus, label: (typeof transportTypes !== 'undefined' && transportTypes.bus) || 'Bus' },
+            { type: 'aerial', icon: transportIcons.aerial, label: (typeof transportTypes !== 'undefined' && transportTypes.aerial) || 'Aéreo' }
         ];
         
         transportOrder.forEach(function(item) {
@@ -106,6 +114,231 @@
         });
         
         console.log('Leyenda de trip editor renderizada');
+    }
+
+    /**
+     * Renderiza la lista de rutas con controles para editar
+     */
+    function renderRoutesList() {
+        const routesListContainer = $('#routesList');
+        const routesListCard = $('#routesListCard');
+        const routesCount = $('#routesCount');
+        
+        if (routesListContainer.length === 0) return;
+        
+        routesListContainer.empty();
+        const totalRoutes = routesData.length;
+        routesCount.text(`(${totalRoutes})`);
+        
+        if (totalRoutes === 0) {
+            routesListCard.hide();
+            return;
+        }
+        
+        routesListCard.show();
+        
+        // Create table layout for better horizontal display
+        const table = $(`
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align: center;">#</th>
+                            <th style="width: 60px; text-align: center;"></th>
+                            <th>Transport Type</th>
+                            <th style="width: 100px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routesTableBody"></tbody>
+                </table>
+            </div>
+        `);
+        
+        routesListContainer.append(table);
+        const tbody = $('#routesTableBody');
+        
+        routesData.forEach(function(route, index) {
+            const color = route.color || transportColors[route.transport_type];
+            const icon = transportIcons[route.transport_type] || '';
+            
+            // Build transport type selector
+            const transportOrder = ['plane', 'car', 'train', 'ship', 'walk', 'bus', 'aerial'];
+            let optionsHtml = '';
+            transportOrder.forEach(function(type) {
+                const typeLabel = (typeof transportTypes !== 'undefined' && transportTypes[type]) || type;
+                const selected = type === route.transport_type ? 'selected' : '';
+                optionsHtml += `<option value="${type}" ${selected}>${typeLabel}</option>`;
+            });
+            
+            const row = $(`
+                <tr data-route-index="${index}" style="cursor: pointer;" title="Click to focus on this route on the map">
+                    <td class="text-center align-middle">
+                        <div style="width: 30px; height: 4px; background-color: ${color}; margin: 0 auto;"></div>
+                    </td>
+                    <td class="text-center align-middle">${icon}</td>
+                    <td class="align-middle">
+                        <select class="form-select form-select-sm transport-type-selector" data-route-index="${index}">
+                            ${optionsHtml}
+                        </select>
+                    </td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-outline-danger delete-route-btn" data-route-index="${index}" title="Delete route">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `);
+            
+            tbody.append(row);
+        });
+        
+        // Attach event handlers
+        $('.transport-type-selector').off('change').on('change', function() {
+            const index = parseInt($(this).data('route-index'));
+            const newType = $(this).val();
+            changeRouteTransportType(index, newType);
+        });
+        
+        $('.delete-route-btn').off('click').on('click', function() {
+            const index = parseInt($(this).data('route-index'));
+            deleteRoute(index);
+        });
+        
+        // Highlight route on hover
+        $('tr[data-route-index]').off('mouseenter mouseleave').hover(
+            function() {
+                const index = parseInt($(this).data('route-index'));
+                highlightRoute(index, true);
+            },
+            function() {
+                const index = parseInt($(this).data('route-index'));
+                highlightRoute(index, false);
+            }
+        );
+        
+        // Click to focus on route
+        $('tr[data-route-index]').off('click').on('click', function(e) {
+            // Don't trigger if clicking on select or button
+            if ($(e.target).closest('select, button').length > 0) return;
+            
+            const index = parseInt($(this).data('route-index'));
+            focusOnRoute(index);
+        });
+    }
+    
+    /**
+     * Destaca visualmente una ruta en el mapa
+     */
+    function highlightRoute(index, highlight) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        if (!route.layer) return;
+        
+        if (highlight) {
+            // Highlight: increase width and opacity
+            route.layer.setStyle({
+                weight: 8,
+                opacity: 1
+            });
+            route.layer.bringToFront();
+        } else {
+            // Reset to normal
+            route.layer.setStyle({
+                weight: 4,
+                opacity: 0.8
+            });
+        }
+    }
+    
+    /**
+     * Enfoca el mapa en una ruta específica
+     */
+    function focusOnRoute(index) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        if (!route.layer) return;
+        
+        // Fit map to route bounds
+        try {
+            const bounds = route.layer.getBounds();
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 12
+            });
+            
+            // Flash the route
+            let flashCount = 0;
+            const flashInterval = setInterval(function() {
+                if (flashCount >= 4) {
+                    clearInterval(flashInterval);
+                    route.layer.setStyle({
+                        weight: 4,
+                        opacity: 0.8
+                    });
+                    return;
+                }
+                
+                const isVisible = flashCount % 2 === 0;
+                route.layer.setStyle({
+                    weight: isVisible ? 8 : 4,
+                    opacity: isVisible ? 1 : 0.3
+                });
+                
+                flashCount++;
+            }, 200);
+        } catch (e) {
+            console.warn('No se pudo enfocar en la ruta:', e);
+        }
+    }
+
+    /**
+     * Cambia el tipo de transporte de una ruta
+     */
+    function changeRouteTransportType(index, newType) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        route.transport_type = newType;
+        route.color = transportColors[newType];
+        
+        // Update the layer on the map
+        if (route.layer) {
+            route.layer.setStyle({ color: route.color });
+            route.layer.transportType = newType;
+            route.layer.color = route.color;
+        }
+        
+        // Update the hidden form field with new data
+        updateRoutesData();
+        
+        console.log(`Route ${index} transport type changed to ${newType}`);
+    }
+
+    /**
+     * Elimina una ruta específica
+     */
+    function deleteRoute(index) {
+        if (index < 0 || index >= routesData.length) return;
+        
+        const route = routesData[index];
+        
+        // Remove from map
+        if (route.layer && drawnItems.hasLayer(route.layer)) {
+            drawnItems.removeLayer(route.layer);
+        }
+        
+        // Remove from routesData
+        routesData.splice(index, 1);
+        
+        // Re-render the list
+        renderRoutesList();
+        
+        console.log(`Route ${index} deleted`);
     }
 
     /**
@@ -277,12 +510,21 @@
             routesData.push({
                 transport_type: layer.transportType || 'car',
                 color: layer.color || transportColors['car'],
-                geojson: geojson
+                geojson: geojson,
+                layer: layer  // Keep reference to the layer
             });
         });
 
-        // Actualizar input hidden
-        document.getElementById('routes_data').value = JSON.stringify(routesData);
+        // Actualizar input hidden (sin las referencias a layers)
+        const routesDataForSave = routesData.map(route => ({
+            transport_type: route.transport_type,
+            color: route.color,
+            geojson: route.geojson
+        }));
+        document.getElementById('routes_data').value = JSON.stringify(routesDataForSave);
+
+        // Update routes list UI
+        renderRoutesList();
 
         console.log('Rutas actualizadas:', routesData.length);
     }
