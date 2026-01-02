@@ -24,9 +24,6 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
     <link rel="shortcut icon" type="image/x-icon" href="<?= htmlspecialchars(SITE_FAVICON) ?>">
     <?php endif; ?>
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="<?= ASSETS_URL ?>/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    
     <?php if ($mapRenderer === 'leaflet'): ?>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/leaflet/css/leaflet.css">
@@ -52,8 +49,11 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
     <!-- Mapa a pantalla completa -->
     <div id="map"></div>
 
+    <!-- Offcanvas backdrop -->
+    <div class="offcanvas-backdrop" id="offcanvasBackdrop"></div>
+    
     <!-- Botón para abrir el panel lateral -->
-    <button class="btn btn-primary floating-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#tripsPanel" aria-controls="tripsPanel">
+    <button class="btn btn-primary floating-menu-toggle" type="button" id="openOffcanvas" aria-controls="tripsPanel">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
         </svg>
@@ -106,7 +106,7 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
                 </svg>
                 <?= __('map.my_trips') ?>
             </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <button type="button" class="btn-close" id="closeOffcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
             <!-- Buscador de lugares -->
@@ -179,11 +179,8 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
         </div>
     </div>
 
-    <!-- jQuery -->
+    <!-- jQuery (required for map interactions) -->
     <script src="<?= ASSETS_URL ?>/vendor/jquery/jquery-3.7.1.min.js"></script>
-    
-    <!-- Bootstrap 5 JS -->
-    <script src="<?= ASSETS_URL ?>/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <?php if ($mapRenderer === 'leaflet'): ?>
     <!-- Leaflet JS -->
@@ -242,20 +239,51 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
         i18n.init(function() {
             console.log('Language system initialized:', i18n.getCurrentLanguage());
         });
-        
-        // Event handler para el toggle de idioma
-        $(document).ready(function() {
-            $('input[name="langToggle"]').on('change', function() {
-                const newLang = $(this).val();
-                console.log('Language changed to:', newLang);
-                
-                // Guardar en localStorage y cookie
-                i18n.setLanguage(newLang, function() {
-                    // Recargar página para aplicar nuevo idioma
-                    window.location.reload();
+    </script>
+    
+    <!-- Offcanvas and UI interactions (vanilla JS) -->
+    <script>
+        (function() {
+            // Offcanvas functionality
+            const offcanvas = document.getElementById('tripsPanel');
+            const backdrop = document.getElementById('offcanvasBackdrop');
+            const openBtn = document.getElementById('openOffcanvas');
+            const closeBtn = document.getElementById('closeOffcanvas');
+            
+            function openOffcanvas() {
+                offcanvas.classList.add('show');
+                backdrop.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeOffcanvas() {
+                offcanvas.classList.remove('show');
+                backdrop.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            
+            openBtn.addEventListener('click', openOffcanvas);
+            closeBtn.addEventListener('click', closeOffcanvas);
+            backdrop.addEventListener('click', closeOffcanvas);
+            
+            // Close on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && offcanvas.classList.contains('show')) {
+                    closeOffcanvas();
+                }
+            });
+            
+            // Language toggle
+            document.querySelectorAll('input[name="langToggle"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    const newLang = this.value;
+                    console.log('Language changed to:', newLang);
+                    i18n.setLanguage(newLang, function() {
+                        window.location.reload();
+                    });
                 });
             });
-        });
+        })();
     </script>
     
     <!-- Public Map JS -->

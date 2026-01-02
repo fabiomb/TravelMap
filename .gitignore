@@ -8,4 +8,5 @@ assets/js/trip_map_leaflet_backup.js
 assets/js/public_map_leaflet_backup.js
 flightdiary_2025_12_29_23_58.csv
 backups/*.json
-*.db*.db
+*.db
+admin/phpminiadmin.php
