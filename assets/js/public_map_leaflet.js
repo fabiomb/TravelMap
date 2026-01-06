@@ -928,7 +928,99 @@
     }
 
     /**
-     * Creates a single flight layer (simple polyline - fast)
+     * Creates a curved flight path using quadratic Bézier curve
+     * Simulates 3D arc effect in 2D for a more realistic flight representation
+     */
+    function createCurvedFlightPath(startCoord, endCoord, curvature) {
+        const start = L.latLng(startCoord[1], startCoord[0]);
+        const end = L.latLng(endCoord[1], endCoord[0]);
+        
+        // Calculate midpoint
+        const midLat = (start.lat + end.lat) / 2;
+        const midLng = (start.lng + end.lng) / 2;
+        
+        // Calculate distance for curve height
+        const distance = start.distanceTo(end);
+        
+        // Adjust curve height based on distance (longer flights = higher arc)
+        // The offset is calculated to create a visible arc
+        // For short flights: minimum visible curve, for long flights: natural arc
+        const baseHeight = distance / 5; // More aggressive curvature
+        const curveHeight = Math.max(baseHeight, distance * 0.15); // At least 15% of distance
+        
+        // Calculate perpendicular offset for control point
+        const bearing = getBearing(start, end);
+        const perpBearing = bearing + 90; // Perpendicular to the flight path
+        
+        // Create control point offset from midpoint
+        const controlPoint = destinationPoint(
+            L.latLng(midLat, midLng), 
+            perpBearing, 
+            curveHeight * (curvature || 1)
+        );
+        
+        // Generate points along the quadratic Bézier curve
+        const points = [];
+        const segments = Math.max(20, Math.floor(distance / 50000)); // More segments for longer flights
+        
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const lat = (1 - t) * (1 - t) * start.lat + 
+                       2 * (1 - t) * t * controlPoint.lat + 
+                       t * t * end.lat;
+            const lng = (1 - t) * (1 - t) * start.lng + 
+                       2 * (1 - t) * t * controlPoint.lng + 
+                       t * t * end.lng;
+            points.push([lat, lng]);
+        }
+        
+        return points;
+    }
+    
+    /**
+     * Calculate bearing between two points
+     */
+    function getBearing(start, end) {
+        const startLat = start.lat * Math.PI / 180;
+        const startLng = start.lng * Math.PI / 180;
+        const endLat = end.lat * Math.PI / 180;
+        const endLng = end.lng * Math.PI / 180;
+        
+        const dLng = endLng - startLng;
+        const y = Math.sin(dLng) * Math.cos(endLat);
+        const x = Math.cos(startLat) * Math.sin(endLat) -
+                 Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
+        
+        const bearing = Math.atan2(y, x);
+        return (bearing * 180 / Math.PI + 360) % 360;
+    }
+    
+    /**
+     * Calculate destination point given distance and bearing
+     */
+    function destinationPoint(point, bearing, distance) {
+        const radius = 6371000; // Earth's radius in meters
+        const δ = distance / radius;
+        const θ = bearing * Math.PI / 180;
+        
+        const φ1 = point.lat * Math.PI / 180;
+        const λ1 = point.lng * Math.PI / 180;
+        
+        const φ2 = Math.asin(
+            Math.sin(φ1) * Math.cos(δ) +
+            Math.cos(φ1) * Math.sin(δ) * Math.cos(θ)
+        );
+        
+        const λ2 = λ1 + Math.atan2(
+            Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+            Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
+        );
+        
+        return L.latLng(φ2 * 180 / Math.PI, λ2 * 180 / Math.PI);
+    }
+
+    /**
+     * Creates a single flight layer with curved path for realistic flight arc
      */
     function createFlightLayer(route, trip) {
         if (!route.geojson || !route.geojson.geometry || route.geojson.geometry.type !== 'LineString') {
@@ -942,14 +1034,28 @@
         const dashArray = isFuture ? '2, 4' : '4, 6';
         const opacity = isFuture ? 0.5 : 0.6;
         
-        // Simple straight line (much faster than Bézier curves)
-        const latLngs = coords.map(function(c) { return [c[1], c[0]]; });
+        // Create curved flight path for more realistic representation
+        // For multi-segment flights, curve each segment
+        const latLngs = [];
+        
+        if (coords.length === 2) {
+            // Simple point-to-point flight - create smooth curve
+            const curvedPath = createCurvedFlightPath(coords[0], coords[1], 1);
+            latLngs.push(...curvedPath);
+        } else {
+            // Multi-segment flight - curve each segment
+            for (let i = 0; i < coords.length - 1; i++) {
+                const segmentPath = createCurvedFlightPath(coords[i], coords[i + 1], 0.8);
+                latLngs.push(...segmentPath);
+            }
+        }
         
         const layer = L.polyline(latLngs, {
             color: color,
             weight: 2,
             opacity: opacity,
-            dashArray: dashArray
+            dashArray: dashArray,
+            smoothFactor: 1
         });
         
         // Popup
