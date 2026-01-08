@@ -13,8 +13,16 @@ require_once __DIR__ . '/../includes/auth.php';
 require_auth();
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/models/Trip.php';
+require_once __DIR__ . '/../src/models/TripTag.php';
+require_once __DIR__ . '/../src/models/Settings.php';
 
 $tripModel = new Trip();
+$tripTagModel = new TripTag();
+$settingsModel = new Settings(getDB());
+
+// Verificar si el sistema de tags está habilitado
+$tripTagsEnabled = $settingsModel->get('trip_tags_enabled', true);
+
 $message = '';
 $message_type = '';
 
@@ -74,6 +82,14 @@ require_once __DIR__ . '/../includes/header.php';
 
 // Obtener todos los viajes
 $trips = $tripModel->getAll('start_date DESC, created_at DESC');
+
+// Cargar tags para cada viaje solo si está habilitado
+if ($tripTagsEnabled) {
+    foreach ($trips as &$trip) {
+        $trip['tags'] = $tripTagModel->getByTripId($trip['id']);
+    }
+    unset($trip); // Romper referencia
+}
 ?>
 
 <!-- Page Header -->
@@ -187,6 +203,16 @@ $trips = $tripModel->getAll('start_date DESC, created_at DESC');
                                         <div class="cell-title"><?= htmlspecialchars($trip['title']) ?></div>
                                         <?php if ($trip['description']): ?>
                                             <div class="cell-subtitle"><?= htmlspecialchars(mb_substr($trip['description'], 0, 60)) ?><?= mb_strlen($trip['description']) > 60 ? '...' : '' ?></div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($tripTagsEnabled && !empty($trip['tags'])): ?>
+                                            <div class="mt-1">
+                                                <?php foreach ($trip['tags'] as $tag): ?>
+                                                    <span class="badge bg-light text-dark border me-1" style="font-size: 0.7em;">
+                                                        <?= htmlspecialchars($tag) ?>
+                                                    </span>
+                                                <?php endforeach; ?>
+                                            </div>
                                         <?php endif; ?>
                                     </td>
                                     <td>

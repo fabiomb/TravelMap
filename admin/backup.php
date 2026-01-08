@@ -12,16 +12,8 @@ require_once __DIR__ . '/../includes/auth.php';
 require_auth();
 
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../src/models/Trip.php';
-require_once __DIR__ . '/../src/models/Route.php';
-require_once __DIR__ . '/../src/models/Point.php';
-require_once __DIR__ . '/../src/models/Settings.php';
 
 $db = getDB();
-$tripModel = new Trip();
-$routeModel = new Route();
-$pointModel = new Point();
-$settingsModel = new Settings($db);
 
 // Backup directory
 $backupDir = ROOT_PATH . '/backups';
@@ -34,6 +26,7 @@ $stats = [
     'trips' => 0,
     'routes' => 0,
     'points' => 0,
+    'tags' => 0,
     'settings' => 0,
     'images_count' => 0,
     'images_size' => 0
@@ -48,6 +41,9 @@ try {
     
     $stmt = $db->query('SELECT COUNT(*) as total FROM points_of_interest');
     $stats['points'] = (int)$stmt->fetch()['total'];
+
+    $stmt = $db->query('SELECT COUNT(*) as total FROM trip_tags');
+    $stats['tags'] = (int)$stmt->fetch()['total'];
     
     $stmt = $db->query('SELECT COUNT(*) as total FROM settings');
     $stats['settings'] = (int)$stmt->fetch()['total'];
@@ -116,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $includeTrips = isset($_POST['include_trips']);
         $includeRoutes = isset($_POST['include_routes']);
         $includePoints = isset($_POST['include_points']);
+        $includeTags = isset($_POST['include_tags']);
         $includeSettings = isset($_POST['include_settings']);
         $includeImages = isset($_POST['include_images']);
         $saveToServer = isset($_POST['save_to_server']);
@@ -148,6 +145,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->query('SELECT * FROM points_of_interest ORDER BY id');
                 $backup['data']['points_of_interest'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $backup['includes'][] = 'points';
+            }
+
+            // Export tags
+            if ($includeTags) {
+                $stmt = $db->query('SELECT * FROM trip_tags ORDER BY id');
+                $backup['data']['trip_tags'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $backup['includes'][] = 'tags';
             }
             
             // Export settings
@@ -305,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $db->beginTransaction();
                 
-                $imported = ['trips' => 0, 'routes' => 0, 'points' => 0, 'settings' => 0];
+                $imported = ['trips' => 0, 'routes' => 0, 'points' => 0, 'tags' => 0, 'settings' => 0];
                 $idMap = ['trips' => []];
                 
                 // Replace mode - clear tables first
@@ -315,6 +319,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     if (isset($backupData['data']['points_of_interest'])) {
                         $db->exec('DELETE FROM points_of_interest');
+                    }
+                    if (isset($backupData['data']['trip_tags'])) {
+                        $db->exec('DELETE FROM trip_tags');
                     }
                     if (isset($backupData['data']['trips'])) {
                         $db->exec('DELETE FROM trips');
@@ -456,6 +463,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $imported['points_skipped'] = $skippedPoints;
                     $imported['points_updated'] = $updatedPoints;
                 }
+
+                // Import tags (with mapped trip_id)
+                if (isset($backupData['data']['trip_tags'])) {
+                    foreach ($backupData['data']['trip_tags'] as $tag) {
+                        $oldTripId = $tag['trip_id'];
+                        $newTripId = $idMap['trips'][$oldTripId] ?? null;
+                        
+                        if (!$newTripId) continue;
+                        
+                        unset($tag['id'], $tag['created_at']);
+                        
+                        // Check if exists
+                        $stmt = $db->prepare('SELECT id FROM trip_tags WHERE trip_id = ? AND tag_name = ?');
+                        $stmt->execute([$newTripId, $tag['tag_name']]);
+                        $existing = $stmt->fetch();
+                        
+                        if (!$existing || $restoreMode === 'replace') {
+                            $stmt = $db->prepare('INSERT INTO trip_tags (trip_id, tag_name) VALUES (?, ?)');
+                            $stmt->execute([
+                                $newTripId,
+                                $tag['tag_name']
+                            ]);
+                            $imported['tags']++;
+                        }
+                    }
+                }
                 
                 // Import settings
                 if (isset($backupData['data']['settings'])) {
@@ -494,6 +527,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($imported['trips'] > 0) $summary[] = $imported['trips'] . ' trips';
                 if ($imported['routes'] > 0) $summary[] = $imported['routes'] . ' routes';
                 if ($imported['points'] > 0) $summary[] = $imported['points'] . ' points';
+                if ($imported['tags'] > 0) $summary[] = $imported['tags'] . ' tags';
                 if ($imported['settings'] > 0) $summary[] = $imported['settings'] . ' settings';
                 
                 $details = [];
@@ -645,6 +679,14 @@ require_once __DIR__ . '/../includes/header.php';
                         <label class="form-check-label" for="include_points">
                             <strong><?= __('navigation.points') ?></strong>
                             <span class="badge badge-info" style="margin-left: 8px;"><?= $stats['points'] ?></span>
+                        </label>
+                    </div>
+
+                    <div class="form-check" style="margin-bottom: 10px;">
+                        <input type="checkbox" class="form-check-input" id="include_tags" name="include_tags" checked>
+                        <label class="form-check-label" for="include_tags">
+                            <strong>Tags</strong>
+                            <span class="badge badge-info" style="margin-left: 8px;"><?= $stats['tags'] ?></span>
                         </label>
                     </div>
                     

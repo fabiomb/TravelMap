@@ -78,8 +78,6 @@
     "transport_walk": "Walk",
     "transport_bus": "Bus",
     "transport_aerial": "Aerial",
-    "transport_bus": "Bus",
-    "transport_aerial": "Aerial",
     "transport": "Transport",
     "upcoming_trip": "Upcoming trip",
     "upcoming_trips": "Upcoming trips",
@@ -103,8 +101,6 @@
     "share_link": "Share Link",
     "link_copied": "Link copied to clipboard",
     "copy_failed": "Failed to copy link",
-    "hide_all_trips": "Hide all trips",
-    "trips_section": "Trips",
     "loading_trips": "Loading trips..."
   },
   "forms": {
@@ -198,7 +194,13 @@
     "points": "Points",
     "map_editor": "Map Editor",
     "draw_routes_on_map": "Draw routes for your trip on the map",
-    "trip_info": "Trip Information"
+    "trip_info": "Trip Information",
+    "tags": "Tags",
+    "add_tags": "Add tags...",
+    "tags_help": "Type and press Enter, Tab or Comma to add tags.",
+    "tag_too_long": "Tag is too long (maximum 50 characters)",
+    "tag_invalid_chars": "Tag contains invalid characters (only letters, numbers, spaces and hyphens allowed)",
+    "too_many_tags": "Too many tags (maximum 10)"
   },
   "points": {
     "title": "Points of Interest",

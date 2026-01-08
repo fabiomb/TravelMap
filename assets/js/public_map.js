@@ -18,7 +18,7 @@
     let clusterMarkers = [];
     let pointMarkers = [];
     let popup = null;
-    
+
     // Map style URLs (all free, no API key needed)
     const MAP_STYLES = {
         'positron': 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -26,25 +26,25 @@
         'dark-matter': 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
         'osm-liberty': 'https://tiles.openfreemap.org/styles/liberty'
     };
-    
+
     // Track visibility state
     let visibleTripIds = new Set();
     let showRoutes = true;
     let showPoints = true;
     let showFlightRoutes = false;
-    
+
     // Route sources and layers tracking
     let routeSourcesAdded = new Set();
-    
+
     // Throttle timer for cluster updates (performance)
     let clusterUpdateTimer = null;
     const CLUSTER_UPDATE_DELAY = 100; // ms - throttle cluster recalculations
-    
+
     // Idle detection for reducing GPU usage when not interacting
     let idleTimer = null;
     let isIdle = false;
     const IDLE_TIMEOUT = 3000; // ms - time before map goes idle
-    
+
     // LocalStorage key for user preferences
     const STORAGE_KEY = 'travelmap_preferences';
 
@@ -61,7 +61,7 @@
     function getURLParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const params = {};
-        
+
         // Parse center parameter (lat,lng)
         if (urlParams.has('center')) {
             const centerStr = urlParams.get('center');
@@ -70,7 +70,7 @@
                 params.center = parts; // [lat, lng]
             }
         }
-        
+
         // Parse zoom parameter
         if (urlParams.has('zoom')) {
             const zoomVal = parseFloat(urlParams.get('zoom'));
@@ -78,7 +78,7 @@
                 params.zoom = zoomVal;
             }
         }
-        
+
         // Parse trips parameter (comma-separated IDs)
         if (urlParams.has('trips')) {
             const tripsStr = urlParams.get('trips');
@@ -89,15 +89,15 @@
                 params.trips = tripIds;
             }
         }
-        
+
         // Parse boolean parameters (routes, points, flights)
-        ['routes', 'points', 'flights'].forEach(function(key) {
+        ['routes', 'points', 'flights'].forEach(function (key) {
             if (urlParams.has(key)) {
                 const val = urlParams.get(key).toLowerCase();
                 params[key] = val === '1' || val === 'true';
             }
         });
-        
+
         return params;
     }
 
@@ -134,21 +134,21 @@
 
     // Point type config
     const pointTypeConfig = {
-        'stay': { 
-            icon: pointTypeIcons.stay, 
+        'stay': {
+            icon: pointTypeIcons.stay,
             labelKey: 'map.point_type_stay',
             label: __('map.point_type_stay'),
-            color: '#FF6B6B' 
+            color: '#FF6B6B'
         },
-        'visit': { 
-            icon: pointTypeIcons.visit, 
+        'visit': {
+            icon: pointTypeIcons.visit,
             labelKey: 'map.point_type_visit',
             label: __('map.point_type_visit'),
             color: '#4ECDC4',
             darkText: true
         },
-        'food': { 
-            icon: pointTypeIcons.food, 
+        'food': {
+            icon: pointTypeIcons.food,
             labelKey: 'map.point_type_food',
             label: __('map.point_type_food'),
             color: '#FFE66D',
@@ -203,7 +203,7 @@
 
     function getSelectedTripIds() {
         const selected = [];
-        $('.trip-checkbox:checked').each(function() {
+        $('.trip-checkbox:checked').each(function () {
             selected.push(parseInt($(this).val()));
         });
         return selected;
@@ -227,7 +227,7 @@
             url: BASE_URL + '/api/get_config.php',
             method: 'GET',
             dataType: 'json'
-        }).done(function(response) {
+        }).done(function (response) {
             if (response.success && response.data) {
                 appConfig = response.data;
                 if (appConfig.transportColors) {
@@ -238,7 +238,7 @@
                     transportConfig.walk.color = appConfig.transportColors.walk || transportConfig.walk.color;
                 }
             }
-        }).fail(function() {
+        }).fail(function () {
             console.warn('Config load failed, using defaults');
         });
     }
@@ -250,7 +250,7 @@
         // Get configured map style or default to voyager
         const mapStyleKey = appConfig?.map?.style || 'voyager';
         const mapStyleUrl = MAP_STYLES[mapStyleKey] || MAP_STYLES['voyager'];
-        
+
         // Create MapLibre GL map with performance optimizations
         map = new maplibregl.Map({
             container: 'map',
@@ -279,17 +279,17 @@
             closeOnClick: false,
             maxWidth: '320px'
         });
-        
+
         // Track if we just opened a popup (to prevent immediate close)
         let popupOpenTime = 0;
-        
+
         // Listen for popup open events
-        popup.on('open', function() {
+        popup.on('open', function () {
             popupOpenTime = Date.now();
         });
-        
+
         // Close popup when clicking on the map canvas (not markers or popups)
-        document.getElementById('map').addEventListener('click', function(e) {
+        document.getElementById('map').addEventListener('click', function (e) {
             // Check if click is on the canvas itself, not on markers or popups
             if (e.target.classList.contains('maplibregl-canvas')) {
                 // Only close if popup wasn't just opened (within 100ms)
@@ -300,7 +300,7 @@
         });
 
         // Wait for map to load before adding layers
-        map.on('load', function() {
+        map.on('load', function () {
             console.log('MapLibre GL map loaded');
             // Set default cursor - use the map container element
             document.getElementById('map').style.cursor = 'default';
@@ -310,7 +310,7 @@
         // Update clusters on zoom (throttled for performance)
         map.on('zoom', throttledClusterUpdate);
         map.on('moveend', throttledClusterUpdate);
-        
+
         // Idle detection to reduce GPU usage when not interacting
         function resetIdleTimer() {
             if (isIdle) {
@@ -325,16 +325,16 @@
                 // The map will still respond to interactions
             }, IDLE_TIMEOUT);
         }
-        
+
         map.on('move', resetIdleTimer);
         map.on('zoom', resetIdleTimer);
         map.on('click', resetIdleTimer);
         map.on('mousemove', resetIdleTimer);
-        
+
         // Start idle timer
         resetIdleTimer();
     }
-    
+
     /**
      * Throttled cluster update to reduce CPU usage
      */
@@ -353,7 +353,7 @@
             url: API_URL,
             method: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success && response.data && response.data.trips) {
                     tripsData = response.data.trips;
                     initSupercluster();
@@ -366,7 +366,7 @@
                     showError(__('map.no_trips_found'));
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Error loading data:', error);
                 showError(__('map.error_loading_data'));
             }
@@ -379,7 +379,7 @@
     function initSupercluster() {
         const mapConfig = appConfig?.map || {};
         const maxClusterRadius = mapConfig.maxClusterRadius || 50;
-        
+
         supercluster = new Supercluster({
             radius: maxClusterRadius,
             maxZoom: 16,
@@ -394,38 +394,38 @@
         const allPoints = [];
         // Track coordinates to detect co-located points
         const coordsMap = new Map();
-        
-        tripsData.forEach(function(trip) {
+
+        tripsData.forEach(function (trip) {
             visibleTripIds.add(trip.id);
-            
+
             // Render routes
             if (trip.routes && trip.routes.length > 0) {
-                trip.routes.forEach(function(route) {
+                trip.routes.forEach(function (route) {
                     renderRoute(route, trip);
                 });
             }
-            
+
             // Collect points for clustering
             if (trip.points && trip.points.length > 0) {
-                trip.points.forEach(function(point) {
+                trip.points.forEach(function (point) {
                     const coordKey = `${point.latitude.toFixed(6)},${point.longitude.toFixed(6)}`;
-                    
+
                     // Count how many points are at this location
                     const existingCount = coordsMap.get(coordKey) || 0;
                     coordsMap.set(coordKey, existingCount + 1);
-                    
+
                     // Apply small offset if there are multiple points at same location
                     // Offset creates a small spiral pattern around the original point
                     let offsetLat = point.latitude;
                     let offsetLon = point.longitude;
-                    
+
                     if (existingCount > 0) {
                         const angle = (existingCount * 137.5) * (Math.PI / 180); // Golden angle for good distribution
                         const radius = 0.00015 * Math.sqrt(existingCount); // Grows slightly with each point
                         offsetLat = point.latitude + radius * Math.cos(angle);
                         offsetLon = point.longitude + radius * Math.sin(angle);
                     }
-                    
+
                     allPoints.push({
                         type: 'Feature',
                         properties: {
@@ -433,6 +433,7 @@
                             tripId: trip.id,
                             tripTitle: trip.title,
                             tripColor: trip.color,
+                            tripTags: trip.tags || [],
                             originalLat: point.latitude,
                             originalLon: point.longitude
                         },
@@ -444,11 +445,11 @@
                 });
             }
         });
-        
+
         // Load points into supercluster
         supercluster.load(allPoints);
         updateClusters();
-        
+
         // Render flight arcs with deck.gl
         updateFlightArcs();
     }
@@ -462,7 +463,7 @@
         }
 
         const transportType = route.transport_type || 'car';
-        
+
         // Skip simple plane routes (A-to-B) - they're handled by deck.gl arcs
         // Complex aerial routes with 3+ waypoints are rendered as lines
         const isPlaneRoute = transportType === 'plane';
@@ -473,13 +474,13 @@
             }
             // Complex aerial route - continue to render as line
         }
-        
+
         const config = transportConfig[transportType] || transportConfig['car'];
         const isFuture = isFutureTrip(trip);
         const color = isFuture ? '#6B6B6B' : config.color;
         const sourceId = `route-${trip.id}-${route.id}`;
         const layerId = `route-layer-${trip.id}-${route.id}`;
-        
+
         // Add source
         if (!map.getSource(sourceId)) {
             map.addSource(sourceId, {
@@ -488,12 +489,12 @@
             });
             routeSourcesAdded.add(sourceId);
         }
-        
+
         // Add layer
         if (!map.getLayer(layerId)) {
             // Plane routes are controlled by showFlightRoutes, others by showRoutes
             const initialVisibility = isPlaneRoute ? showFlightRoutes : showRoutes;
-            
+
             const layerConfig = {
                 id: layerId,
                 type: 'line',
@@ -513,33 +514,46 @@
                     transportType: transportType
                 }
             };
-            
+
             // Add dash pattern if needed
             if (isFuture || config.dashArray) {
                 layerConfig.paint['line-dasharray'] = isFuture ? [2, 6] : config.dashArray;
             }
-            
+
             map.addLayer(layerConfig);
-            
+
             // Add click handler for popup
-            map.on('click', layerId, function(e) {
+            map.on('click', layerId, function (e) {
                 e.preventDefault();
                 const futureLabel = isFuture ? ` <span class="badge bg-secondary">Próximo</span>` : '';
+
+                // Generar HTML de tags
+                let tagsHtml = '';
+                if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+                    tagsHtml = '<div class="mt-1 d-flex gap-1 flex-wrap">';
+                    trip.tags.forEach(tag => {
+                        tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.7em;">${escapeHtml(tag)}</span>`;
+                    });
+                    tagsHtml += '</div>';
+                }
+
                 popup.setLngLat(e.lngLat)
                     .setHTML(`
                         <div class="route-popup">
-                            <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
+                            <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}
+                            ${tagsHtml}
+                            <br>
                             <small class="text-muted">${__('map.transport')}: ${__('map.transport_' + transportType)}</small>
                         </div>
                     `)
                     .addTo(map);
             });
-            
+
             // Change cursor on hover
-            map.on('mouseenter', layerId, function() {
+            map.on('mouseenter', layerId, function () {
                 document.getElementById('map').style.cursor = 'pointer';
             });
-            map.on('mouseleave', layerId, function() {
+            map.on('mouseleave', layerId, function () {
                 document.getElementById('map').style.cursor = 'default';
             });
         }
@@ -555,7 +569,7 @@
             }
             return;
         }
-        
+
         // Lazy load deck.gl if not already loaded
         if (typeof deck === 'undefined') {
             if (!deckLoaded) {
@@ -563,11 +577,11 @@
                 console.log('Loading deck.gl on demand...');
                 const script = document.createElement('script');
                 script.src = BASE_URL + '/assets/vendor/deckgl/deck.gl.min.js';
-                script.onload = function() {
+                script.onload = function () {
                     console.log('deck.gl loaded');
                     renderFlightArcs();
                 };
-                script.onerror = function() {
+                script.onerror = function () {
                     console.error('Failed to load deck.gl');
                     deckLoaded = false;
                 };
@@ -575,21 +589,21 @@
             }
             return;
         }
-        
+
         renderFlightArcs();
     }
-    
+
     /**
      * Actually render the flight arcs (called after deck.gl is loaded)
      */
     function renderFlightArcs() {
         const flightData = [];
-        
-        tripsData.forEach(function(trip) {
+
+        tripsData.forEach(function (trip) {
             if (!visibleTripIds.has(trip.id)) return;
-            
+
             if (trip.routes && trip.routes.length > 0) {
-                trip.routes.forEach(function(route) {
+                trip.routes.forEach(function (route) {
                     if (route.transport_type === 'plane' && route.geojson && route.geojson.geometry) {
                         const coords = route.geojson.geometry.coordinates;
                         // Only render as arc if it's a simple A-to-B flight (exactly 2 points)
@@ -609,7 +623,7 @@
                 });
             }
         });
-        
+
         // Create or update deck.gl overlay with performance optimizations
         const arcLayer = new deck.ArcLayer({
             id: 'flight-arcs',
@@ -635,11 +649,25 @@
             onClick: (info) => {
                 if (info.object) {
                     const d = info.object;
+                    const trip = tripsData.find(t => t.id === d.tripId); // Buscar trip completo para tags
                     const futureLabel = d.isFuture ? ` <span class="badge bg-secondary">Próximo</span>` : '';
+
+                    // Generar HTML de tags
+                    let tagsHtml = '';
+                    if (appConfig?.tripTagsEnabled && trip && trip.tags && trip.tags.length > 0) {
+                        tagsHtml = '<div class="mt-1 d-flex gap-1 flex-wrap">';
+                        trip.tags.forEach(tag => {
+                            tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.7em;">${escapeHtml(tag)}</span>`;
+                        });
+                        tagsHtml += '</div>';
+                    }
+
                     popup.setLngLat(info.coordinate)
                         .setHTML(`
                             <div class="route-popup">
-                                <strong>${transportIcons.plane} ${escapeHtml(d.tripTitle)}</strong>${futureLabel}<br>
+                                <strong>${transportIcons.plane} ${escapeHtml(d.tripTitle)}</strong>${futureLabel}
+                                ${tagsHtml}
+                                <br>
                                 <small class="text-muted">${__('map.transport')}: ${__('map.transport_plane')}</small>
                             </div>
                         `)
@@ -647,7 +675,7 @@
                 }
             }
         });
-        
+
         if (!deckOverlay) {
             deckOverlay = new deck.MapboxOverlay({
                 interleaved: true,
@@ -667,10 +695,10 @@
             clearClusterMarkers();
             return;
         }
-        
+
         const bounds = map.getBounds();
         const zoom = Math.floor(map.getZoom());
-        
+
         // Get visible points (filter by visible trips)
         const visiblePoints = supercluster.getClusters(
             [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
@@ -683,14 +711,14 @@
             }
             return visibleTripIds.has(feature.properties.tripId);
         });
-        
+
         // Clear existing markers
         clearClusterMarkers();
-        
+
         // Create new markers
-        visiblePoints.forEach(function(feature) {
+        visiblePoints.forEach(function (feature) {
             const coords = feature.geometry.coordinates;
-            
+
             if (feature.properties.cluster) {
                 // Cluster marker
                 const count = feature.properties.point_count;
@@ -712,13 +740,13 @@
                     font-size: 13px;
                     cursor: pointer;
                 `;
-                
+
                 const marker = new maplibregl.Marker({ element: el })
                     .setLngLat(coords)
                     .addTo(map);
-                
+
                 // Click to zoom into cluster
-                el.addEventListener('click', function(e) {
+                el.addEventListener('click', function (e) {
                     e.stopPropagation(); // Prevent map click handler
                     const expansionZoom = supercluster.getClusterExpansionZoom(feature.properties.cluster_id);
                     map.easeTo({
@@ -726,14 +754,14 @@
                         zoom: expansionZoom
                     });
                 });
-                
+
                 clusterMarkers.push(marker);
             } else {
                 // Individual point marker with icon
                 const point = feature.properties;
                 const typeConfig = pointTypeConfig[point.type] || pointTypeConfig['visit'];
                 const iconColor = typeConfig.darkText ? 'color: #000; stroke: #000;' : '';
-                
+
                 const el = document.createElement('div');
                 el.className = 'custom-point-marker';
                 el.innerHTML = `
@@ -741,20 +769,20 @@
                         <span class="point-icon" style="${iconColor}">${typeConfig.icon}</span>
                     </div>
                 `;
-                
+
                 const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
                     .setLngLat(coords)
                     .addTo(map);
-                
+
                 // Click to show popup
-                el.addEventListener('click', function(e) {
+                el.addEventListener('click', function (e) {
                     e.stopPropagation(); // Prevent map click from closing popup
                     const popupContent = createPointPopup(point, typeConfig);
                     popup.setLngLat(coords)
                         .setHTML(popupContent)
                         .addTo(map);
                 });
-                
+
                 pointMarkers.push(marker);
             }
         });
@@ -775,35 +803,44 @@
      */
     function createPointPopup(point, typeConfig) {
         let html = '<div class="point-popup">';
-        
+
         if (point.image_url) {
             const displayImage = point.thumbnail_url || point.image_url;
             html += `<img src="${displayImage}" alt="${escapeHtml(point.title)}" class="popup-image" onclick="openLightbox('${point.image_url}', '${escapeHtml(point.title)}')" title="${__('map.click_to_view_full')}">`;
         }
-        
+
         html += '<div class="popup-content">';
         html += `<h6 class="popup-title">${escapeHtml(point.title)}</h6>`;
-        
+
         const typeLabel = typeConfig.labelKey ? __(typeConfig.labelKey) : typeConfig.label;
         const textColor = typeConfig.darkText ? 'color: #000; --bs-badge-color: #000;' : '';
         html += `<span class="badge mb-2 d-inline-flex align-items-center gap-1" style="background-color: ${typeConfig.color}; ${textColor}">${typeConfig.icon} ${typeLabel}</span>`;
-        
+
         html += `<p class="popup-trip mb-1"><span style="color: ${point.tripColor}; font-weight: bold;">${escapeHtml(point.tripTitle)}</span></p>`;
-        
+
+        // Tags del viaje
+        if (appConfig?.tripTagsEnabled && point.tripTags && point.tripTags.length > 0) {
+            html += '<div class="mb-2 d-flex gap-1 flex-wrap">';
+            point.tripTags.forEach(tag => {
+                html += `<span class="badge bg-light text-dark border" style="font-size: 0.65em;">${escapeHtml(tag)}</span>`;
+            });
+            html += '</div>';
+        }
+
         if (point.visit_date) {
             html += `<p class="popup-date mb-1">${formatDate(point.visit_date)}</p>`;
         }
-        
+
         if (point.description) {
             html += `<p class="popup-description">${escapeHtml(point.description)}</p>`;
         }
-        
+
         // Use original coordinates if available (in case of offset for co-located points)
         const displayLat = point.originalLat !== undefined ? point.originalLat : point.latitude;
         const displayLon = point.originalLon !== undefined ? point.originalLon : point.longitude;
         html += `<p class="popup-coords">${displayLat.toFixed(6)}, ${displayLon.toFixed(6)}</p>`;
         html += '</div></div>';
-        
+
         return html;
     }
 
@@ -823,7 +860,7 @@
      */
     function fitMapToContent() {
         const urlParams = getURLParams();
-        
+
         // If URL has center and/or zoom parameters, use those
         if (urlParams.center || urlParams.zoom) {
             if (urlParams.center && urlParams.zoom) {
@@ -839,17 +876,17 @@
             }
             return;
         }
-        
+
         // Otherwise, fit to content bounds
         const bounds = new maplibregl.LngLatBounds();
         let hasContent = false;
-        
-        tripsData.forEach(function(trip) {
+
+        tripsData.forEach(function (trip) {
             if (trip.routes) {
-                trip.routes.forEach(function(route) {
+                trip.routes.forEach(function (route) {
                     if (route.geojson && route.geojson.geometry && route.geojson.geometry.coordinates) {
                         const coords = route.geojson.geometry.coordinates;
-                        coords.forEach(function(coord) {
+                        coords.forEach(function (coord) {
                             bounds.extend(coord);
                             hasContent = true;
                         });
@@ -857,13 +894,13 @@
                 });
             }
             if (trip.points) {
-                trip.points.forEach(function(point) {
+                trip.points.forEach(function (point) {
                     bounds.extend([point.longitude, point.latitude]);
                     hasContent = true;
                 });
             }
         });
-        
+
         if (hasContent && !bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 50 });
         }
@@ -885,7 +922,7 @@
     function updateTripVisibility(tripId, visible) {
         // Update route layer visibility
         const layers = map.getStyle().layers || [];
-        layers.forEach(function(layer) {
+        layers.forEach(function (layer) {
             if (layer.metadata && layer.metadata.tripId === tripId) {
                 const transportType = layer.metadata?.transportType;
                 // Plane routes use showFlightRoutes, others use showRoutes
@@ -893,7 +930,7 @@
                 map.setLayoutProperty(layer.id, 'visibility', visible && toggleState ? 'visible' : 'none');
             }
         });
-        
+
         // Update clusters and flight arcs
         updateClusters();
         updateFlightArcs();
@@ -905,7 +942,7 @@
     function toggleRoutes(show) {
         showRoutes = show;
         const layers = map.getStyle().layers || [];
-        layers.forEach(function(layer) {
+        layers.forEach(function (layer) {
             if (layer.id.startsWith('route-layer-')) {
                 const tripId = layer.metadata?.tripId;
                 const transportType = layer.metadata?.transportType;
@@ -934,13 +971,13 @@
      */
     function toggleFlightRoutes(show) {
         showFlightRoutes = show;
-        
+
         // Toggle deck.gl arcs (simple A-to-B flights)
         updateFlightArcs();
-        
+
         // Toggle complex plane line layers (3+ waypoints)
         const layers = map.getStyle().layers || [];
-        layers.forEach(function(layer) {
+        layers.forEach(function (layer) {
             if (layer.id.startsWith('route-layer-')) {
                 const tripId = layer.metadata?.tripId;
                 const transportType = layer.metadata?.transportType;
@@ -958,9 +995,9 @@
     function renderLegend() {
         const legendItems = $('#legendItems');
         if (legendItems.length === 0) return;
-        
+
         legendItems.empty();
-        
+
         const transportOrder = [
             { type: 'plane', icon: transportIcons.plane, label: __('map.transport_plane') },
             { type: 'car', icon: transportIcons.car, label: __('map.transport_car') },
@@ -968,8 +1005,8 @@
             { type: 'ship', icon: transportIcons.ship, label: __('map.transport_ship') },
             { type: 'walk', icon: transportIcons.walk, label: __('map.transport_walk') }
         ];
-        
-        transportOrder.forEach(function(item) {
+
+        transportOrder.forEach(function (item) {
             const config = transportConfig[item.type];
             if (config) {
                 legendItems.append(`
@@ -980,7 +1017,7 @@
                 `);
             }
         });
-        
+
         // Future trips indicator
         legendItems.append(`
             <div class="legend-item legend-future-separator">
@@ -994,7 +1031,7 @@
 
     function groupTripsByYear(trips) {
         const grouped = {};
-        trips.forEach(function(trip) {
+        trips.forEach(function (trip) {
             let year;
             if (isFutureTrip(trip)) {
                 year = 'future';
@@ -1010,7 +1047,7 @@
     }
 
     function getSortedYearKeys(groupedTrips) {
-        return Object.keys(groupedTrips).sort(function(a, b) {
+        return Object.keys(groupedTrips).sort(function (a, b) {
             if (a === 'future') return -1;
             if (b === 'future') return 1;
             if (a === 'Sin fecha') return 1;
@@ -1033,28 +1070,28 @@
         const prefs = loadPreferences();
         const savedCollapsedStates = prefs.yearCollapsedStates || {};
         const currentYear = new Date().getFullYear().toString();
-        
-        sortedYears.forEach(function(year) {
+
+        sortedYears.forEach(function (year) {
             const trips = groupedTrips[year];
             const yearId = 'year-' + year.replace(/\s/g, '-');
             const isFutureGroup = year === 'future';
             const yearLabel = isFutureGroup ? __('map.upcoming_trips') : year;
-            
+
             // Default: expand future and current year
             const defaultExpanded = isFutureGroup || year === currentYear;
             const isCollapsed = savedCollapsedStates[year] !== undefined ? savedCollapsedStates[year] : !defaultExpanded;
-            
+
             const chevronDown = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>';
             const chevronRight = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>';
-            
+
             let totalRoutes = 0, totalPoints = 0;
             trips.forEach(t => {
                 totalRoutes += t.routes ? t.routes.length : 0;
                 totalPoints += t.points ? t.points.length : 0;
             });
-            
+
             const yearClass = isFutureGroup ? 'year-group year-future' : 'year-group';
-            
+
             const $yearGroup = $(`
                 <div class="${yearClass}" data-year="${year}">
                     <div class="year-header">
@@ -1074,14 +1111,35 @@
                     <div class="year-trips ${isCollapsed ? 'collapsed' : ''}" id="${yearId}"></div>
                 </div>
             `);
-            
+
             const $yearTrips = $yearGroup.find('.year-trips');
-            
-            trips.forEach(function(trip) {
+
+            trips.forEach(function (trip) {
                 const isFuture = isFutureTrip(trip);
                 const itemClass = isFuture ? 'trip-filter-item trip-future' : 'trip-filter-item';
                 const colorIndicator = isFuture ? '#6B6B6B' : trip.color;
-                
+
+                // Generar HTML de tags
+                let tagsHtml = '';
+                if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+                    tagsHtml = '<div class="trip-tags mt-1 d-flex gap-1 flex-wrap">';
+
+                    const MAX_TAGS = 4;
+                    const visibleTags = trip.tags.slice(0, MAX_TAGS);
+                    const hiddenTags = trip.tags.slice(MAX_TAGS);
+
+                    visibleTags.forEach(tag => {
+                        tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.65em;">${escapeHtml(tag)}</span>`;
+                    });
+
+                    if (hiddenTags.length > 0) {
+                        const hiddenTagsText = escapeHtml(hiddenTags.join(', '));
+                        tagsHtml += `<span class="badge bg-secondary border" style="font-size: 0.65em; cursor: help;" title="${hiddenTagsText}">+${hiddenTags.length}</span>`;
+                    }
+
+                    tagsHtml += '</div>';
+                }
+
                 $yearTrips.append(`
                     <div class="${itemClass}">
                         <div class="form-check d-flex align-items-start gap-2">
@@ -1090,25 +1148,26 @@
                             <label class="form-check-label flex-grow-1" for="trip-${trip.id}">
                                 <span class="trip-title">${escapeHtml(trip.title)}</span>
                                 <span class="trip-details">${formatDateRange(trip.start_date, trip.end_date)}</span>
+                                ${tagsHtml}
                             </label>
                         </div>
                     </div>
                 `);
             });
-            
+
             $tripsList.append($yearGroup);
         });
 
         // Event handlers
-        $('.year-toggle-btn').on('click', function() {
+        $('.year-toggle-btn').on('click', function () {
             const targetId = $(this).data('target');
             const $target = $('#' + targetId);
             const $chevron = $(this).find('.year-chevron');
             const isCollapsing = !$target.hasClass('collapsed');
-            
+
             $target.toggleClass('collapsed');
             $chevron.html(isCollapsing ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
-            
+
             // Save state
             const year = $(this).closest('.year-group').data('year');
             const prefs = loadPreferences();
@@ -1117,10 +1176,10 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
         });
 
-        $('.year-checkbox').on('change', function() {
+        $('.year-checkbox').on('change', function () {
             const year = $(this).data('year');
             const isChecked = $(this).is(':checked');
-            $(`.trip-checkbox[data-year="${year}"]`).each(function() {
+            $(`.trip-checkbox[data-year="${year}"]`).each(function () {
                 $(this).prop('checked', isChecked);
                 const tripId = parseInt($(this).val());
                 if (isChecked) showTrip(tripId);
@@ -1129,7 +1188,7 @@
             savePreferences();
         });
 
-        $('.trip-checkbox').on('change', function() {
+        $('.trip-checkbox').on('change', function () {
             const tripId = parseInt($(this).val());
             const isChecked = $(this).is(':checked');
             if (isChecked) showTrip(tripId);
@@ -1147,7 +1206,7 @@
         const $tripCheckboxes = $(`.trip-checkbox[data-year="${year}"]`);
         const total = $tripCheckboxes.length;
         const checked = $tripCheckboxes.filter(':checked').length;
-        
+
         $yearCheckbox.prop('checked', checked === total);
         $yearCheckbox.prop('indeterminate', checked > 0 && checked < total);
     }
@@ -1155,30 +1214,30 @@
     function applyTripSelectionPreferences() {
         const urlParams = getURLParams();
         const prefs = loadPreferences();
-        
+
         // If URL has trip parameters, use those instead of saved preferences
         if (urlParams.trips && urlParams.trips.length > 0) {
-            $('.trip-checkbox').each(function() {
+            $('.trip-checkbox').each(function () {
                 const tripId = parseInt($(this).val());
                 const shouldBeChecked = urlParams.trips.includes(tripId);
-                
+
                 $(this).prop('checked', shouldBeChecked);
                 if (shouldBeChecked) showTrip(tripId);
                 else hideTrip(tripId);
             });
             return;
         }
-        
+
         // Otherwise, use saved preferences
         if (prefs.selectedTrips === null) return;
-        
+
         const knownTripIds = prefs.knownTripIds || [];
-        
-        $('.trip-checkbox').each(function() {
+
+        $('.trip-checkbox').each(function () {
             const tripId = parseInt($(this).val());
             const isNewTrip = knownTripIds.length > 0 && !knownTripIds.includes(tripId);
             const shouldBeChecked = isNewTrip || prefs.selectedTrips.includes(tripId);
-            
+
             $(this).prop('checked', shouldBeChecked);
             if (shouldBeChecked) showTrip(tripId);
             else hideTrip(tripId);
@@ -1188,26 +1247,26 @@
     function applyInitialToggleStates() {
         const urlParams = getURLParams();
         const prefs = loadPreferences();
-        
+
         // Determine which values to use: URL params override preferences
         const showFlightRoutes = urlParams.hasOwnProperty('flights') ? urlParams.flights : prefs.showFlightRoutes;
         const showPoints = urlParams.hasOwnProperty('points') ? urlParams.points : prefs.showPoints;
         const showRoutes = urlParams.hasOwnProperty('routes') ? urlParams.routes : prefs.showRoutes;
-        
+
         // Update checkbox states to reflect what's being shown
         $('#toggleFlightRoutes').prop('checked', showFlightRoutes);
         $('#togglePoints').prop('checked', showPoints);
         $('#toggleRoutes').prop('checked', showRoutes);
-        
+
         // Apply the states
         if (showFlightRoutes) {
             updateFlightArcs();
         }
-        
+
         if (!showPoints) {
             clearClusterMarkers();
         }
-        
+
         if (!showRoutes) {
             toggleRoutes(false);
         }
@@ -1253,45 +1312,45 @@
      */
     function generateShareableLink() {
         const params = new URLSearchParams();
-        
+
         // Get current map center and zoom
         const center = map.getCenter();
         const zoom = map.getZoom();
-        
+
         // Add center (lat,lng)
         params.set('center', `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`);
-        
+
         // Add zoom
         params.set('zoom', Math.round(zoom).toString());
-        
+
         // Add selected trips
         const selectedTrips = [];
-        $('.trip-checkbox:checked').each(function() {
+        $('.trip-checkbox:checked').each(function () {
             selectedTrips.push($(this).val());
         });
         if (selectedTrips.length > 0) {
             params.set('trips', selectedTrips.join(','));
         }
-        
+
         // Add toggle states
         if ($('#toggleRoutes').is(':checked')) {
             params.set('routes', '1');
         } else {
             params.set('routes', '0');
         }
-        
+
         if ($('#togglePoints').is(':checked')) {
             params.set('points', '1');
         } else {
             params.set('points', '0');
         }
-        
+
         if ($('#toggleFlightRoutes').is(':checked')) {
             params.set('flights', '1');
         } else {
             params.set('flights', '0');
         }
-        
+
         // Generate full URL
         const baseUrl = window.location.origin + window.location.pathname;
         return `${baseUrl}?${params.toString()}`;
@@ -1302,12 +1361,12 @@
      */
     function shareMapLink() {
         const url = generateShareableLink();
-        
+
         // Try to use the modern Clipboard API
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function() {
+            navigator.clipboard.writeText(url).then(function () {
                 showShareSuccess();
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // Fallback to old method
                 fallbackCopyToClipboard(url);
             });
@@ -1329,7 +1388,7 @@
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         try {
             const successful = document.execCommand('copy');
             if (successful) {
@@ -1340,7 +1399,7 @@
         } catch (err) {
             showShareError();
         }
-        
+
         document.body.removeChild(textArea);
     }
 
@@ -1350,7 +1409,7 @@
     function showShareSuccess() {
         const btn = $('#shareMapBtn');
         const originalHtml = btn.html();
-        
+
         btn.html(`
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
                 <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
@@ -1358,8 +1417,8 @@
             ${__('map.link_copied')}
         `);
         btn.addClass('btn-success').removeClass('btn-outline-primary');
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             btn.html(originalHtml);
             btn.removeClass('btn-success').addClass('btn-outline-primary');
         }, 2000);
@@ -1388,7 +1447,7 @@
             url: `${BASE_URL}/api/geocode.php?q=${encodeURIComponent(query)}&limit=5`,
             method: 'GET',
             dataType: 'json',
-            success: function(results) {
+            success: function (results) {
                 searchResults.empty();
                 if (!results || results.length === 0) {
                     searchResults.html('<div class="list-group-item small text-muted">' + __('map.no_results') + '</div>');
@@ -1398,12 +1457,12 @@
                     searchResults.html(`<div class="list-group-item small text-danger">${results.error}</div>`);
                     return;
                 }
-                results.forEach(function(place) {
+                results.forEach(function (place) {
                     const item = $(`<button type="button" class="list-group-item list-group-item-action small" data-lat="${place.lat}" data-lon="${place.lon}">
                         <strong>${place.name || place.type}</strong><br>
                         <span class="text-muted" style="font-size: 0.85em;">${place.display_name}</span>
                     </button>`);
-                    item.on('click', function() {
+                    item.on('click', function () {
                         map.flyTo({ center: [parseFloat(place.lon), parseFloat(place.lat)], zoom: 12 });
                         searchResults.hide();
                         $('#publicPlaceSearch').val('');
@@ -1411,7 +1470,7 @@
                     searchResults.append(item);
                 });
             },
-            error: function() {
+            error: function () {
                 searchResults.html('<div class="list-group-item small text-danger">Error al buscar</div>');
             }
         });
@@ -1421,41 +1480,41 @@
 
     function setupEventHandlers() {
         $('#publicSearchBtn').on('click', () => searchPublicPlace($('#publicPlaceSearch').val()));
-        $('#publicPlaceSearch').on('keypress', function(e) {
+        $('#publicPlaceSearch').on('keypress', function (e) {
             if (e.which === 13) {
                 e.preventDefault();
                 searchPublicPlace($(this).val());
             }
         });
 
-        $(document).on('click', function(e) {
+        $(document).on('click', function (e) {
             if (!$(e.target).closest('#publicPlaceSearch, #publicSearchResults, #publicSearchBtn').length) {
                 $('#publicSearchResults').hide();
             }
         });
 
-        $('#toggleRoutes').on('change', function() {
+        $('#toggleRoutes').on('change', function () {
             toggleRoutes($(this).is(':checked'));
             savePreferences();
         });
 
-        $('#toggleFlightRoutes').on('change', function() {
+        $('#toggleFlightRoutes').on('change', function () {
             toggleFlightRoutes($(this).is(':checked'));
             savePreferences();
         });
 
-        $('#togglePoints').on('change', function() {
+        $('#togglePoints').on('change', function () {
             togglePoints($(this).is(':checked'));
             savePreferences();
         });
 
-        $('#filterAll').on('click', function() {
+        $('#filterAll').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', true).trigger('change');
         });
 
-        $('#filterPast').on('click', function() {
+        $('#filterPast').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             tripsData.forEach(trip => {
@@ -1463,14 +1522,14 @@
             });
         });
 
-        $('#filterNone').on('click', function() {
+        $('#filterNone').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', false).trigger('change');
         });
 
         // Share map link button
-        $('#shareMapBtn').on('click', function() {
+        $('#shareMapBtn').on('click', function () {
             shareMapLink();
         });
 
@@ -1486,7 +1545,7 @@
         }
     }
 
-    window.openLightbox = function(imageUrl, altText) {
+    window.openLightbox = function (imageUrl, altText) {
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
         if (lightbox && lightboxImage) {
@@ -1497,7 +1556,7 @@
         }
     };
 
-    window.closeLightbox = function() {
+    window.closeLightbox = function () {
         const lightbox = document.getElementById('imageLightbox');
         if (lightbox) {
             lightbox.style.display = 'none';
@@ -1505,12 +1564,12 @@
         }
     };
 
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeLightbox();
     });
 
     // ==================== PERFORMANCE MODE ====================
-    
+
     /**
      * Detect if we should enable performance mode
      * Targets Windows + AMD which has poor WebGL performance
@@ -1520,37 +1579,37 @@
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             if (!gl) return false;
-            
+
             const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
             if (!debugInfo) return false;
-            
+
             const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
             const isAMD = renderer.includes('amd') || renderer.includes('radeon') || renderer.includes('ati');
             const isWindows = navigator.platform.toLowerCase().includes('win');
-            
+
             // Also enable for Intel integrated graphics on Windows
             const isIntel = renderer.includes('intel');
-            
+
             if ((isAMD || isIntel) && isWindows) {
                 console.log('Performance mode enabled for:', renderer);
                 return true;
             }
-            
+
             return false;
         } catch (e) {
             return false;
         }
     }
-    
+
     /**
      * Apply performance mode if needed
      */
     function applyPerformanceMode() {
         const prefs = loadPreferences();
         // Check if user explicitly set performance mode, or auto-detect
-        const shouldEnable = prefs.performanceMode === true || 
+        const shouldEnable = prefs.performanceMode === true ||
             (prefs.performanceMode === undefined && detectPerformanceMode());
-        
+
         if (shouldEnable) {
             document.body.classList.add('performance-mode');
             console.log('Performance mode: enabled (CSS blur effects disabled)');
@@ -1559,10 +1618,10 @@
 
     // ==================== INITIALIZATION ====================
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         applyPerformanceMode();
         applyPreferencesToControls();
-        loadConfig().always(function() {
+        loadConfig().always(function () {
             initMap();
             setupEventHandlers();
         });

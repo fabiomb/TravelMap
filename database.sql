@@ -112,18 +112,32 @@ INSERT INTO settings (setting_key, setting_value, setting_type, description) VAL
 ('transport_color_walk', '#44FF44', 'string', 'Color para rutas caminando'),
 ('transport_color_bus', '#9C27B0', 'string', 'Color para rutas en bus'),
 ('transport_color_aerial', '#E91E63', 'string', 'Color para rutas en teleférico/aéreo'),
-('transport_color_bus', '#9C27B0', 'string', 'Color para rutas en autobús'),
-('transport_color_aerial', '#E91E63', 'string', 'Color para rutas aéreas (globos, zepelines)'),
 ('image_max_width', '1920', 'number', 'Ancho máximo de imágenes en píxeles'),
 ('image_max_height', '1080', 'number', 'Alto máximo de imágenes en píxeles'),
 ('image_quality', '85', 'number', 'Calidad de compresión JPEG (0-100)'),
 ('site_title', 'Travel Map - Mis Viajes por el Mundo', 'string', 'Título del sitio público'),
 ('site_description', 'Explora mis viajes por el mundo con mapas interactivos, rutas y fotografías', 'string', 'Descripción del sitio para SEO'),
 ('site_favicon', '', 'string', 'URL del favicon (ejemplo: /TravelMap/uploads/favicon.ico)'),
-('site_analytics_code', '', 'string', 'Código de Google Analytics u otro script de análisis');
+('site_analytics_code', '', 'string', 'Código de Google Analytics u otro script de análisis'),
+('trip_tags_enabled', 'true', 'boolean', 'Habilitar sistema de etiquetas en los viajes');
 
 -- ============================================
 -- Datos iniciales (opcional)
 -- ============================================
 -- El usuario administrador inicial se creará mediante el script seed_admin.php
 -- Aquí solo definimos la estructura
+
+-- ============================================
+-- Tabla: trip_tags
+-- Descripción: Almacena etiquetas configurables para los viajes
+-- ============================================
+CREATE TABLE IF NOT EXISTS trip_tags (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    trip_id INT UNSIGNED NOT NULL,
+    tag_name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    INDEX idx_trip_tag (trip_id),
+    -- Case-insensitive uniqueness enforced by collation utf8mb4_unicode_ci
+    UNIQUE KEY unique_trip_tag (trip_id, tag_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

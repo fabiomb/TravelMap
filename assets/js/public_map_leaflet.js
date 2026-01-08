@@ -17,7 +17,7 @@
     let pointsClusters = {}; // { tripId: clusterGroup }
     let allPointsCluster; // Cluster global para todos los puntos
     let appConfig = null; // Configuración cargada desde el servidor
-    
+
     // LocalStorage key for user preferences
     const STORAGE_KEY = 'travelmap_preferences';
 
@@ -34,7 +34,7 @@
     function getURLParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const params = {};
-        
+
         // Parse center parameter (lat,lng)
         if (urlParams.has('center')) {
             const centerStr = urlParams.get('center');
@@ -43,7 +43,7 @@
                 params.center = parts; // [lat, lng]
             }
         }
-        
+
         // Parse zoom parameter
         if (urlParams.has('zoom')) {
             const zoomVal = parseFloat(urlParams.get('zoom'));
@@ -51,7 +51,7 @@
                 params.zoom = zoomVal;
             }
         }
-        
+
         // Parse trips parameter (comma-separated IDs)
         if (urlParams.has('trips')) {
             const tripsStr = urlParams.get('trips');
@@ -62,15 +62,15 @@
                 params.trips = tripIds;
             }
         }
-        
+
         // Parse boolean parameters (routes, points, flights)
-        ['routes', 'points', 'flights'].forEach(function(key) {
+        ['routes', 'points', 'flights'].forEach(function (key) {
             if (urlParams.has(key)) {
                 const val = urlParams.get(key).toLowerCase();
                 params[key] = val === '1' || val === 'true';
             }
         });
-        
+
         return params;
     }
 
@@ -117,7 +117,7 @@
      * Get array of all trip IDs currently loaded
      */
     function getAllTripIds() {
-        return tripsData.map(function(trip) {
+        return tripsData.map(function (trip) {
             return trip.id;
         });
     }
@@ -127,7 +127,7 @@
      */
     function getSelectedTripIds() {
         const selected = [];
-        $('.trip-checkbox:checked').each(function() {
+        $('.trip-checkbox:checked').each(function () {
             selected.push(parseInt($(this).val()));
         });
         return selected;
@@ -138,12 +138,12 @@
      */
     function applyPreferencesToControls() {
         const prefs = loadPreferences();
-        
+
         // Apply toggle states
         $('#toggleRoutes').prop('checked', prefs.showRoutes);
         $('#togglePoints').prop('checked', prefs.showPoints);
         $('#toggleFlightRoutes').prop('checked', prefs.showFlightRoutes);
-        
+
     }
 
     /**
@@ -152,18 +152,18 @@
     function applyTripSelectionPreferences() {
         const urlParams = getURLParams();
         const prefs = loadPreferences();
-        
+
         // If URL has trip parameters, use those instead of saved preferences
         if (urlParams.trips && urlParams.trips.length > 0) {
-            $('.trip-checkbox').each(function() {
+            $('.trip-checkbox').each(function () {
                 const tripId = parseInt($(this).val());
                 const shouldBeChecked = urlParams.trips.includes(tripId);
-                
+
                 $(this).prop('checked', shouldBeChecked);
             });
-            
+
             // Update map visibility based on URL selections
-            $('.trip-checkbox').each(function() {
+            $('.trip-checkbox').each(function () {
                 const tripId = parseInt($(this).val());
                 const isChecked = $(this).is(':checked');
                 if (isChecked) {
@@ -174,27 +174,27 @@
             });
             return;
         }
-        
+
         // If selectedTrips is null (first visit), leave all checked (default)
         if (prefs.selectedTrips === null) {
             return;
         }
-        
+
         const knownTripIds = prefs.knownTripIds || [];
-        
+
         // Apply saved trip selections
-        $('.trip-checkbox').each(function() {
+        $('.trip-checkbox').each(function () {
             const tripId = parseInt($(this).val());
-            
+
             // If this trip wasn't known before (new trip), default to visible
             const isNewTrip = knownTripIds.length > 0 && !knownTripIds.includes(tripId);
             const shouldBeChecked = isNewTrip || prefs.selectedTrips.includes(tripId);
-            
+
             $(this).prop('checked', shouldBeChecked);
         });
-        
+
         // Update map visibility based on selections
-        $('.trip-checkbox').each(function() {
+        $('.trip-checkbox').each(function () {
             const tripId = parseInt($(this).val());
             const isChecked = $(this).is(':checked');
             if (isChecked) {
@@ -203,7 +203,7 @@
                 hideTrip(tripId);
             }
         });
-        
+
     }
 
     /**
@@ -213,28 +213,28 @@
     function applyInitialToggleStates() {
         const urlParams = getURLParams();
         const prefs = loadPreferences();
-        
+
         // Determine which values to use: URL params override preferences
         const showFlightRoutes = urlParams.hasOwnProperty('flights') ? urlParams.flights : prefs.showFlightRoutes;
         const showPoints = urlParams.hasOwnProperty('points') ? urlParams.points : prefs.showPoints;
         const showRoutes = urlParams.hasOwnProperty('routes') ? urlParams.routes : prefs.showRoutes;
-        
+
         // Update checkbox states to reflect what's being shown
         $('#toggleFlightRoutes').prop('checked', showFlightRoutes);
         $('#togglePoints').prop('checked', showPoints);
         $('#toggleRoutes').prop('checked', showRoutes);
-        
+
         // Handle flight routes visibility
         if (showFlightRoutes) {
             // Create flight layers on demand
             if (!flightRoutesCreated) {
                 createFlightRouteLayers();
             }
-            
-            $('.trip-checkbox:checked').each(function() {
+
+            $('.trip-checkbox:checked').each(function () {
                 const tripId = parseInt($(this).val());
                 if (flightRoutesLayers[tripId]) {
-                    flightRoutesLayers[tripId].forEach(function(layer) {
+                    flightRoutesLayers[tripId].forEach(function (layer) {
                         if (!map.hasLayer(layer)) {
                             layer.addTo(map);
                         }
@@ -242,25 +242,25 @@
                 }
             });
         }
-        
+
         // Handle points visibility
         if (!showPoints) {
             if (map.hasLayer(allPointsCluster)) {
                 map.removeLayer(allPointsCluster);
             }
         }
-        
+
         // Handle routes visibility
         if (!showRoutes) {
-            Object.values(routesLayers).forEach(function(layers) {
-                layers.forEach(function(layer) {
+            Object.values(routesLayers).forEach(function (layers) {
+                layers.forEach(function (layer) {
                     if (map.hasLayer(layer)) {
                         map.removeLayer(layer);
                     }
                 });
             });
         }
-        
+
     }
 
     // SVG icons for transport types
@@ -287,21 +287,21 @@
 
     // Iconos por tipo de punto
     const pointTypeConfig = {
-        'stay': { 
-            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4V20C3 20.9428 3 21.4142 3.29289 21.7071C3.58579 22 4.05719 22 5 22H19C19.9428 22 20.4142 22 20.7071 21.7071C21 21.4142 21 20.9428 21 20V4"/><path d="M10.5 8V9.5M10.5 11V9.5M13.5 8V9.5M13.5 11V9.5M10.5 9.5H13.5"/><path d="M14 22L14 17.9999C14 16.8954 13.1046 15.9999 12 15.9999C10.8954 15.9999 10 16.8954 10 17.9999V22"/><path d="M2 4H8C8.6399 2.82727 10.1897 2 12 2C13.8103 2 15.3601 2.82727 16 4H22"/><path d="M6 8H7M6 12H7M6 16H7"/><path d="M17 8H18M17 12H18M17 16H18"/></svg>', 
+        'stay': {
+            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4V20C3 20.9428 3 21.4142 3.29289 21.7071C3.58579 22 4.05719 22 5 22H19C19.9428 22 20.4142 22 20.7071 21.7071C21 21.4142 21 20.9428 21 20V4"/><path d="M10.5 8V9.5M10.5 11V9.5M13.5 8V9.5M13.5 11V9.5M10.5 9.5H13.5"/><path d="M14 22L14 17.9999C14 16.8954 13.1046 15.9999 12 15.9999C10.8954 15.9999 10 16.8954 10 17.9999V22"/><path d="M2 4H8C8.6399 2.82727 10.1897 2 12 2C13.8103 2 15.3601 2.82727 16 4H22"/><path d="M6 8H7M6 12H7M6 16H7"/><path d="M17 8H18M17 12H18M17 16H18"/></svg>',
             labelKey: 'map.point_type_stay',
             label: __('map.point_type_stay'),
-            color: '#FF6B6B' 
+            color: '#FF6B6B'
         },
-        'visit': { 
-            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.31253 4.7812L7.6885 4.36517V4.36517L8.31253 4.7812ZM7.5 6V6.75C7.75076 6.75 7.98494 6.62467 8.12404 6.41603L7.5 6ZM2.17224 8.83886L1.45453 8.62115L2.17224 8.83886ZM4.83886 6.17224L4.62115 5.45453H4.62115L4.83886 6.17224ZM3.46243 20.092L3.93822 19.5123L3.93822 19.5123L3.46243 20.092ZM2.90796 19.5376L3.48772 19.0618L3.48772 19.0618L2.90796 19.5376ZM21.092 19.5376L20.5123 19.0618L20.5123 19.0618L21.092 19.5376ZM20.5376 20.092L20.0618 19.5123L20.0618 19.5123L20.5376 20.092ZM14.0195 3.89791C14.3847 4.09336 14.8392 3.95575 15.0346 3.59054C15.2301 3.22534 15.0924 2.77084 14.7272 2.57539L14.0195 3.89791ZM22.5455 8.62115C22.4252 8.22477 22.0064 8.00092 21.61 8.12116C21.2137 8.2414 20.9898 8.6602 21.1101 9.05658L22.5455 8.62115ZM21.25 11.5V13.5H22.75V11.5H21.25ZM14.5 20.25H9.5V21.75H14.5V20.25ZM2.75 13.5V11.5H1.25V13.5H2.75ZM12.3593 2.25H11.6407V3.75H12.3593V2.25ZM7.6885 4.36517L6.87596 5.58397L8.12404 6.41603L8.93657 5.19722L7.6885 4.36517ZM11.6407 2.25C11.1305 2.25 10.6969 2.24925 10.3369 2.28282C9.96142 2.31783 9.61234 2.39366 9.27276 2.57539L9.98055 3.89791C10.0831 3.84299 10.2171 3.80049 10.4762 3.77634C10.7506 3.75075 11.1031 3.75 11.6407 3.75V2.25ZM8.93657 5.19722C9.23482 4.74985 9.43093 4.45704 9.60448 4.24286C9.76825 4.04074 9.87794 3.95282 9.98055 3.89791L9.27276 2.57539C8.93318 2.75713 8.67645 3.00553 8.43904 3.29853C8.2114 3.57947 7.97154 3.94062 7.6885 4.36517L8.93657 5.19722ZM2.75 11.5C2.75 10.0499 2.75814 9.49107 2.88994 9.05657L1.45453 8.62115C1.24186 9.32224 1.25 10.159 1.25 11.5H2.75ZM7.5 5.25C6.159 5.25 5.32224 5.24186 4.62115 5.45453L5.05657 6.88994C5.49107 6.75814 6.04987 6.75 7.5 6.75V5.25ZM2.88994 9.05657C3.20503 8.01787 4.01787 7.20503 5.05657 6.88994L4.62115 5.45453C3.10304 5.91505 1.91505 7.10304 1.45453 8.62115L2.88994 9.05657ZM9.5 20.25C7.83789 20.25 6.65724 20.2488 5.75133 20.1417C4.86197 20.0366 4.33563 19.8384 3.93822 19.5123L2.98663 20.6718C3.69558 21.2536 4.54428 21.5095 5.57525 21.6313C6.58966 21.7512 7.87463 21.75 9.5 21.75V20.25ZM1.25 13.5C1.25 15.1254 1.24877 16.4103 1.36868 17.4248C1.49054 18.4557 1.74638 19.3044 2.3282 20.0134L3.48772 19.0618C3.16158 18.6644 2.96343 18.138 2.85831 17.2487C2.75123 16.3428 2.75 15.1621 2.75 13.5H1.25ZM3.93822 19.5123C3.77366 19.3772 3.62277 19.2263 3.48772 19.0618L2.3282 20.0134C2.52558 20.2539 2.74612 20.4744 2.98663 20.6718L3.93822 19.5123ZM21.25 13.5C21.25 15.1621 21.2488 16.3428 21.1417 17.2487C21.0366 18.138 20.8384 18.6644 20.5123 19.0618L21.6718 20.0134C22.2536 19.3044 22.5095 18.4557 22.6313 17.4248C22.7512 16.4103 22.75 15.1254 22.75 13.5H21.25ZM14.5 21.75C16.1254 21.75 17.4103 21.7512 18.4248 21.6313C19.4557 21.5095 20.3044 21.2536 21.0134 20.6718L20.0618 19.5123C19.6644 19.8384 19.138 20.0366 18.2487 20.1417C17.3428 20.2488 16.1621 20.25 14.5 20.25V21.75ZM20.5123 19.0618C20.3772 19.2263 20.2263 19.3772 20.0618 19.5123L21.0134 20.6718C21.2539 20.4744 21.4744 20.2539 21.6718 20.0134L20.5123 19.0618ZM12.3593 3.75C12.8969 3.75 13.2494 3.75075 13.5238 3.77634C13.7829 3.80049 13.9169 3.84299 14.0195 3.89791L14.7272 2.57539C14.3877 2.39366 14.0386 2.31783 13.6631 2.28282C13.3031 2.24925 12.8695 2.25 12.3593 2.25V3.75ZM22.75 11.5C22.75 10.159 22.7581 9.32224 22.5455 8.62115L21.1101 9.05658C21.2419 9.49107 21.25 10.0499 21.25 11.5H22.75Z" fill="currentColor" stroke="none"/><circle cx="12" cy="13" r="4" stroke="currentColor" fill="none"/><path d="M17.9737 3.02148C17.9795 2.99284 18.0205 2.99284 18.0263 3.02148C18.3302 4.50808 19.4919 5.66984 20.9785 5.97368C21.0072 5.97954 21.0072 6.02046 20.9785 6.02632C19.4919 6.33016 18.3302 7.49192 18.0263 8.97852C18.0205 9.00716 17.9795 9.00716 17.9737 8.97852C17.6698 7.49192 16.5081 6.33016 15.0215 6.02632C14.9928 6.02046 14.9928 5.97954 15.0215 5.97368C16.5081 5.66984 17.6698 4.50808 17.9737 3.02148Z" fill="currentColor" stroke="none"/></svg>', 
+        'visit': {
+            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.31253 4.7812L7.6885 4.36517V4.36517L8.31253 4.7812ZM7.5 6V6.75C7.75076 6.75 7.98494 6.62467 8.12404 6.41603L7.5 6ZM2.17224 8.83886L1.45453 8.62115L2.17224 8.83886ZM4.83886 6.17224L4.62115 5.45453H4.62115L4.83886 6.17224ZM3.46243 20.092L3.93822 19.5123L3.93822 19.5123L3.46243 20.092ZM2.90796 19.5376L3.48772 19.0618L3.48772 19.0618L2.90796 19.5376ZM21.092 19.5376L20.5123 19.0618L20.5123 19.0618L21.092 19.5376ZM20.5376 20.092L20.0618 19.5123L20.0618 19.5123L20.5376 20.092ZM14.0195 3.89791C14.3847 4.09336 14.8392 3.95575 15.0346 3.59054C15.2301 3.22534 15.0924 2.77084 14.7272 2.57539L14.0195 3.89791ZM22.5455 8.62115C22.4252 8.22477 22.0064 8.00092 21.61 8.12116C21.2137 8.2414 20.9898 8.6602 21.1101 9.05658L22.5455 8.62115ZM21.25 11.5V13.5H22.75V11.5H21.25ZM14.5 20.25H9.5V21.75H14.5V20.25ZM2.75 13.5V11.5H1.25V13.5H2.75ZM12.3593 2.25H11.6407V3.75H12.3593V2.25ZM7.6885 4.36517L6.87596 5.58397L8.12404 6.41603L8.93657 5.19722L7.6885 4.36517ZM11.6407 2.25C11.1305 2.25 10.6969 2.24925 10.3369 2.28282C9.96142 2.31783 9.61234 2.39366 9.27276 2.57539L9.98055 3.89791C10.0831 3.84299 10.2171 3.80049 10.4762 3.77634C10.7506 3.75075 11.1031 3.75 11.6407 3.75V2.25ZM8.93657 5.19722C9.23482 4.74985 9.43093 4.45704 9.60448 4.24286C9.76825 4.04074 9.87794 3.95282 9.98055 3.89791L9.27276 2.57539C8.93318 2.75713 8.67645 3.00553 8.43904 3.29853C8.2114 3.57947 7.97154 3.94062 7.6885 4.36517L8.93657 5.19722ZM2.75 11.5C2.75 10.0499 2.75814 9.49107 2.88994 9.05657L1.45453 8.62115C1.24186 9.32224 1.25 10.159 1.25 11.5H2.75ZM7.5 5.25C6.159 5.25 5.32224 5.24186 4.62115 5.45453L5.05657 6.88994C5.49107 6.75814 6.04987 6.75 7.5 6.75V5.25ZM2.88994 9.05657C3.20503 8.01787 4.01787 7.20503 5.05657 6.88994L4.62115 5.45453C3.10304 5.91505 1.91505 7.10304 1.45453 8.62115L2.88994 9.05657ZM9.5 20.25C7.83789 20.25 6.65724 20.2488 5.75133 20.1417C4.86197 20.0366 4.33563 19.8384 3.93822 19.5123L2.98663 20.6718C3.69558 21.2536 4.54428 21.5095 5.57525 21.6313C6.58966 21.7512 7.87463 21.75 9.5 21.75V20.25ZM1.25 13.5C1.25 15.1254 1.24877 16.4103 1.36868 17.4248C1.49054 18.4557 1.74638 19.3044 2.3282 20.0134L3.48772 19.0618C3.16158 18.6644 2.96343 18.138 2.85831 17.2487C2.75123 16.3428 2.75 15.1621 2.75 13.5H1.25ZM3.93822 19.5123C3.77366 19.3772 3.62277 19.2263 3.48772 19.0618L2.3282 20.0134C2.52558 20.2539 2.74612 20.4744 2.98663 20.6718L3.93822 19.5123ZM21.25 13.5C21.25 15.1621 21.2488 16.3428 21.1417 17.2487C21.0366 18.138 20.8384 18.6644 20.5123 19.0618L21.6718 20.0134C22.2536 19.3044 22.5095 18.4557 22.6313 17.4248C22.7512 16.4103 22.75 15.1254 22.75 13.5H21.25ZM14.5 21.75C16.1254 21.75 17.4103 21.7512 18.4248 21.6313C19.4557 21.5095 20.3044 21.2536 21.0134 20.6718L20.0618 19.5123C19.6644 19.8384 19.138 20.0366 18.2487 20.1417C17.3428 20.2488 16.1621 20.25 14.5 20.25V21.75ZM20.5123 19.0618C20.3772 19.2263 20.2263 19.3772 20.0618 19.5123L21.0134 20.6718C21.2539 20.4744 21.4744 20.2539 21.6718 20.0134L20.5123 19.0618ZM12.3593 3.75C12.8969 3.75 13.2494 3.75075 13.5238 3.77634C13.7829 3.80049 13.9169 3.84299 14.0195 3.89791L14.7272 2.57539C14.3877 2.39366 14.0386 2.31783 13.6631 2.28282C13.3031 2.24925 12.8695 2.25 12.3593 2.25V3.75ZM22.75 11.5C22.75 10.159 22.7581 9.32224 22.5455 8.62115L21.1101 9.05658C21.2419 9.49107 21.25 10.0499 21.25 11.5H22.75Z" fill="currentColor" stroke="none"/><circle cx="12" cy="13" r="4" stroke="currentColor" fill="none"/><path d="M17.9737 3.02148C17.9795 2.99284 18.0205 2.99284 18.0263 3.02148C18.3302 4.50808 19.4919 5.66984 20.9785 5.97368C21.0072 5.97954 21.0072 6.02046 20.9785 6.02632C19.4919 6.33016 18.3302 7.49192 18.0263 8.97852C18.0205 9.00716 17.9795 9.00716 17.9737 8.97852C17.6698 7.49192 16.5081 6.33016 15.0215 6.02632C14.9928 6.02046 14.9928 5.97954 15.0215 5.97368C16.5081 5.66984 17.6698 4.50808 17.9737 3.02148Z" fill="currentColor" stroke="none"/></svg>',
             labelKey: 'map.point_type_visit',
             label: __('map.point_type_visit'),
             color: '#4ECDC4',
             darkText: true
         },
-        'food': { 
-            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 17C18.2386 17 16 14.7614 16 12C16 9.23858 18.2386 7 21 7"/><path d="M21 21C16.0294 21 12 16.9706 12 12C12 7.02944 16.0294 3 21 3"/><path d="M6 3L6 8M6 21L6 11"/><path d="M3.5 8H8.5"/><path d="M9 3L9 7.35224C9 12.216 3 12.2159 3 7.35207L3 3"/></svg>', 
+        'food': {
+            emoji: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 17C18.2386 17 16 14.7614 16 12C16 9.23858 18.2386 7 21 7"/><path d="M21 21C16.0294 21 12 16.9706 12 12C12 7.02944 16.0294 3 21 3"/><path d="M6 3L6 8M6 21L6 11"/><path d="M3.5 8H8.5"/><path d="M9 3L9 7.35224C9 12.216 3 12.2159 3 7.35207L3 3"/></svg>',
             labelKey: 'map.point_type_food',
             label: __('map.point_type_food'),
             color: '#FFE66D',
@@ -317,10 +317,10 @@
             url: BASE_URL + '/api/get_config.php',
             method: 'GET',
             dataType: 'json'
-        }).done(function(response) {
+        }).done(function (response) {
             if (response.success && response.data) {
                 appConfig = response.data;
-                
+
                 // Actualizar colores de transporte con la configuración del servidor
                 if (appConfig.transportColors) {
                     transportConfig.plane.color = appConfig.transportColors.plane || transportConfig.plane.color;
@@ -332,7 +332,7 @@
                     transportConfig.aerial.color = appConfig.transportColors.aerial || transportConfig.aerial.color;
                 }
             }
-        }).fail(function(xhr, status, error) {
+        }).fail(function (xhr, status, error) {
             console.warn('Config load failed, using defaults');
         });
     }
@@ -346,7 +346,7 @@
         const clusterEnabled = mapConfig.clusterEnabled !== false; // Por defecto true
         const maxClusterRadius = mapConfig.maxClusterRadius || 30;
         const disableClusteringAtZoom = mapConfig.disableClusteringAtZoom || 15;
-        
+
         // Crear mapa centrado en vista global
         map = L.map('map', {
             center: [20, 0],
@@ -379,11 +379,11 @@
                 subdomains: 'abc'  // OSM only supports a, b, c
             }
         };
-        
+
         // Get configured style or default to voyager
         const mapStyleKey = mapConfig.style || 'voyager';
         const tileConfig = tileStyles[mapStyleKey] || tileStyles['voyager'];
-        
+
         // Add tile layer
         L.tileLayer(tileConfig.url, {
             attribution: tileConfig.attribution,
@@ -402,7 +402,7 @@
                 removeOutsideVisibleBounds: true,
                 chunkedLoading: true,
                 chunkInterval: 200,
-                iconCreateFunction: function(cluster) {
+                iconCreateFunction: function (cluster) {
                     const count = cluster.getChildCount();
                     return L.divIcon({
                         html: `<div class="marker-cluster-custom"><span>${count}</span></div>`,
@@ -427,9 +427,9 @@
     function renderLegend() {
         const legendItems = $('#legendItems');
         if (legendItems.length === 0) return;
-        
+
         legendItems.empty();
-        
+
         // Definir el orden y labels de los tipos de transporte
         const transportOrder = [
             { type: 'plane', icon: transportIcons.plane, label: __('map.transport_plane') },
@@ -440,8 +440,8 @@
             { type: 'bus', icon: transportIcons.bus, label: __('map.transport_bus') },
             { type: 'aerial', icon: transportIcons.aerial, label: __('map.transport_aerial') }
         ];
-        
-        transportOrder.forEach(function(item) {
+
+        transportOrder.forEach(function (item) {
             const config = transportConfig[item.type];
             if (config) {
                 const legendItem = $(`
@@ -453,7 +453,7 @@
                 legendItems.append(legendItem);
             }
         });
-        
+
         // Add future trips indicator to legend
         const futureLegendIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
         const futureLegendItem = $(`
@@ -473,10 +473,10 @@
             url: API_URL,
             method: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success && response.data && response.data.trips) {
                     tripsData = response.data.trips;
-                    
+
                     // Order is important: render trips first (populates layers), 
                     // then panel (applies saved selections)
                     renderAllTrips();
@@ -487,7 +487,7 @@
                     showError(__('map.no_trips_found'));
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Error al cargar datos:', error);
                 showError(__('map.error_loading_data'));
             }
@@ -500,8 +500,8 @@
     function groupTripsByYear(trips) {
         const grouped = {};
         const futureYear = 'future';
-        
-        trips.forEach(function(trip) {
+
+        trips.forEach(function (trip) {
             let year;
             if (isFutureTrip(trip)) {
                 year = futureYear;
@@ -510,13 +510,13 @@
             } else {
                 year = 'Sin fecha';
             }
-            
+
             if (!grouped[year]) {
                 grouped[year] = [];
             }
             grouped[year].push(trip);
         });
-        
+
         return grouped;
     }
 
@@ -525,7 +525,7 @@
      */
     function getSortedYearKeys(groupedTrips) {
         const keys = Object.keys(groupedTrips);
-        return keys.sort(function(a, b) {
+        return keys.sort(function (a, b) {
             if (a === 'future') return -1;
             if (b === 'future') return 1;
             if (a === 'Sin fecha') return 1;
@@ -550,9 +550,9 @@
      */
     function getDefaultExpandedYears(sortedYears) {
         const expanded = ['future']; // Always expand future trips
-        
+
         const currentYear = new Date().getFullYear().toString();
-        
+
         // Check if current year has trips
         if (sortedYears.includes(currentYear)) {
             expanded.push(currentYear);
@@ -566,7 +566,7 @@
                 }
             }
         }
-        
+
         return expanded;
     }
 
@@ -602,42 +602,42 @@
         const groupedTrips = groupTripsByYear(tripsData);
         const sortedYears = getSortedYearKeys(groupedTrips);
         const savedCollapsedStates = getYearCollapsedStates();
-        
+
         // Determine collapsed states: use saved or calculate defaults
         let collapsedStates = {};
         if (savedCollapsedStates === null) {
             // First visit: collapse all except future and current/last year
             const expandedYears = getDefaultExpandedYears(sortedYears);
-            sortedYears.forEach(function(year) {
+            sortedYears.forEach(function (year) {
                 collapsedStates[year] = !expandedYears.includes(year);
             });
         } else {
             collapsedStates = savedCollapsedStates;
         }
-        
+
         // Icons
         const chevronDown = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>';
         const chevronRight = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>';
         const futureIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
         const routeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="19" r="3"/><path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"/></svg>';
         const pointIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 18C5.17107 18.4117 4 19.0443 4 19.7537C4 20.9943 7.58172 22 12 22C16.4183 22 20 20.9943 20 19.7537C20 19.0443 18.8289 18.4117 17 18"/><path d="M14.5 9C14.5 10.3807 13.3807 11.5 12 11.5C10.6193 11.5 9.5 10.3807 9.5 9C9.5 7.61929 10.6193 6.5 12 6.5C13.3807 6.5 14.5 7.61929 14.5 9Z"/><path d="M13.2574 17.4936C12.9201 17.8184 12.4693 18 12.0002 18C11.531 18 11.0802 17.8184 10.7429 17.4936C7.6543 14.5008 3.51519 11.1575 5.53371 6.30373C6.6251 3.67932 9.24494 2 12.0002 2C14.7554 2 17.3752 3.67933 18.4666 6.30373C20.4826 11.1514 16.3536 14.5111 13.2574 17.4936Z"/></svg>';
-        
-        sortedYears.forEach(function(year) {
+
+        sortedYears.forEach(function (year) {
             const trips = groupedTrips[year];
             const yearId = 'year-' + year.replace(/\s/g, '-');
             const isCollapsed = collapsedStates[year] === true;
             const isFutureGroup = year === 'future';
             const yearLabel = isFutureGroup ? __('map.upcoming_trips') : year;
             const yearClass = isFutureGroup ? 'year-group year-future' : 'year-group';
-            
+
             // Calculate totals for the year
             let totalRoutes = 0;
             let totalPoints = 0;
-            trips.forEach(function(trip) {
+            trips.forEach(function (trip) {
                 totalRoutes += trip.routes ? trip.routes.length : 0;
                 totalPoints += trip.points ? trip.points.length : 0;
             });
-            
+
             // Year group header
             const $yearGroup = $(`
                 <div class="${yearClass}" data-year="${year}">
@@ -663,18 +663,39 @@
                     </div>
                 </div>
             `);
-            
+
             const $yearTrips = $yearGroup.find('.year-trips');
-            
+
             // Render trips in this year group
-            trips.forEach(function(trip) {
+            trips.forEach(function (trip) {
                 const routesCount = trip.routes ? trip.routes.length : 0;
                 const pointsCount = trip.points ? trip.points.length : 0;
                 const isFuture = isFutureTrip(trip);
                 const futureBadge = isFuture ? `<span class="badge bg-light text-secondary border ms-2" style="font-size: 0.65rem;">${futureIcon} Próximo</span>` : '';
                 const itemClass = isFuture ? 'trip-filter-item trip-future' : 'trip-filter-item';
                 const colorIndicator = isFuture ? '#6B6B6B' : trip.color;
-                
+
+                // Generar HTML de tags
+                let tagsHtml = '';
+                if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+                    tagsHtml = '<div class="trip-tags mt-1 d-flex gap-1 flex-wrap">';
+
+                    const MAX_TAGS = 4;
+                    const visibleTags = trip.tags.slice(0, MAX_TAGS);
+                    const hiddenTags = trip.tags.slice(MAX_TAGS);
+
+                    visibleTags.forEach(tag => {
+                        tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.65em;">${escapeHtml(tag)}</span>`;
+                    });
+
+                    if (hiddenTags.length > 0) {
+                        const hiddenTagsText = escapeHtml(hiddenTags.join(', '));
+                        tagsHtml += `<span class="badge bg-secondary border" style="font-size: 0.65em; cursor: help;" title="${hiddenTagsText}">+${hiddenTags.length}</span>`;
+                    }
+
+                    tagsHtml += '</div>';
+                }
+
                 const $tripItem = $(`
                     <div class="${itemClass}">
                         <div class="form-check d-flex align-items-start gap-2">
@@ -694,39 +715,40 @@
                                         <span title="Puntos">${pointIcon} ${pointsCount}</span>
                                     </span>
                                 </span>
+                                ${tagsHtml}
                             </label>
                         </div>
                     </div>
                 `);
-                
+
                 $yearTrips.append($tripItem);
             });
-            
+
             $tripsList.append($yearGroup);
         });
 
         // Year toggle (collapse/expand) events
-        $('.year-toggle-btn').on('click', function() {
+        $('.year-toggle-btn').on('click', function () {
             const targetId = $(this).data('target');
             const $target = $('#' + targetId);
             const $chevron = $(this).find('.year-chevron');
             const year = $(this).closest('.year-group').data('year');
             const isCollapsing = !$target.hasClass('collapsed');
-            
+
             $target.toggleClass('collapsed');
             $chevron.html(isCollapsing ? chevronRight : chevronDown);
-            
+
             // Save collapsed state
             saveYearCollapsedState(year, isCollapsing);
         });
 
         // Year checkbox events
-        $('.year-checkbox').on('change', function() {
+        $('.year-checkbox').on('change', function () {
             const year = $(this).data('year');
             const isChecked = $(this).is(':checked');
-            
+
             // Toggle all trips in this year
-            $(`.trip-checkbox[data-year="${year}"]`).each(function() {
+            $(`.trip-checkbox[data-year="${year}"]`).each(function () {
                 $(this).prop('checked', isChecked);
                 const tripId = parseInt($(this).val());
                 if (isChecked) {
@@ -735,22 +757,22 @@
                     hideTrip(tripId);
                 }
             });
-            
+
             savePreferences();
         });
 
         // Trip checkbox events
-        $('.trip-checkbox').on('change', function() {
+        $('.trip-checkbox').on('change', function () {
             onTripToggle.call(this);
             updateYearCheckboxState($(this).data('year'));
             savePreferences();
         });
-        
+
         // Apply saved trip selections after rendering
         applyTripSelectionPreferences();
-        
+
         // Update year checkbox states based on trip selections
-        sortedYears.forEach(function(year) {
+        sortedYears.forEach(function (year) {
             updateYearCheckboxState(year);
         });
     }
@@ -763,7 +785,7 @@
         const $tripCheckboxes = $(`.trip-checkbox[data-year="${year}"]`);
         const totalTrips = $tripCheckboxes.length;
         const checkedTrips = $tripCheckboxes.filter(':checked').length;
-        
+
         if (checkedTrips === 0) {
             $yearCheckbox.prop('checked', false);
             $yearCheckbox.prop('indeterminate', false);
@@ -780,7 +802,7 @@
      * Renderiza todos los viajes en el mapa
      */
     function renderAllTrips() {
-        tripsData.forEach(function(trip) {
+        tripsData.forEach(function (trip) {
             renderTrip(trip);
         });
     }
@@ -798,14 +820,14 @@
 
         // Renderizar rutas
         if (trip.routes && trip.routes.length > 0) {
-            trip.routes.forEach(function(route) {
+            trip.routes.forEach(function (route) {
                 renderRoute(route, trip);
             });
         }
 
         // Renderizar puntos
         if (trip.points && trip.points.length > 0) {
-            trip.points.forEach(function(point) {
+            trip.points.forEach(function (point) {
                 renderPoint(point, trip);
             });
         }
@@ -831,7 +853,7 @@
         }
 
         const transportType = route.transport_type || 'car';
-        
+
         // For plane routes, defer creation until user enables them
         if (transportType === 'plane') {
             if (!flightRoutesData[trip.id]) {
@@ -840,7 +862,7 @@
             flightRoutesData[trip.id].push({ route: route, trip: trip });
             return;
         }
-        
+
         // For other transport types, create layers immediately
         const config = transportConfig[transportType] || transportConfig['car'];
         const isFuture = isFutureTrip(trip);
@@ -855,12 +877,25 @@
                 opacity: opacity,
                 dashArray: dashArray
             },
-            onEachFeature: function(feature, lyr) {
-                const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
-                const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
+            onEachFeature: function (feature, lyr) {
+                // Add popup
+                const futureLabel = isFutureTrip(trip) ? ` <span class="badge bg-secondary">Próximo</span>` : '';
+
+                // Generar HTML de tags
+                let tagsHtml = '';
+                if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+                    tagsHtml = '<div class="mt-1 d-flex gap-1 flex-wrap">';
+                    trip.tags.forEach(tag => {
+                        tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.7em;">${escapeHtml(tag)}</span>`;
+                    });
+                    tagsHtml += '</div>';
+                }
+
                 lyr.bindPopup(`
                     <div class="route-popup">
-                        <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
+                        <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}
+                        ${tagsHtml}
+                        <br>
                         <small class="text-muted">${__('map.transport')}: ${__('map.transport_' + transportType)}</small>
                     </div>
                 `);
@@ -879,40 +914,40 @@
             if (callback) callback();
             return;
         }
-        
+
         // Flatten all flight data into a single array for batch processing
         const allFlightData = [];
-        Object.keys(flightRoutesData).forEach(function(tripId) {
+        Object.keys(flightRoutesData).forEach(function (tripId) {
             if (!flightRoutesLayers[tripId]) {
                 flightRoutesLayers[tripId] = [];
             }
-            flightRoutesData[tripId].forEach(function(data) {
+            flightRoutesData[tripId].forEach(function (data) {
                 allFlightData.push({ tripId: tripId, route: data.route, trip: data.trip });
             });
         });
-        
+
         // Process in batches (polylines are fast, can do more per batch)
         const BATCH_SIZE = 50;
         let index = 0;
-        
+
         function processBatch() {
             const end = Math.min(index + BATCH_SIZE, allFlightData.length);
-            
+
             for (let i = index; i < end; i++) {
                 const item = allFlightData[i];
                 const layer = createFlightLayer(item.route, item.trip);
                 if (layer) {
                     flightRoutesLayers[item.tripId].push(layer);
                     // Add to map if flight toggle is enabled
-                    if ($('#toggleFlightRoutes').is(':checked') && 
+                    if ($('#toggleFlightRoutes').is(':checked') &&
                         $('#trip-' + item.tripId).is(':checked')) {
                         layer.addTo(map);
                     }
                 }
             }
-            
+
             index = end;
-            
+
             if (index < allFlightData.length) {
                 // More to process - schedule next batch
                 requestAnimationFrame(processBatch);
@@ -922,7 +957,7 @@
                 if (callback) callback();
             }
         }
-        
+
         // Start processing
         processBatch();
     }
@@ -934,48 +969,48 @@
     function createCurvedFlightPath(startCoord, endCoord, curvature) {
         const start = L.latLng(startCoord[1], startCoord[0]);
         const end = L.latLng(endCoord[1], endCoord[0]);
-        
+
         // Calculate midpoint
         const midLat = (start.lat + end.lat) / 2;
         const midLng = (start.lng + end.lng) / 2;
-        
+
         // Calculate distance for curve height
         const distance = start.distanceTo(end);
-        
+
         // Adjust curve height based on distance (longer flights = higher arc)
         // The offset is calculated to create a visible arc
         // For short flights: minimum visible curve, for long flights: natural arc
         const baseHeight = distance / 5; // More aggressive curvature
         const curveHeight = Math.max(baseHeight, distance * 0.15); // At least 15% of distance
-        
+
         // Always curve upward (north) for visual consistency
         // This creates a more pleasing and intuitive arc effect
         const offsetDegrees = (curveHeight / 111320) * (curvature || 1); // Convert meters to degrees (approx)
-        
+
         // Create control point above the midpoint (always toward north)
         const controlPoint = L.latLng(
             midLat + offsetDegrees, // Always add to latitude (north)
             midLng
         );
-        
+
         // Generate points along the quadratic Bézier curve
         const points = [];
         const segments = Math.max(20, Math.floor(distance / 50000)); // More segments for longer flights
-        
+
         for (let i = 0; i <= segments; i++) {
             const t = i / segments;
-            const lat = (1 - t) * (1 - t) * start.lat + 
-                       2 * (1 - t) * t * controlPoint.lat + 
-                       t * t * end.lat;
-            const lng = (1 - t) * (1 - t) * start.lng + 
-                       2 * (1 - t) * t * controlPoint.lng + 
-                       t * t * end.lng;
+            const lat = (1 - t) * (1 - t) * start.lat +
+                2 * (1 - t) * t * controlPoint.lat +
+                t * t * end.lat;
+            const lng = (1 - t) * (1 - t) * start.lng +
+                2 * (1 - t) * t * controlPoint.lng +
+                t * t * end.lng;
             points.push([lat, lng]);
         }
-        
+
         return points;
     }
-    
+
     /**
      * Calculate bearing between two points
      */
@@ -984,16 +1019,16 @@
         const startLng = start.lng * Math.PI / 180;
         const endLat = end.lat * Math.PI / 180;
         const endLng = end.lng * Math.PI / 180;
-        
+
         const dLng = endLng - startLng;
         const y = Math.sin(dLng) * Math.cos(endLat);
         const x = Math.cos(startLat) * Math.sin(endLat) -
-                 Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
-        
+            Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
+
         const bearing = Math.atan2(y, x);
         return (bearing * 180 / Math.PI + 360) % 360;
     }
-    
+
     /**
      * Calculate destination point given distance and bearing
      */
@@ -1001,20 +1036,20 @@
         const radius = 6371000; // Earth's radius in meters
         const δ = distance / radius;
         const θ = bearing * Math.PI / 180;
-        
+
         const φ1 = point.lat * Math.PI / 180;
         const λ1 = point.lng * Math.PI / 180;
-        
+
         const φ2 = Math.asin(
             Math.sin(φ1) * Math.cos(δ) +
             Math.cos(φ1) * Math.sin(δ) * Math.cos(θ)
         );
-        
+
         const λ2 = λ1 + Math.atan2(
             Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
             Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
         );
-        
+
         return L.latLng(φ2 * 180 / Math.PI, λ2 * 180 / Math.PI);
     }
 
@@ -1025,18 +1060,18 @@
         if (!route.geojson || !route.geojson.geometry || route.geojson.geometry.type !== 'LineString') {
             return null;
         }
-        
+
         const coords = route.geojson.geometry.coordinates;
         const isFuture = isFutureTrip(trip);
         const config = transportConfig['plane'];
         const color = isFuture ? '#6B6B6B' : (config.color || route.color);
         const dashArray = isFuture ? '2, 4' : '4, 6';
         const opacity = isFuture ? 0.5 : 0.6;
-        
+
         // Create curved flight path for more realistic representation
         // For multi-segment flights, curve each segment
         const latLngs = [];
-        
+
         if (coords.length === 2) {
             // Simple point-to-point flight - create smooth curve
             const curvedPath = createCurvedFlightPath(coords[0], coords[1], 1);
@@ -1048,7 +1083,7 @@
                 latLngs.push(...segmentPath);
             }
         }
-        
+
         const layer = L.polyline(latLngs, {
             color: color,
             weight: 2,
@@ -1056,17 +1091,30 @@
             dashArray: dashArray,
             smoothFactor: 1
         });
-        
+
         // Popup
         const futureIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2V6M8 2V6"/><path d="M21 15V12C21 8.22876 21 6.34315 19.8284 5.17157C18.6569 4 16.7712 4 13 4H11C7.22876 4 5.34315 4 4.17157 5.17157C3 6.34315 3 8.22876 3 12V14C3 17.7712 3 19.6569 4.17157 20.8284C5.34315 22 7.22876 22 11 22H12"/><path d="M3 10H21"/><path d="M18.5 22C19.0057 21.5085 21 20.2002 21 19.5C21 18.7998 19.0057 17.4915 18.5 17M20.5 19.5H14"/></svg>';
         const futureLabel = isFuture ? ` <span class="badge bg-secondary">${futureIconSvg} Próximo</span>` : '';
+
+        // Generar HTML de tags
+        let tagsHtml = '';
+        if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+            tagsHtml = '<div class="mt-1 d-flex gap-1 flex-wrap">';
+            trip.tags.forEach(tag => {
+                tagsHtml += `<span class="badge bg-light text-dark border" style="font-size: 0.7em;">${escapeHtml(tag)}</span>`;
+            });
+            tagsHtml += '</div>';
+        }
+
         layer.bindPopup(`
             <div class="route-popup">
-                <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}<br>
+                <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}
+                ${tagsHtml}
+                <br>
                 <small class="text-muted">${__('map.transport')}: ${__('map.transport_plane')}</small>
             </div>
         `);
-        
+
         return layer;
     }
 
@@ -1075,7 +1123,7 @@
      */
     function renderPoint(point, trip) {
         const typeConfig = pointTypeConfig[point.type] || pointTypeConfig['visit'];
-        
+
         // Icono personalizado
         const iconColor = typeConfig.darkText ? 'color: #000; stroke: #000;' : '';
         const icon = L.divIcon({
@@ -1110,25 +1158,25 @@
      */
     function createPointPopup(point, trip, typeConfig) {
         let html = '<div class="point-popup">';
-        
+
         // Imagen si existe (clicable para abrir lightbox)
         // Usar thumbnail para mostrar en popup, full image para lightbox
         if (point.image_url) {
             const displayImage = point.thumbnail_url || point.image_url;
             html += `<img src="${displayImage}" alt="${escapeHtml(point.title)}" class="popup-image" onclick="openLightbox('${point.image_url}', '${escapeHtml(point.title)}')" title="${__('map.click_to_view_full')}">`;
         }
-        
+
         // Contenido
         html += '<div class="popup-content">';
-        
+
         // Título
         html += `<h6 class="popup-title">${escapeHtml(point.title)}</h6>`;
-        
+
         // Badge del tipo
         const typeLabel = typeConfig.labelKey ? __(typeConfig.labelKey) : typeConfig.label;
         const textColor = typeConfig.darkText ? 'color: #000; --bs-badge-color: #000;' : '';
         html += `<span class="badge mb-2" style="background-color: ${typeConfig.color}; ${textColor} display: inline-flex; align-items: center; gap: 4px;">${typeConfig.emoji} <span>${typeLabel}</span></span>`;
-        
+
         // Viaje
         html += `<p class="popup-trip mb-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-map me-1" viewBox="0 0 16 16">
@@ -1136,7 +1184,16 @@
                     </svg>
                     <span style="color: ${trip.color}; font-weight: bold;">${escapeHtml(trip.title)}</span>
                  </p>`;
-        
+
+        // Tags del viaje
+        if (appConfig?.tripTagsEnabled && trip.tags && trip.tags.length > 0) {
+            html += '<div class="mb-2 d-flex gap-1 flex-wrap">';
+            trip.tags.forEach(tag => {
+                html += `<span class="badge bg-light text-dark border" style="font-size: 0.65em;">${escapeHtml(tag)}</span>`;
+            });
+            html += '</div>';
+        }
+
         // Fecha
         if (point.visit_date) {
             html += `<p class="popup-date mb-1">
@@ -1147,12 +1204,12 @@
                         ${formatDate(point.visit_date)}
                      </p>`;
         }
-        
+
         // Descripción
         if (point.description) {
             html += `<p class="popup-description">${escapeHtml(point.description)}</p>`;
         }
-        
+
         // Coordenadas
         html += `<p class="popup-coords">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-geo-alt me-1" viewBox="0 0 16 16">
@@ -1161,9 +1218,9 @@
                     </svg>
                     ${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}
                  </p>`;
-        
+
         html += '</div></div>';
-        
+
         return html;
     }
 
@@ -1172,7 +1229,7 @@
      */
     function fitMapToContent() {
         const urlParams = getURLParams();
-        
+
         // If URL has center and/or zoom parameters, use those
         if (urlParams.center || urlParams.zoom) {
             if (urlParams.center && urlParams.zoom) {
@@ -1187,7 +1244,7 @@
             }
             return;
         }
-        
+
         // Otherwise, fit to content bounds
         if (tripsData.length === 0) {
             return;
@@ -1197,8 +1254,8 @@
         let hasContent = false;
 
         // Agregar rutas a los bounds (solo rutas con getBounds, skip curves)
-        Object.values(routesLayers).forEach(function(layers) {
-            layers.forEach(function(layer) {
+        Object.values(routesLayers).forEach(function (layers) {
+            layers.forEach(function (layer) {
                 try {
                     if (layer.getBounds && typeof layer.getBounds === 'function') {
                         const layerBounds = layer.getBounds();
@@ -1249,7 +1306,7 @@
     function showTrip(tripId) {
         // Mostrar rutas (excepto avión si el toggle está desactivado)
         if (routesLayers[tripId] && $('#toggleRoutes').is(':checked')) {
-            routesLayers[tripId].forEach(function(layer) {
+            routesLayers[tripId].forEach(function (layer) {
                 if (!map.hasLayer(layer)) {
                     layer.addTo(map);
                 }
@@ -1262,9 +1319,9 @@
             if (!flightRoutesCreated) {
                 createFlightRouteLayers();
             }
-            
+
             if (flightRoutesLayers[tripId]) {
-                flightRoutesLayers[tripId].forEach(function(layer) {
+                flightRoutesLayers[tripId].forEach(function (layer) {
                     if (!map.hasLayer(layer)) {
                         layer.addTo(map);
                     }
@@ -1274,7 +1331,7 @@
 
         // Mostrar puntos
         if (pointsClusters[tripId]) {
-            pointsClusters[tripId].forEach(function(marker) {
+            pointsClusters[tripId].forEach(function (marker) {
                 if (!allPointsCluster.hasLayer(marker)) {
                     allPointsCluster.addLayer(marker);
                 }
@@ -1288,7 +1345,7 @@
     function hideTrip(tripId) {
         // Ocultar rutas
         if (routesLayers[tripId]) {
-            routesLayers[tripId].forEach(function(layer) {
+            routesLayers[tripId].forEach(function (layer) {
                 if (map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
@@ -1297,7 +1354,7 @@
 
         // Ocultar rutas en avión
         if (flightRoutesLayers[tripId]) {
-            flightRoutesLayers[tripId].forEach(function(layer) {
+            flightRoutesLayers[tripId].forEach(function (layer) {
                 if (map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
@@ -1306,7 +1363,7 @@
 
         // Ocultar puntos
         if (pointsClusters[tripId]) {
-            pointsClusters[tripId].forEach(function(marker) {
+            pointsClusters[tripId].forEach(function (marker) {
                 if (allPointsCluster.hasLayer(marker)) {
                     allPointsCluster.removeLayer(marker);
                 }
@@ -1334,45 +1391,45 @@
      */
     function generateShareableLink() {
         const params = new URLSearchParams();
-        
+
         // Get current map center and zoom
         const center = map.getCenter();
         const zoom = map.getZoom();
-        
+
         // Add center (lat,lng)
         params.set('center', `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`);
-        
+
         // Add zoom
         params.set('zoom', Math.round(zoom).toString());
-        
+
         // Add selected trips
         const selectedTrips = [];
-        $('.trip-checkbox:checked').each(function() {
+        $('.trip-checkbox:checked').each(function () {
             selectedTrips.push($(this).val());
         });
         if (selectedTrips.length > 0) {
             params.set('trips', selectedTrips.join(','));
         }
-        
+
         // Add toggle states
         if ($('#toggleRoutes').is(':checked')) {
             params.set('routes', '1');
         } else {
             params.set('routes', '0');
         }
-        
+
         if ($('#togglePoints').is(':checked')) {
             params.set('points', '1');
         } else {
             params.set('points', '0');
         }
-        
+
         if ($('#toggleFlightRoutes').is(':checked')) {
             params.set('flights', '1');
         } else {
             params.set('flights', '0');
         }
-        
+
         // Generate full URL
         const baseUrl = window.location.origin + window.location.pathname;
         return `${baseUrl}?${params.toString()}`;
@@ -1383,12 +1440,12 @@
      */
     function shareMapLink() {
         const url = generateShareableLink();
-        
+
         // Try to use the modern Clipboard API
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function() {
+            navigator.clipboard.writeText(url).then(function () {
                 showShareSuccess();
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // Fallback to old method
                 fallbackCopyToClipboard(url);
             });
@@ -1410,7 +1467,7 @@
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         try {
             const successful = document.execCommand('copy');
             if (successful) {
@@ -1421,7 +1478,7 @@
         } catch (err) {
             showShareError();
         }
-        
+
         document.body.removeChild(textArea);
     }
 
@@ -1431,7 +1488,7 @@
     function showShareSuccess() {
         const btn = $('#shareMapBtn');
         const originalHtml = btn.html();
-        
+
         btn.html(`
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1">
                 <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
@@ -1439,8 +1496,8 @@
             ${__('map.link_copied')}
         `);
         btn.addClass('btn-success').removeClass('btn-outline-primary');
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             btn.html(originalHtml);
             btn.removeClass('btn-success').addClass('btn-outline-primary');
         }, 2000);
@@ -1460,10 +1517,10 @@
         if (!startDate && !endDate) {
             return 'Sin fechas';
         }
-        
+
         const start = startDate ? formatDate(startDate) : '';
         const end = endDate ? formatDate(endDate) : '';
-        
+
         if (start && end) {
             return `${start} - ${end}`;
         }
@@ -1475,12 +1532,12 @@
      */
     function formatDate(dateString) {
         if (!dateString) return '';
-        
+
         const date = new Date(dateString + 'T00:00:00');
-        return date.toLocaleDateString('es-ES', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
     }
 
@@ -1518,7 +1575,7 @@
             url: url,
             method: 'GET',
             dataType: 'json',
-            success: function(results) {
+            success: function (results) {
                 searchResults.empty();
 
                 if (!results || results.length === 0) {
@@ -1531,11 +1588,11 @@
                     return;
                 }
 
-                results.forEach(function(place) {
+                results.forEach(function (place) {
                     const displayName = place.display_name;
                     const lat = parseFloat(place.lat);
                     const lon = parseFloat(place.lon);
-                    
+
                     const item = $(`
                         <button type="button" class="list-group-item list-group-item-action small" data-lat="${lat}" data-lon="${lon}">
                             <div>
@@ -1548,7 +1605,7 @@
                         </button>
                     `);
 
-                    item.on('click', function() {
+                    item.on('click', function () {
                         const lat = parseFloat($(this).data('lat'));
                         const lon = parseFloat($(this).data('lon'));
                         goToPublicPlace(lat, lon);
@@ -1557,14 +1614,14 @@
                     searchResults.append(item);
                 });
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Error en búsqueda:', error);
                 let errorMsg = 'Error al buscar. Intenta nuevamente.';
-                
+
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
                 }
-                
+
                 searchResults.html(`<div class="list-group-item small text-danger">${errorMsg}</div>`);
             }
         });
@@ -1575,7 +1632,7 @@
      */
     function goToPublicPlace(lat, lng) {
         map.setView([lat, lng], 12);
-        
+
         // Ocultar resultados
         $('#publicSearchResults').hide();
         $('#publicPlaceSearch').val('');
@@ -1587,12 +1644,12 @@
      */
     function setupEventHandlers() {
         // Búsqueda de lugares
-        $('#publicSearchBtn').on('click', function() {
+        $('#publicSearchBtn').on('click', function () {
             const query = $('#publicPlaceSearch').val();
             searchPublicPlace(query);
         });
 
-        $('#publicPlaceSearch').on('keypress', function(e) {
+        $('#publicPlaceSearch').on('keypress', function (e) {
             if (e.which === 13) { // Enter
                 e.preventDefault();
                 const query = $(this).val();
@@ -1601,19 +1658,19 @@
         });
 
         // Ocultar resultados al hacer clic fuera
-        $(document).on('click', function(e) {
+        $(document).on('click', function (e) {
             if (!$(e.target).closest('#publicPlaceSearch, #publicSearchResults, #publicSearchBtn').length) {
                 $('#publicSearchResults').hide();
             }
         });
 
         // Toggle de rutas
-        $('#toggleRoutes').on('change', function() {
+        $('#toggleRoutes').on('change', function () {
             const show = $(this).is(':checked');
-            $('.trip-checkbox:checked').each(function() {
+            $('.trip-checkbox:checked').each(function () {
                 const tripId = parseInt($(this).val());
                 if (routesLayers[tripId]) {
-                    routesLayers[tripId].forEach(function(layer) {
+                    routesLayers[tripId].forEach(function (layer) {
                         if (show) {
                             if (!map.hasLayer(layer)) layer.addTo(map);
                         } else {
@@ -1626,19 +1683,19 @@
         });
 
         // Toggle de rutas en avión
-        $('#toggleFlightRoutes').on('change', function() {
+        $('#toggleFlightRoutes').on('change', function () {
             const show = $(this).is(':checked');
-            
+
             if (show) {
                 // Create flight layers on first enable (batched creation handles adding to map)
                 if (!flightRoutesCreated) {
                     createFlightRouteLayers();
                 } else {
                     // Already created, just show them
-                    $('.trip-checkbox:checked').each(function() {
+                    $('.trip-checkbox:checked').each(function () {
                         const tripId = parseInt($(this).val());
                         if (flightRoutesLayers[tripId]) {
-                            flightRoutesLayers[tripId].forEach(function(layer) {
+                            flightRoutesLayers[tripId].forEach(function (layer) {
                                 if (!map.hasLayer(layer)) layer.addTo(map);
                             });
                         }
@@ -1646,8 +1703,8 @@
                 }
             } else {
                 // Hide all flight routes
-                Object.values(flightRoutesLayers).forEach(function(layers) {
-                    layers.forEach(function(layer) {
+                Object.values(flightRoutesLayers).forEach(function (layers) {
+                    layers.forEach(function (layer) {
                         if (map.hasLayer(layer)) map.removeLayer(layer);
                     });
                 });
@@ -1656,7 +1713,7 @@
         });
 
         // Toggle de puntos
-        $('#togglePoints').on('change', function() {
+        $('#togglePoints').on('change', function () {
             const show = $(this).is(':checked');
             if (show) {
                 if (!map.hasLayer(allPointsCluster)) {
@@ -1671,25 +1728,25 @@
         });
 
         // Filter buttons
-        $('#filterAll').on('click', function() {
+        $('#filterAll').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', true).trigger('change');
             savePreferences();
         });
 
-        $('#filterPast').on('click', function() {
+        $('#filterPast').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             // Uncheck future trips, check past trips
-            tripsData.forEach(function(trip) {
+            tripsData.forEach(function (trip) {
                 const isFuture = isFutureTrip(trip);
                 $('#trip-' + trip.id).prop('checked', !isFuture).trigger('change');
             });
             savePreferences();
         });
 
-        $('#filterNone').on('click', function() {
+        $('#filterNone').on('click', function () {
             $('.filter-btn').removeClass('active');
             $(this).addClass('active');
             $('.trip-checkbox').prop('checked', false).trigger('change');
@@ -1697,7 +1754,7 @@
         });
 
         // Share map link button
-        $('#shareMapBtn').on('click', function() {
+        $('#shareMapBtn').on('click', function () {
             shareMapLink();
         });
 
@@ -1706,11 +1763,11 @@
     }
 
     // Inicialización principal: cargar configuración primero, luego inicializar el mapa
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Apply saved preferences to controls before anything else
         applyPreferencesToControls();
-        
-        loadConfig().always(function() {
+
+        loadConfig().always(function () {
             // Inicializar el mapa después de cargar la configuración
             initMap();
             renderLegend(); // Renderizar leyenda con colores configurados
@@ -1726,7 +1783,7 @@
         const lightbox = document.getElementById('imageLightbox');
         if (lightbox) {
             // Cerrar lightbox al hacer click en cualquier parte
-            lightbox.addEventListener('click', function() {
+            lightbox.addEventListener('click', function () {
                 closeLightbox();
             });
         }
@@ -1735,15 +1792,15 @@
     /**
      * Abre el lightbox con una imagen
      */
-    window.openLightbox = function(imageUrl, altText) {
+    window.openLightbox = function (imageUrl, altText) {
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
-        
+
         if (lightbox && lightboxImage) {
             lightboxImage.src = imageUrl;
             lightboxImage.alt = altText || '';
             lightbox.style.display = 'flex';
-            
+
             // Prevenir scroll del body
             document.body.style.overflow = 'hidden';
         }
@@ -1752,19 +1809,19 @@
     /**
      * Cierra el lightbox
      */
-    window.closeLightbox = function() {
+    window.closeLightbox = function () {
         const lightbox = document.getElementById('imageLightbox');
-        
+
         if (lightbox) {
             lightbox.style.display = 'none';
-            
+
             // Restaurar scroll del body
             document.body.style.overflow = '';
         }
     };
 
     // También cerrar con tecla ESC
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeLightbox();
         }

@@ -19,6 +19,7 @@ try {
     // Obtener las configuraciones necesarias para el frontend
     $mapConfig = $settingsModel->getMapConfig();
     $transportColors = $settingsModel->getTransportColors();
+    $tripTagsEnabled = $settingsModel->get('trip_tags_enabled', true);
     
     // Log para depuración (comentar en producción)
     error_log('Map Config: ' . json_encode($mapConfig));
@@ -28,7 +29,8 @@ try {
         'success' => true,
         'data' => [
             'map' => $mapConfig,
-            'transportColors' => $transportColors
+            'transportColors' => $transportColors,
+            'tripTagsEnabled' => $tripTagsEnabled
         ]
     ];
     

@@ -195,7 +195,13 @@
     "points": "Puntos",
     "map_editor": "Editor de Mapa",
     "draw_routes_on_map": "Dibuja las rutas de tu viaje en el mapa",
-    "trip_info": "Información del Viaje"
+    "trip_info": "Información del Viaje",
+    "tags": "Etiquetas",
+    "add_tags": "Agregar etiquetas...",
+    "tags_help": "Escribe y presiona Enter, Tab o Coma para agregar etiquetas.",
+    "tag_too_long": "La etiqueta es demasiado larga (máximo 50 caracteres)",
+    "tag_invalid_chars": "La etiqueta contiene caracteres inválidos (solo letras, números, espacios y guiones)",
+    "too_many_tags": "Demasiadas etiquetas (máximo 10)"
   },
   "points": {
     "title": "Puntos de Interés",

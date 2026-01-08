@@ -86,6 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 'type' => 'number'
             ];
         }
+
+        // Trip Tags toggle (checkbox)
+        $updates['trip_tags_enabled'] = [
+            'value' => isset($_POST['trip_tags_enabled']) && $_POST['trip_tags_enabled'] === '1',
+            'type' => 'boolean'
+        ];
         
         // Colores de transporte
         $transportTypes = ['plane', 'ship', 'car', 'train', 'walk', 'bus', 'aerial'];
@@ -630,6 +636,15 @@ require_once __DIR__ . '/../includes/header.php';
                                min="1" max="20" required>
                         <div class="form-hint"><?= __('settings.disable_clustering_description') ?></div>
                     </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 24px;">
+                    <label class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="trip_tags_enabled" name="trip_tags_enabled" value="1"
+                               <?= ($currentSettings['trip_tags_enabled'] ?? true) ? 'checked' : '' ?>>
+                        <span class="form-check-label"><?= __('settings.trip_tags_enabled', 'Habilitar sistema de etiquetas (Tags)') ?></span>
+                    </label>
+                    <div class="form-hint" style="margin-left: 44px;"><?= __('settings.trip_tags_enabled_desc', 'Muestra las etiquetas en el mapa público y permite gestionarlas en el administrador.') ?></div>
                 </div>
             </div>
         </div>

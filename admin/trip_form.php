@@ -13,8 +13,16 @@ require_once __DIR__ . '/../includes/auth.php';
 require_auth();
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/models/Trip.php';
+require_once __DIR__ . '/../src/models/TripTag.php';
+require_once __DIR__ . '/../src/models/Settings.php';
 
 $tripModel = new Trip();
+$tripTagModel = new TripTag();
+$settingsModel = new Settings(getDB());
+
+// Verificar si el sistema de tags está habilitado
+$tripTagsEnabled = $settingsModel->get('trip_tags_enabled', true);
+
 $errors = [];
 $success = false;
 $trip = null;
@@ -30,6 +38,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         exit;
     }
     $is_edit = true;
+    // Cargar tags
+    $trip_tags = $tripTagModel->getByTripId($trip_id);
+} else {
+    $trip_tags = [];
 }
 
 // Procesar formulario
@@ -45,13 +57,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validar datos
     $errors = $tripModel->validate($data);
+    
+    // Validar tags solo si el sistema de tags está habilitado
+    $validated_tags = [];
+    if ($tripTagsEnabled) {
+        $tags_input = $_POST['trip_tags'] ?? '';
+        $tags_array = $tags_input ? explode(',', $tags_input) : [];
+        
+        // Validación de tags
+        foreach ($tags_array as $tag) {
+            $tag = trim($tag);
+            
+            // Ignorar tags vacíos
+            if (empty($tag)) {
+                continue;
+            }
+            
+            // Validar longitud máxima (50 caracteres)
+            if (mb_strlen($tag) > 50) {
+                $errors['tags'] = __('trips.tag_too_long');
+                break;
+            }
+            
+            // Validar caracteres especiales (solo letras, números, espacios, guiones)
+            if (!preg_match('/^[\p{L}\p{N}\s\-]+$/u', $tag)) {
+                $errors['tags'] = __('trips.tag_invalid_chars');
+                break;
+            }
+            
+            $validated_tags[] = $tag;
+        }
+        
+        // Limitar cantidad máxima de tags (10)
+        if (count($validated_tags) > 10) {
+            $errors['tags'] = __('trips.too_many_tags');
+        }
+    }
 
     if (empty($errors)) {
         if ($is_edit) {
             // Actualizar
             if ($tripModel->update($trip_id, $data)) {
+                // Sincronizar tags solo si está habilitado
+                if ($tripTagsEnabled) {
+                    $tripTagModel->sync($trip_id, $validated_tags);
+                }
+
                 $success = true;
                 $trip = $tripModel->getById($trip_id); // Recargar datos
+                $trip_tags = $tripTagModel->getByTripId($trip_id); // Recargar tags
                 $message = __('common.updated_success');
             } else {
                 $errors['general'] = __('common.error_updating');
@@ -60,6 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Crear
             $new_id = $tripModel->create($data);
             if ($new_id) {
+                // Sincronizar tags solo si está habilitado
+                if ($tripTagsEnabled) {
+                    $tripTagModel->sync($new_id, $validated_tags);
+                }
+                
                 $success = true;
                 $message = __('common.created_success');
                 // Redirigir a edición del nuevo viaje
@@ -256,6 +315,22 @@ $form_data = $trip ?? [
                         </div>
                     </div>
 
+                    <?php if ($tripTagsEnabled): ?>
+                    <!-- Tags -->
+                    <div class="mb-3">
+                        <label class="form-label"><?= __('trips.tags') ?></label>
+                        <div id="tags-container" class="form-control d-flex flex-wrap gap-2 align-items-center <?= isset($errors['tags']) ? 'is-invalid' : '' ?>" style="min-height: 38px; height: auto; cursor: text;">
+                            <!-- Tags will be injected here via JS -->
+                            <input type="text" id="tag-input" class="border-0 flex-grow-1" style="outline: none; min-width: 100px; background: transparent;" placeholder="<?= __('trips.add_tags') ?>">
+                        </div>
+                        <input type="hidden" name="trip_tags" id="trip_tags_hidden" value="<?= htmlspecialchars(implode(',', $trip_tags ?? [])) ?>">
+                        <?php if (isset($errors['tags'])): ?>
+                            <div class="invalid-feedback d-block"><?= htmlspecialchars($errors['tags']) ?></div>
+                        <?php endif; ?>
+                        <small class="form-text text-muted"><?= __('trips.tags_help') ?></small>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <a href="trips.php" class="btn btn-secondary"><?= __('common.cancel') ?></a>
                         <button type="submit" class="btn btn-primary">
@@ -290,6 +365,9 @@ $form_data = $trip ?? [
                     <li><strong><?= __('trips.description') ?>:</strong> <?= __('trips.additional_details') ?></li>
                     <li><strong><?= __('common.date') ?>:</strong> <?= __('trips.travel_period') ?></li>
                     <li><strong><?= __('trips.color') ?>:</strong> <?= __('trips.map_visualization') ?></li>
+                    <?php if ($tripTagsEnabled): ?>
+                    <li><strong>Tags:</strong> <?= __('trips.tags_desc') ?? 'Keywords to categorize your trip' ?></li>
+                    <?php endif; ?>
                     <li><strong><?= __('trips.status') ?>:</strong> <?= __('trips.draft') ?> <?= __('common.or') ?> <?= __('trips.published') ?></li>
                 </ul>
 
@@ -311,6 +389,99 @@ $form_data = $trip ?? [
 document.getElementById('color_hex').addEventListener('input', function(e) {
     document.getElementById('color_hex_text').value = e.target.value;
 });
+
+// Tags Logic
+(function() {
+    const container = document.getElementById('tags-container');
+    const input = document.getElementById('tag-input');
+    const hiddenInput = document.getElementById('trip_tags_hidden');
+    
+    // Only run if elements exist (i.e., if tripTagsEnabled is true)
+    if (!container || !input || !hiddenInput) {
+        return;
+    }
+    
+    // Load initial tags
+    let tags = hiddenInput.value ? hiddenInput.value.split(',').filter(t => t.trim() !== '') : [];
+    
+    function updateHiddenInput() {
+        hiddenInput.value = tags.join(',');
+    }
+    
+    function createTagElement(text) {
+        const span = document.createElement('span');
+        span.className = 'badge bg-secondary d-flex align-items-center gap-1';
+        span.style.padding = '6px 10px';
+        span.style.fontSize = '0.9em';
+        
+        span.textContent = text;
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.marginLeft = '5px';
+        closeBtn.style.fontSize = '1.2em';
+        closeBtn.style.lineHeight = '0.5';
+        
+        closeBtn.onclick = function(e) {
+            e.stopPropagation(); // prevent focusing input
+            tags = tags.filter(t => t !== text);
+            span.remove();
+            updateHiddenInput();
+        };
+        
+        span.appendChild(closeBtn);
+        return span;
+    }
+    
+    function renderTags() {
+        // Clear existing tags (keep input)
+        Array.from(container.children).forEach(child => {
+            if (child !== input) child.remove();
+        });
+        
+        // Add tags before input
+        tags.forEach(tag => {
+            container.insertBefore(createTagElement(tag), input);
+        });
+    }
+    
+    function addTag(text) {
+        const tag = text.trim();
+        if (tag && !tags.includes(tag)) {
+            tags.push(tag);
+            renderTags();
+            updateHiddenInput();
+        }
+        input.value = '';
+    }
+    
+    // Create initial tags
+    renderTags();
+    
+    // Event Listeners
+    container.onclick = function() {
+        input.focus();
+    };
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',') {
+            e.preventDefault();
+            addTag(this.value);
+        }
+        if (e.key === 'Backspace' && this.value === '' && tags.length > 0) {
+            tags.pop();
+            renderTags();
+            updateHiddenInput();
+        }
+    });
+    
+    input.addEventListener('blur', function() {
+        if (this.value.trim()) {
+            addTag(this.value);
+        }
+    });
+})();
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

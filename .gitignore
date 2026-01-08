@@ -10,3 +10,8 @@ flightdiary_2025_12_29_23_58.csv
 backups/*.json
 *.db
 admin/phpminiadmin.php
+docker-compose.yml
+docker-entrypoint.sh
+README_DOCKER.md
+Dockerfile
+info.php

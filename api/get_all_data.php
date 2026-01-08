@@ -12,12 +12,14 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/models/Trip.php';
 require_once __DIR__ . '/../src/models/Route.php';
 require_once __DIR__ . '/../src/models/Point.php';
+require_once __DIR__ . '/../src/models/TripTag.php';
 require_once __DIR__ . '/../src/helpers/FileHelper.php';
 
 try {
     $tripModel = new Trip();
     $routeModel = new Route();
     $pointModel = new Point();
+    $tripTagModel = new TripTag();
     
     // Obtener todos los viajes publicados
     $trips = $tripModel->getAll('start_date DESC', 'published');
@@ -32,6 +34,9 @@ try {
     foreach ($trips as $trip) {
         // Obtener rutas del viaje
         $routes = $routeModel->getByTripId($trip['id']);
+        
+        // Obtener tags del viaje
+        $tags = $tripTagModel->getByTripId($trip['id']);
         
         // Procesar rutas para convertir GeoJSON
         $processedRoutes = [];
@@ -79,6 +84,7 @@ try {
             'start_date' => $trip['start_date'],
             'end_date' => $trip['end_date'],
             'color' => $trip['color_hex'],
+            'tags' => $tags,
             'routes' => $processedRoutes,
             'points' => $processedPoints
         ];
