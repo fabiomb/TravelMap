@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ];
         
         // Colores de transporte
-        $transportTypes = ['plane', 'ship', 'car', 'train', 'walk', 'bus', 'aerial'];
+        $transportTypes = ['plane', 'ship', 'car', 'bike', 'train', 'walk', 'bus', 'aerial'];
         foreach ($transportTypes as $type) {
             $key = 'transport_color_' . $type;
             if (isset($_POST[$key])) {
@@ -676,6 +676,7 @@ require_once __DIR__ . '/../includes/header.php';
                         'plane' => __('settings.transport_plane'),
                         'ship' => __('settings.transport_ship'),
                         'car' => __('settings.transport_car'),
+                        'bike' => __('settings.transport_bike'),
                         'train' => __('settings.transport_train'),
                         'walk' => __('settings.transport_walk'),
                         'bus' => __('settings.transport_bus'),
@@ -685,6 +686,7 @@ require_once __DIR__ . '/../includes/header.php';
                         'plane' => '#FF4444',
                         'ship' => '#00AAAA',
                         'car' => '#4444FF',
+                        'bike' => '#b88907',
                         'train' => '#FF8800',
                         'walk' => '#44FF44',
                         'bus' => '#9C27B0',

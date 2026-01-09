@@ -83,6 +83,7 @@
     "transport_plane": "Avión",
     "transport_ship": "Barco",
     "transport_car": "Auto",
+    "transport_bike": "Motocicleta",
     "transport_train": "Tren",
     "transport_walk": "Caminata",
     "transport_bus": "Bus",
@@ -155,7 +156,6 @@
     "must_be_unique": "Debe ser único en el sistema",
     "used_for_login": "Se usa para iniciar sesión",
     "note_own_user_warning": "Si estás editando tu propio usuario y cambias la contraseña, deberás iniciar sesión nuevamente con la nueva contraseña."
-
   },
   "trips": {
     "title": "Viajes",
@@ -381,6 +381,7 @@
     "transport_plane": "Avión",
     "transport_ship": "Barco",
     "transport_car": "Auto",
+    "transport_bike": "Motocicleta",
     "transport_train": "Tren",
     "transport_walk": "Caminata",
     "transport_bus": "Autobús",

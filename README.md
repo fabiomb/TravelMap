@@ -1,4 +1,4 @@
-# TravelMap - Diario de Viajes Interactivo V 1.0.123
+# TravelMap - Diario de Viajes Interactivo V 1.0.129
 
 Aplicación web completa para crear y visualizar mapas interactivos de viajes con puntos de interés, rutas georreferenciadas y gestión multimedia. Sistema desarrollado con tecnologías nativas sin dependencias de frameworks externos.
 
