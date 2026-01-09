@@ -66,6 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 'type' => 'string'
             ];
         }
+
+        if (isset($_POST['distance_unit'])) {
+            $updates['distance_unit'] = [
+                'value' => $_POST['distance_unit'],
+                'type' => 'string'
+            ];
+        }
         
         // Checkbox: always process (unchecked = not sent in POST)
         $updates['map_cluster_enabled'] = [
@@ -645,6 +652,15 @@ require_once __DIR__ . '/../includes/header.php';
                         <span class="form-check-label"><?= __('settings.trip_tags_enabled', 'Habilitar sistema de etiquetas (Tags)') ?></span>
                     </label>
                     <div class="form-hint" style="margin-left: 44px;"><?= __('settings.trip_tags_enabled_desc', 'Muestra las etiquetas en el mapa público y permite gestionarlas en el administrador.') ?></div>
+                </div>
+
+                <div class="form-group" style="margin-top: 24px;">
+                    <label for="distance_unit" class="form-label"><?= __('settings.distance_unit') ?? 'Unidad de Distancia Preferida' ?></label>
+                    <select class="form-control form-select" id="distance_unit" name="distance_unit">
+                        <option value="km" <?= ($currentSettings['distance_unit'] ?? 'km') === 'km' ? 'selected' : '' ?>>Kilómetros (km)</option>
+                        <option value="mi" <?= ($currentSettings['distance_unit'] ?? 'km') === 'mi' ? 'selected' : '' ?>>Millas (mi)</option>
+                    </select>
+                    <div class="form-hint"><?= __('settings.distance_unit_description') ?? 'Unidad usada para viajes en tierra (auto, tren, caminata, etc.)' ?></div>
                 </div>
             </div>
         </div>

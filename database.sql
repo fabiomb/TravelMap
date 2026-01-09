@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS routes (
     trip_id INT UNSIGNED NOT NULL,
     transport_type ENUM('plane', 'car', 'walk', 'ship', 'train', 'bus', 'aerial') NOT NULL,
     geojson_data LONGTEXT NOT NULL,
+    is_round_trip TINYINT(1) DEFAULT 1,
+    distance_meters INT UNSIGNED DEFAULT 0,
     color VARCHAR(7) DEFAULT '#3388ff',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

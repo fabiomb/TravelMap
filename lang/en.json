@@ -33,6 +33,11 @@
     "quick_actions": "Quick Actions",
     "view_public_map": "View Public Map",
     "recent_activity": "Recent Activity",
+    "travel_stats": "Travel Statistics",
+    "travel_stats_air": "Air Travel",
+    "travel_stats_sea": "Sea Travel",
+    "travel_stats_land": "Land Travel",
+    "routes": "routes",
     "system_info": "System Information",
     "filter_trips": "Filter Trips",
     "select_all": "Select All",
@@ -57,9 +62,13 @@
     "instructions": "Instructions",
     "draw_routes": "Draw routes",
     "edit_routes": "Edit routes",
-    "delete": "Delete",
+    "share_link": "Share map link",
     "transport_types": "Transport Types",
     "trip_points": "Trip Points",
+    "focus_route": "Click to focus on this route on the map",
+    "delete_route": "Delete route",
+    "confirm_delete_all": "Are you sure you want to delete all routes?",
+    "confirm_no_routes": "No routes drawn. Do you want to continue and delete all existing routes?",
     "transport_legend": "Transport Legend",
     "click_to_edit_routes": "Hover to highlight | Click to focus on map",
     "instruction_click_polyline": "Click on the polyline button",
@@ -98,7 +107,6 @@
     "show_past_trips": "Past trips only",
     "hide_all_trips": "Hide all trips",
     "trips_section": "Trips",
-    "share_link": "Share Link",
     "link_copied": "Link copied to clipboard",
     "copy_failed": "Failed to copy link",
     "loading_trips": "Loading trips..."
@@ -159,6 +167,7 @@
     "description": "Description",
     "start_date": "Start Date",
     "end_date": "End Date",
+    "is_round_trip": "Round Trip",
     "color": "Color",
     "status": "Status",
     "published": "Published",
@@ -285,9 +294,14 @@
       "bus": "Bus",
       "aerial": "Aerial"
     },
+    "distance": "Distance",
+    "is_round_trip": "Round Trip",
     "saved_success": "Routes saved successfully",
     "deleted_success": "Routes deleted successfully",
-    "error_saving": "Error processing route data"
+    "error_saving": "Error processing route data",
+    "detected_distance": "Detected distance",
+    "enter_transport_number": "Enter the number",
+    "invalid_option_default": "Invalid option. Selecting Car by default."
   },
   "users": {
     "title": "Users",
@@ -441,7 +455,9 @@
     "show_footer_note_description": "Display the footer note on the public map page",
     "footer_note_text": "Footer text",
     "footer_note_text_description": "Supports HTML for links. Leave empty for default with GitHub link.",
-    "footer_note_placeholder": "Example: TravelMap - Created by Fabio Baccaglioni"
+    "footer_note_placeholder": "Example: TravelMap - Created by Fabio Baccaglioni",
+    "distance_unit": "Preferred Distance Unit",
+    "distance_unit_description": "Unit used for land travel (car, train, walk, etc.)"
   },
   "auth": {
     "login": "Login",

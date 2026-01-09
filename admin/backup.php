@@ -391,11 +391,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $existing = $stmt->fetch();
                         
                         if (!$existing || $restoreMode === 'replace') {
-                            $stmt = $db->prepare('INSERT INTO routes (trip_id, transport_type, geojson_data, color) VALUES (?, ?, ?, ?)');
+                            $stmt = $db->prepare('INSERT INTO routes (trip_id, transport_type, geojson_data, is_round_trip, distance_meters, color) VALUES (?, ?, ?, ?, ?, ?)');
                             $stmt->execute([
                                 $newTripId,
                                 $route['transport_type'],
                                 $route['geojson_data'],
+                                $route['is_round_trip'] ?? 1,
+                                $route['distance_meters'] ?? 0,
                                 $route['color'] ?? '#3388ff'
                             ]);
                             $imported['routes']++;

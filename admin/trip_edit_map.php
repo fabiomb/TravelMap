@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['routes_data'])) {
                     'trip_id' => $trip_id,
                     'transport_type' => $route_data['transport_type'] ?? 'car',
                     'geojson_data' => json_encode($route_data['geojson']),
+                    'is_round_trip' => $route_data['is_round_trip'] ?? 0,
                     'color' => $route_data['color'] ?? Route::getColorByTransport($route_data['transport_type'] ?? 'car')
                 ]);
             }
@@ -85,6 +86,7 @@ foreach ($routes as $route) {
         'id' => $route['id'],
         'transport_type' => $route['transport_type'],
         'geojson' => json_decode($route['geojson_data'], true),
+        'is_round_trip' => (int)$route['is_round_trip'],
         'color' => $route['color']
     ];
 }
@@ -302,6 +304,17 @@ const tripColor = '<?= htmlspecialchars($trip['color_hex']) ?>';
 const existingRoutes = <?= json_encode($routes_js) ?>;
 const existingPoints = <?= json_encode($points_js) ?>;
 const transportTypes = <?= json_encode($transport_types) ?>;
+
+// Traducciones para JS
+const PHP_TRANSLATIONS = <?= $lang->getTranslationsAsJson() ?>;
+</script>
+
+<!-- i18n JS -->
+<script src="<?= ASSETS_URL ?>/js/i18n.js?v=<?php echo $version; ?>"></script>
+
+<script>
+// Inicializar i18n
+i18n.init();
 </script>
 
 <!-- Script del mapa -->

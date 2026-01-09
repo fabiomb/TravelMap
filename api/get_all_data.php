@@ -38,13 +38,19 @@ try {
         // Obtener tags del viaje
         $tags = $tripTagModel->getByTripId($trip['id']);
         
-        // Procesar rutas para convertir GeoJSON
+        // Procesar rutas para convertir GeoJSON y calcular distancia total
         $processedRoutes = [];
+        $totalDistance = 0;
         foreach ($routes as $route) {
+            $dist = (int) ($route['distance_meters'] ?? 0);
+            $totalDistance += $dist;
+            
             $processedRoutes[] = [
                 'id' => (int) $route['id'],
                 'transport_type' => $route['transport_type'],
                 'color' => $route['color'],
+                'distance_meters' => $dist,
+                'is_round_trip' => (bool) ($route['is_round_trip'] ?? false),
                 'geojson' => json_decode($route['geojson_data'], true)
             ];
         }
@@ -85,6 +91,7 @@ try {
             'end_date' => $trip['end_date'],
             'color' => $trip['color_hex'],
             'tags' => $tags,
+            'total_distance_meters' => $totalDistance,
             'routes' => $processedRoutes,
             'points' => $processedPoints
         ];

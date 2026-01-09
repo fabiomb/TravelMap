@@ -33,6 +33,11 @@
     "quick_actions": "Acciones Rápidas",
     "view_public_map": "Ver Mapa Público",
     "recent_activity": "Actividad Reciente",
+    "travel_stats": "Estadísticas de Viaje",
+    "travel_stats_air": "Viajes Aéreos",
+    "travel_stats_sea": "Viajes Marítimos",
+    "travel_stats_land": "Viajes Terrestres",
+    "routes": "rutas",
     "system_info": "Información del Sistema",
     "filter_trips": "Filtrar Viajes",
     "select_all": "Seleccionar Todos",
@@ -57,9 +62,13 @@
     "instructions": "Instrucciones",
     "draw_routes": "Dibujar rutas",
     "edit_routes": "Editar rutas",
-    "delete": "Eliminar",
+    "share_link": "Compartir Mapa",
     "transport_types": "Tipos de Transporte",
     "trip_points": "Puntos del Viaje",
+    "focus_route": "Clic para enfocar en esta ruta en el mapa",
+    "delete_route": "Eliminar ruta",
+    "confirm_delete_all": "¿Estás seguro de que deseas eliminar todas las rutas?",
+    "confirm_no_routes": "No has dibujado ninguna ruta. ¿Deseas continuar y eliminar todas las rutas existentes?",
     "transport_legend": "Leyenda de Transporte",
     "click_to_edit_routes": "Pasa el cursor para resaltar | Clic para enfocar en el mapa",
     "instruction_click_polyline": "Haz clic en el botón de polilínea",
@@ -98,7 +107,6 @@
     "show_past_trips": "Solo viajes pasados",
     "hide_all_trips": "Ocultar todos",
     "trips_section": "Viajes",
-    "share_link": "Compartir Enlace",
     "link_copied": "Enlace copiado al portapapeles",
     "copy_failed": "No se pudo copiar el enlace",
     "loading_trips": "Cargando viajes..."
@@ -160,6 +168,7 @@
     "description": "Descripción",
     "start_date": "Fecha de Inicio",
     "end_date": "Fecha de Fin",
+    "is_round_trip": "Ida y Vuelta",
     "color": "Color",
     "status": "Estado",
     "published": "Publicado",
@@ -286,9 +295,14 @@
       "bus": "Autobús",
       "aerial": "Aéreo"
     },
+    "distance": "Distancia",
+    "is_round_trip": "Ida y Vuelta",
     "saved_success": "Rutas guardadas correctamente",
     "deleted_success": "Rutas eliminadas correctamente",
-    "error_saving": "Error al procesar los datos de las rutas"
+    "error_saving": "Error al procesar los datos de las rutas",
+    "detected_distance": "Distancia detectada",
+    "enter_transport_number": "Ingresa el número",
+    "invalid_option_default": "Opción no válida. Seleccionando Auto por defecto."
   },
   "users": {
     "title": "Usuarios",
@@ -420,7 +434,9 @@
     "show_footer_note_description": "Mostrar la nota del pie de página en el mapa público",
     "footer_note_text": "Texto del pie de página",
     "footer_note_text_description": "Soporta HTML para enlaces. Dejar vacío para el predeterminado con enlace a GitHub.",
-    "footer_note_placeholder": "Ejemplo: TravelMap - Creado por Fabio Baccaglioni"
+    "footer_note_placeholder": "Ejemplo: TravelMap - Creado por Fabio Baccaglioni",
+    "distance_unit": "Unidad de Distancia Preferida",
+    "distance_unit_description": "Unidad usada para viajes en tierra (auto, tren, caminata, etc.)"
   },
   "original_settings": {
     "title": "Configuración del Sistema",

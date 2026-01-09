@@ -201,7 +201,8 @@ class Settings {
             'clusterEnabled' => $this->get('map_cluster_enabled', true),
             'maxClusterRadius' => $this->get('map_cluster_max_radius', 30),
             'disableClusteringAtZoom' => $this->get('map_cluster_disable_at_zoom', 15),
-            'style' => $this->get('map_style', 'voyager')
+            'style' => $this->get('map_style', 'voyager'),
+            'distanceUnit' => $this->get('distance_unit', 'km')
         ];
     }
     

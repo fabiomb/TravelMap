@@ -58,15 +58,25 @@ class Route {
      */
     public function create($data) {
         try {
+            $distance = 0;
+            if (isset($data['geojson_data'])) {
+                $distance = self::calculateDistance($data['geojson_data']);
+                if (!empty($data['is_round_trip'])) {
+                    $distance *= 2;
+                }
+            }
+
             $stmt = $this->db->prepare('
-                INSERT INTO routes (trip_id, transport_type, geojson_data, color)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO routes (trip_id, transport_type, geojson_data, is_round_trip, distance_meters, color)
+                VALUES (?, ?, ?, ?, ?, ?)
             ');
             
             $result = $stmt->execute([
                 $data['trip_id'],
                 $data['transport_type'],
                 $data['geojson_data'],
+                $data['is_round_trip'] ?? 1,
+                $distance,
                 $data['color'] ?? '#3388ff'
             ]);
 
@@ -86,15 +96,25 @@ class Route {
      */
     public function update($id, $data) {
         try {
+            $distance = 0;
+            if (isset($data['geojson_data'])) {
+                $distance = self::calculateDistance($data['geojson_data']);
+                if (!empty($data['is_round_trip'])) {
+                    $distance *= 2;
+                }
+            }
+
             $stmt = $this->db->prepare('
                 UPDATE routes 
-                SET transport_type = ?, geojson_data = ?, color = ?
+                SET transport_type = ?, geojson_data = ?, is_round_trip = ?, distance_meters = ?, color = ?
                 WHERE id = ?
             ');
             
             return $stmt->execute([
                 $data['transport_type'],
                 $data['geojson_data'],
+                $data['is_round_trip'] ?? 0,
+                $distance,
                 $data['color'] ?? '#3388ff',
                 $id
             ]);
@@ -154,6 +174,7 @@ class Route {
                     'trip_id' => $trip_id,
                     'transport_type' => $route['transport_type'] ?? 'car',
                     'geojson_data' => $route['geojson_data'],
+                    'is_round_trip' => $route['is_round_trip'] ?? 1,
                     'color' => $route['color'] ?? $this->getColorByTransport($route['transport_type'] ?? 'car')
                 ]);
             }
@@ -163,6 +184,49 @@ class Route {
             error_log('Error al guardar múltiples rutas: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Calcula la distancia total en metros de un GeoJSON LineString
+     * 
+     * @param string $geojson JSON de la ruta
+     * @return int Distancia en metros
+     */
+    public static function calculateDistance($geojson) {
+        $data = json_decode($geojson, true);
+        if (!$data || !isset($data['geometry']['coordinates'])) {
+            return 0;
+        }
+
+        $coords = $data['geometry']['coordinates'];
+        $totalDistance = 0;
+
+        for ($i = 0; $i < count($coords) - 1; $i++) {
+            $totalDistance += self::haversineDistance(
+                $coords[$i][1], $coords[$i][0],
+                $coords[$i+1][1], $coords[$i+1][0]
+            );
+        }
+
+        return (int) round($totalDistance);
+    }
+
+    /**
+     * Fórmula de Haversine para distancia entre dos puntos
+     */
+    private static function haversineDistance($lat1, $lon1, $lat2, $lon2) {
+        $earthRadius = 6371000; // Metros
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lonDelta = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 
     /**
@@ -222,5 +286,28 @@ class Route {
      */
     public static function getIconByTransport($transport_type) {
         return self::$transportIcons[$transport_type] ?? self::$transportIcons['car'];
+    }
+
+    /**
+     * Obtiene estadísticas globales de viajes por tipo de transporte
+     * 
+     * @return array Estadísticas agregadas
+     */
+    public function getStatistics() {
+        try {
+            $stmt = $this->db->query("
+                SELECT 
+                    transport_type, 
+                    SUM(distance_meters * (CASE WHEN is_round_trip = 1 THEN 2 ELSE 1 END)) as total_meters,
+                    COUNT(*) as route_count
+                FROM routes 
+                GROUP BY transport_type
+            ");
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Error al obtener estadísticas de rutas: ' . $e->getMessage());
+            return [];
+        }
     }
 }

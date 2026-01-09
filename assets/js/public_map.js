@@ -244,6 +244,35 @@
     }
 
     /**
+     * Formats distance based on transport type and user preferences
+     */
+    function formatDistance(meters, transportType, isRoundTrip) {
+        if (!meters || meters <= 0) return '';
+
+        const unit = appConfig?.map?.distanceUnit || 'km';
+        let value, label;
+
+        if (transportType === 'plane') {
+            value = meters / 1609.344;
+            label = 'mi';
+        } else if (transportType === 'ship') {
+            value = meters / 1852;
+            label = 'nm';
+        } else {
+            if (unit === 'mi') {
+                value = meters / 1609.344;
+                label = 'mi';
+            } else {
+                value = meters / 1000;
+                label = 'km';
+            }
+        }
+
+        const roundTripIcon = isRoundTrip ? ` <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ms-1 text-warning" style="vertical-align: text-bottom;" title="${__('routes.is_round_trip') || 'Ida y Vuelta'}"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>` : '';
+        return ` · ${Math.round(value).toLocaleString()} ${label}${roundTripIcon}`;
+    }
+
+    /**
      * Initialize the MapLibre GL map
      */
     function initMap() {
@@ -543,7 +572,7 @@
                             <strong>${config.icon} ${escapeHtml(trip.title)}</strong>${futureLabel}
                             ${tagsHtml}
                             <br>
-                            <small class="text-muted">${__('map.transport')}: ${__('map.transport_' + transportType)}</small>
+                            <small class="text-muted">${__('map.transport')}: ${__('map.transport_' + transportType)}${formatDistance(route.distance_meters, transportType, route.is_round_trip)}</small>
                         </div>
                     `)
                     .addTo(map);
@@ -616,6 +645,8 @@
                                 tripId: trip.id,
                                 tripTitle: trip.title,
                                 isFuture: isFuture,
+                                distanceMeters: route.distance_meters,
+                                isRoundTrip: route.is_round_trip,
                                 color: isFuture ? [107, 107, 107, 150] : hexToRgba(transportConfig.plane.color, 180)
                             });
                         }
@@ -668,7 +699,7 @@
                                 <strong>${transportIcons.plane} ${escapeHtml(d.tripTitle)}</strong>${futureLabel}
                                 ${tagsHtml}
                                 <br>
-                                <small class="text-muted">${__('map.transport')}: ${__('map.transport_plane')}</small>
+                                <small class="text-muted">${__('map.transport')}: ${__('map.transport_plane')}${formatDistance(d.distanceMeters, 'plane', d.isRoundTrip)}</small>
                             </div>
                         `)
                         .addTo(map);

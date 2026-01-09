@@ -45,16 +45,16 @@
             url: BASE_URL + '/api/get_config.php',
             method: 'GET',
             dataType: 'json'
-        }).done(function(response) {
+        }).done(function (response) {
             console.log('Respuesta de configuración (trip_map):', response);
-            
+
             if (response.success && response.data) {
                 appConfig = response.data;
-                
+
                 // Actualizar colores de transporte con la configuración del servidor
                 if (appConfig.transportColors) {
                     console.log('Colores recibidos (trip_map):', appConfig.transportColors);
-                    
+
                     transportColors = {
                         'plane': appConfig.transportColors.plane || transportColors.plane,
                         'ship': appConfig.transportColors.ship || transportColors.ship,
@@ -64,13 +64,13 @@
                         'bus': appConfig.transportColors.bus || transportColors.bus,
                         'aerial': appConfig.transportColors.aerial || transportColors.aerial
                     };
-                    
+
                     console.log('transportColors actualizado (trip_map):', transportColors);
                 }
-                
+
                 console.log('Configuración cargada en trip map:', appConfig);
             }
-        }).fail(function(xhr, status, error) {
+        }).fail(function (xhr, status, error) {
             console.error('Error al cargar configuración (trip_map):', error, xhr.responseText);
             console.warn('No se pudo cargar la configuración, usando valores por defecto');
         });
@@ -81,14 +81,14 @@
      */
     function renderLegend() {
         const legendContainer = $('#transportLegend');
-        
+
         if (legendContainer.length === 0) {
             console.warn('No se encontró el contenedor #transportLegend');
             return;
         }
-        
+
         legendContainer.empty();
-        
+
         // Orden de los tipos de transporte (use transportTypes from PHP if available)
         const transportOrder = [
             { type: 'plane', icon: transportIcons.plane, label: (typeof transportTypes !== 'undefined' && transportTypes.plane) || 'Avión' },
@@ -99,20 +99,20 @@
             { type: 'bus', icon: transportIcons.bus, label: (typeof transportTypes !== 'undefined' && transportTypes.bus) || 'Bus' },
             { type: 'aerial', icon: transportIcons.aerial, label: (typeof transportTypes !== 'undefined' && transportTypes.aerial) || 'Aéreo' }
         ];
-        
-        transportOrder.forEach(function(item) {
+
+        transportOrder.forEach(function (item) {
             const color = transportColors[item.type];
-            
+
             const legendItem = $(`
                 <div class="d-flex align-items-center mb-2">
                     <div style="width: 30px; height: 4px; background-color: ${color}; margin-right: 10px;"></div>
                     <small>${item.icon} ${item.label}</small>
                 </div>
             `);
-            
+
             legendContainer.append(legendItem);
         });
-        
+
         console.log('Leyenda de trip editor renderizada');
     }
 
@@ -123,20 +123,20 @@
         const routesListContainer = $('#routesList');
         const routesListCard = $('#routesListCard');
         const routesCount = $('#routesCount');
-        
+
         if (routesListContainer.length === 0) return;
-        
+
         routesListContainer.empty();
         const totalRoutes = routesData.length;
         routesCount.text(`(${totalRoutes})`);
-        
+
         if (totalRoutes === 0) {
             routesListCard.hide();
             return;
         }
-        
+
         routesListCard.show();
-        
+
         // Create table layout for better horizontal display
         const table = $(`
             <div class="table-responsive">
@@ -145,33 +145,35 @@
                         <tr>
                             <th style="width: 50px; text-align: center;">#</th>
                             <th style="width: 60px; text-align: center;"></th>
-                            <th>Transport Type</th>
-                            <th style="width: 100px; text-align: center;">Actions</th>
+                            <th>${__('routes.transport_type') || 'Transport Type'}</th>
+                            <th style="width: 80px; text-align: center;">${__('routes.is_round_trip') || 'Round Trip'}</th>
+                            <th style="width: 100px; text-align: center;">${__('routes.distance') || 'Distance'}</th>
+                            <th style="width: 100px; text-align: center;">${__('trips.actions') || 'Actions'}</th>
                         </tr>
                     </thead>
                     <tbody id="routesTableBody"></tbody>
                 </table>
             </div>
         `);
-        
+
         routesListContainer.append(table);
         const tbody = $('#routesTableBody');
-        
-        routesData.forEach(function(route, index) {
+
+        routesData.forEach(function (route, index) {
             const color = route.color || transportColors[route.transport_type];
             const icon = transportIcons[route.transport_type] || '';
-            
+
             // Build transport type selector
             const transportOrder = ['plane', 'car', 'train', 'ship', 'walk', 'bus', 'aerial'];
             let optionsHtml = '';
-            transportOrder.forEach(function(type) {
+            transportOrder.forEach(function (type) {
                 const typeLabel = (typeof transportTypes !== 'undefined' && transportTypes[type]) || type;
                 const selected = type === route.transport_type ? 'selected' : '';
                 optionsHtml += `<option value="${type}" ${selected}>${typeLabel}</option>`;
             });
-            
+
             const row = $(`
-                <tr data-route-index="${index}" style="cursor: pointer;" title="Click to focus on this route on the map">
+                <tr data-route-index="${index}" style="cursor: pointer;" title="${__('map.focus_route')}">
                     <td class="text-center align-middle">
                         <div style="width: 30px; height: 4px; background-color: ${color}; margin: 0 auto;"></div>
                     </td>
@@ -182,7 +184,15 @@
                         </select>
                     </td>
                     <td class="text-center align-middle">
-                        <button class="btn btn-sm btn-outline-danger delete-route-btn" data-route-index="${index}" title="Delete route">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input round-trip-checkbox" type="checkbox" data-route-index="${index}" ${route.is_round_trip ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td class="text-center align-middle small">
+                        ${formatDistanceDisplay(route.distance_meters, route.transport_type, route.is_round_trip)}
+                    </td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-outline-danger delete-route-btn" data-route-index="${index}" title="${__('map.delete_route')}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                 <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
@@ -191,53 +201,59 @@
                     </td>
                 </tr>
             `);
-            
+
             tbody.append(row);
         });
-        
+
         // Attach event handlers
-        $('.transport-type-selector').off('change').on('change', function() {
+        $('.transport-type-selector').off('change').on('change', function () {
             const index = parseInt($(this).data('route-index'));
             const newType = $(this).val();
             changeRouteTransportType(index, newType);
         });
-        
-        $('.delete-route-btn').off('click').on('click', function() {
+
+        $('.delete-route-btn').off('click').on('click', function () {
             const index = parseInt($(this).data('route-index'));
             deleteRoute(index);
         });
-        
+
+        $('.round-trip-checkbox').off('change').on('change', function () {
+            const index = parseInt($(this).data('route-index'));
+            const isRoundTrip = $(this).is(':checked');
+            toggleRoundTrip(index, isRoundTrip);
+        });
+
         // Highlight route on hover
         $('tr[data-route-index]').off('mouseenter mouseleave').hover(
-            function() {
+            function () {
                 const index = parseInt($(this).data('route-index'));
                 highlightRoute(index, true);
             },
-            function() {
+            function () {
                 const index = parseInt($(this).data('route-index'));
                 highlightRoute(index, false);
             }
         );
-        
+
         // Click to focus on route
-        $('tr[data-route-index]').off('click').on('click', function(e) {
+        $('tr[data-route-index]').off('click').on('click', function (e) {
             // Don't trigger if clicking on select or button
             if ($(e.target).closest('select, button').length > 0) return;
-            
+
             const index = parseInt($(this).data('route-index'));
             focusOnRoute(index);
         });
     }
-    
+
     /**
      * Destaca visualmente una ruta en el mapa
      */
     function highlightRoute(index, highlight) {
         if (index < 0 || index >= routesData.length) return;
-        
+
         const route = routesData[index];
         if (!route.layer) return;
-        
+
         if (highlight) {
             // Highlight: increase width and opacity
             route.layer.setStyle({
@@ -253,16 +269,16 @@
             });
         }
     }
-    
+
     /**
      * Enfoca el mapa en una ruta específica
      */
     function focusOnRoute(index) {
         if (index < 0 || index >= routesData.length) return;
-        
+
         const route = routesData[index];
         if (!route.layer) return;
-        
+
         // Fit map to route bounds
         try {
             const bounds = route.layer.getBounds();
@@ -270,10 +286,10 @@
                 padding: [50, 50],
                 maxZoom: 12
             });
-            
+
             // Flash the route
             let flashCount = 0;
-            const flashInterval = setInterval(function() {
+            const flashInterval = setInterval(function () {
                 if (flashCount >= 4) {
                     clearInterval(flashInterval);
                     route.layer.setStyle({
@@ -282,13 +298,13 @@
                     });
                     return;
                 }
-                
+
                 const isVisible = flashCount % 2 === 0;
                 route.layer.setStyle({
                     weight: isVisible ? 8 : 4,
                     opacity: isVisible ? 1 : 0.3
                 });
-                
+
                 flashCount++;
             }, 200);
         } catch (e) {
@@ -301,22 +317,41 @@
      */
     function changeRouteTransportType(index, newType) {
         if (index < 0 || index >= routesData.length) return;
-        
+
         const route = routesData[index];
         route.transport_type = newType;
         route.color = transportColors[newType];
-        
+
         // Update the layer on the map
         if (route.layer) {
             route.layer.setStyle({ color: route.color });
             route.layer.transportType = newType;
             route.layer.color = route.color;
         }
-        
+
         // Update the hidden form field with new data
         updateRoutesData();
-        
+
         console.log(`Route ${index} transport type changed to ${newType}`);
+    }
+
+    /**
+     * Alterna si una ruta es de ida y vuelta
+     */
+    function toggleRoundTrip(index, isRoundTrip) {
+        if (index < 0 || index >= routesData.length) return;
+
+        const route = routesData[index];
+        route.is_round_trip = isRoundTrip;
+
+        if (route.layer) {
+            route.layer.isRoundTrip = isRoundTrip;
+        }
+
+        // Update the hidden form field
+        updateRoutesData();
+
+        console.log(`Route ${index} round trip set to ${isRoundTrip}`);
     }
 
     /**
@@ -324,20 +359,20 @@
      */
     function deleteRoute(index) {
         if (index < 0 || index >= routesData.length) return;
-        
+
         const route = routesData[index];
-        
+
         // Remove from map
         if (route.layer && drawnItems.hasLayer(route.layer)) {
             drawnItems.removeLayer(route.layer);
         }
-        
+
         // Remove from routesData
         routesData.splice(index, 1);
-        
+
         // Re-render the list
         renderRoutesList();
-        
+
         console.log(`Route ${index} deleted`);
     }
 
@@ -381,7 +416,7 @@
     function initDrawControls() {
         // Usar el color de 'car' de la configuración como color por defecto para dibujar
         const defaultDrawColor = transportColors['car'] || '#4444FF';
-        
+
         drawControl = new L.Control.Draw({
             position: 'topright',
             draw: {
@@ -424,9 +459,10 @@
      */
     function handleRouteCreated(e) {
         const layer = e.layer;
+        const distanceMeters = calculateLayerDistance(layer);
 
         // Pedir tipo de transporte
-        const transportType = promptTransportType();
+        const transportType = promptTransportType(distanceMeters);
 
         if (!transportType) {
             return; // Usuario canceló
@@ -446,6 +482,8 @@
         // Guardar metadata en la capa
         layer.transportType = transportType;
         layer.color = color;
+        layer.isRoundTrip = true; // Por defecto es round trip
+        layer.distanceMeters = distanceMeters;
 
         // Actualizar datos
         updateRoutesData();
@@ -472,15 +510,22 @@
     /**
      * Pide al usuario el tipo de transporte
      */
-    function promptTransportType() {
+    function promptTransportType(distanceMeters) {
         const options = Object.keys(transportTypes);
-        let message = 'Selecciona el tipo de transporte:\n\n';
+        let message = '';
+
+        if (distanceMeters > 0) {
+            const formatted = formatDistanceDisplay(distanceMeters, 'car', false).replace(' · ', '');
+            message += `${__('routes.detected_distance') || 'Distancia detectada'}: ${formatted}\n\n`;
+        }
+
+        message += `${__('map.instruction_select_transport') || 'Selecciona el tipo de transporte'}:\n\n`;
 
         options.forEach((key, index) => {
             message += `${index + 1}. ${transportTypes[key]}\n`;
         });
 
-        message += '\nIngresa el número (1-' + options.length + '):';
+        message += `\n${__('routes.enter_transport_number') || 'Ingresa el número'} (1-' + options.length + '):`;
 
         const input = prompt(message);
 
@@ -494,7 +539,7 @@
             return options[index];
         }
 
-        alert('Opción no válida. Seleccionando Auto por defecto.');
+        alert(__('routes.invalid_option_default') || 'Opción no válida. Seleccionando Auto por defecto.');
         return 'car';
     }
 
@@ -506,10 +551,16 @@
 
         drawnItems.eachLayer(function (layer) {
             const geojson = layer.toGeoJSON();
+            const distance = calculateLayerDistance(layer);
+
+            // Adjust distance if it's round trip
+            const distanceForInfo = layer.isRoundTrip ? distance * 2 : distance;
 
             routesData.push({
                 transport_type: layer.transportType || 'car',
                 color: layer.color || transportColors['car'],
+                is_round_trip: layer.isRoundTrip || false,
+                distance_meters: distanceForInfo,
                 geojson: geojson,
                 layer: layer  // Keep reference to the layer
             });
@@ -519,6 +570,7 @@
         const routesDataForSave = routesData.map(route => ({
             transport_type: route.transport_type,
             color: route.color,
+            is_round_trip: route.is_round_trip ? 1 : 0,
             geojson: route.geojson
         }));
         document.getElementById('routes_data').value = JSON.stringify(routesDataForSave);
@@ -541,10 +593,10 @@
         existingRoutes.forEach(function (route) {
             const geojson = route.geojson;
             const transportType = route.transport_type || 'car';
-            
+
             // Priorizar color de configuración sobre color guardado en BD
             const color = transportColors[transportType] || route.color;
-            
+
             const layer = L.geoJSON(geojson, {
                 style: {
                     color: color,
@@ -557,6 +609,8 @@
             layer.eachLayer(function (l) {
                 l.transportType = transportType;
                 l.color = color;
+                l.isRoundTrip = !!route.is_round_trip;
+                l.distanceMeters = route.distance_meters;
                 drawnItems.addLayer(l);
             });
         });
@@ -628,7 +682,7 @@
      * Limpia todas las rutas
      */
     function clearAllRoutes() {
-        if (!confirm('¿Estás seguro de que quieres eliminar todas las rutas?')) {
+        if (!confirm(__('map.confirm_delete_all'))) {
             return;
         }
 
@@ -644,7 +698,7 @@
         updateRoutesData();
 
         if (routesData.length === 0) {
-            if (!confirm('No has dibujado ninguna ruta. ¿Deseas continuar y eliminar todas las rutas existentes?')) {
+            if (!confirm(__('map.confirm_no_routes'))) {
                 e.preventDefault();
                 return false;
             }
@@ -658,7 +712,7 @@
      */
     function searchPlace(query) {
         if (!query || query.trim().length < 3) {
-            alert('Por favor, ingresa al menos 3 caracteres para buscar');
+            alert(__('map.search_min_chars'));
             return;
         }
 
@@ -673,7 +727,7 @@
             url: url,
             method: 'GET',
             dataType: 'json',
-            success: function(results) {
+            success: function (results) {
                 searchResults.empty();
 
                 if (!results || results.length === 0) {
@@ -686,11 +740,11 @@
                     return;
                 }
 
-                results.forEach(function(place) {
+                results.forEach(function (place) {
                     const displayName = place.display_name;
                     const lat = parseFloat(place.lat);
                     const lon = parseFloat(place.lon);
-                    
+
                     const item = $(`
                         <button type="button" class="list-group-item list-group-item-action" data-lat="${lat}" data-lon="${lon}">
                             <div class="d-flex w-100 justify-content-between">
@@ -705,7 +759,7 @@
                         </button>
                     `);
 
-                    item.on('click', function() {
+                    item.on('click', function () {
                         const lat = parseFloat($(this).data('lat'));
                         const lon = parseFloat($(this).data('lon'));
                         goToPlace(lat, lon, displayName);
@@ -714,14 +768,14 @@
                     searchResults.append(item);
                 });
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Error en búsqueda:', error);
                 let errorMsg = 'Error al buscar. Intenta nuevamente.';
-                
+
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
                 }
-                
+
                 searchResults.html(`<div class="list-group-item text-danger">${errorMsg}</div>`);
             }
         });
@@ -764,14 +818,78 @@
     }
 
     /**
+     * Calcula la distancia de una capa (polyline)
+     */
+    function calculateLayerDistance(layer) {
+        if (!layer || typeof layer.getLatLngs !== 'function') return 0;
+
+        const latLngs = layer.getLatLngs();
+        let totalDistance = 0;
+
+        for (let i = 0; i < latLngs.length - 1; i++) {
+            totalDistance += haversineDistance(
+                latLngs[i].lat, latLngs[i].lng,
+                latLngs[i + 1].lat, latLngs[i + 1].lng
+            );
+        }
+
+        return totalDistance;
+    }
+
+    /**
+     * Calcula la distancia entre dos puntos (fórmula de Haversine)
+     */
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Radio de la Tierra en metros
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    /**
+     * Formatea la distancia para mostrar en la UI
+     */
+    function formatDistanceDisplay(meters, transportType, isRoundTrip) {
+        if (!meters || meters <= 0) return '0 km';
+
+        // Usar la unidad configurada si está disponible
+        const unit = appConfig?.map?.distanceUnit || 'km';
+        let value, label;
+
+        if (transportType === 'plane') {
+            value = meters / 1609.344;
+            label = 'mi';
+        } else if (transportType === 'ship') {
+            value = meters / 1852;
+            label = 'nm';
+        } else {
+            if (unit === 'mi') {
+                value = meters / 1609.344;
+                label = 'mi';
+            } else {
+                value = meters / 1000;
+                label = 'km';
+            }
+        }
+
+        const roundTripIcon = isRoundTrip ? ` <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ms-1 text-warning" style="vertical-align: text-bottom;"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>` : '';
+        return `${Math.round(value).toLocaleString()} ${label}${roundTripIcon}`;
+    }
+
+    /**
      * Inicialización cuando el DOM está listo
      */
     $(document).ready(function () {
         // Cargar configuración primero, luego inicializar el mapa
-        loadConfig().always(function() {
+        loadConfig().always(function () {
             // Inicializar mapa con la configuración cargada
             initMap();
-            
+
             // Renderizar leyenda con colores configurados
             renderLegend();
 
@@ -791,12 +909,12 @@
         $('#routesForm').on('submit', handleFormSubmit);
 
         // Eventos del buscador
-        $('#searchBtn').on('click', function() {
+        $('#searchBtn').on('click', function () {
             const query = $('#placeSearch').val();
             searchPlace(query);
         });
 
-        $('#placeSearch').on('keypress', function(e) {
+        $('#placeSearch').on('keypress', function (e) {
             if (e.which === 13) { // Enter
                 e.preventDefault();
                 const query = $(this).val();
@@ -805,7 +923,7 @@
         });
 
         // Cerrar resultados al hacer clic fuera
-        $(document).on('click', function(e) {
+        $(document).on('click', function (e) {
             if (!$(e.target).closest('#placeSearch, #searchBtn, #searchResults').length) {
                 $('#searchResults').hide();
             }

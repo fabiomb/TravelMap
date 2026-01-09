@@ -6,6 +6,8 @@
  */
 
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../src/models/Route.php';
+require_once __DIR__ . '/../src/models/Settings.php';
 
 // Obtener estadísticas básicas
 try {
@@ -50,11 +52,44 @@ try {
     usort($recent_activity, function($a, $b) {
         return strtotime($b['created_at']) - strtotime($a['created_at']);
     });
+
     $recent_activity = array_slice($recent_activity, 0, 5);
+    
+    // Obtener estadísticas de viaje
+    $routeModel = new Route();
+    $settingsModel = new Settings($db);
+    $travel_stats_base = $routeModel->getStatistics();
+    $preferredUnit = $settingsModel->get('distance_unit', 'km');
+    
+    $travel_stats = [
+        'plane' => ['value' => 0, 'unit' => 'mi', 'count' => 0, 'label' => __('admin.travel_stats_air') ?? 'Air Travel', 'color' => 'blue', 'accent' => '#3b82f6'],
+        'ship' => ['value' => 0, 'unit' => 'nm', 'count' => 0, 'label' => __('admin.travel_stats_sea') ?? 'Sea Travel', 'color' => 'cyan', 'accent' => '#06b6d4'],
+        'land' => ['value' => 0, 'unit' => $preferredUnit, 'count' => 0, 'label' => __('admin.travel_stats_land') ?? 'Land Travel', 'color' => 'green', 'accent' => '#10b981']
+    ];
+    
+    $typeToCategory = [
+        'plane' => 'plane',
+        'ship' => 'ship',
+        'car' => 'land', 'bike' => 'land', 'train' => 'land', 'walk' => 'land', 'bus' => 'land', 'aerial' => 'land'
+    ];
+    
+    foreach ($travel_stats_base as $stat) {
+        $cat = $typeToCategory[$stat['transport_type']] ?? 'land';
+        $meters = (float)$stat['total_meters'];
+        
+        $conv = 0;
+        if ($cat === 'plane') $conv = $meters / 1609.344;
+        elseif ($cat === 'ship') $conv = $meters / 1852;
+        else $conv = ($preferredUnit === 'mi') ? $meters / 1609.344 : $meters / 1000;
+        
+        $travel_stats[$cat]['value'] += $conv;
+        $travel_stats[$cat]['count'] += (int)$stat['route_count'];
+    }
     
 } catch (PDOException $e) {
     $total_trips = $public_trips = $total_points = $total_users = 0;
     $recent_activity = [];
+    $travel_stats = [];
 }
 ?>
 
@@ -119,6 +154,54 @@ try {
         <div class="stat-content">
             <div class="stat-label"><?= __('admin.total_users') ?></div>
             <div class="stat-value"><?= $total_users ?></div>
+        </div>
+    </div>
+</div>
+
+<!-- Travel Statistics -->
+<div class="admin-card mt-4 mb-4">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            <?= __('admin.travel_stats') ?? 'Travel Statistics' ?>
+        </h3>
+    </div>
+    <div class="admin-card-body">
+        <div id="travel-stats-container" class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <?php 
+            $has_stats = false;
+            $stat_icons = [
+                'plane' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8667 3.7804C16.7931 3.03188 17.8307 2.98644 18.9644 3.00233C19.5508 3.01055 19.844 3.01467 20.0792 3.10588C20.4524 3.2506 20.7494 3.54764 20.8941 3.92081C20.9853 4.15601 20.9894 4.4492 20.9977 5.03557C21.0136 6.16926 20.9681 7.20686 20.2196 8.13326C19.5893 8.91337 18.5059 9.32101 17.9846 10.1821C17.5866 10.8395 17.772 11.5203 17.943 12.2209L19.2228 17.4662C19.4779 18.5115 19.2838 19.1815 18.5529 19.9124C18.164 20.3013 17.8405 20.2816 17.5251 19.779L13.6627 13.6249L11.8181 15.0911C11.1493 15.6228 10.8149 15.8886 10.6392 16.2627C10.2276 17.1388 10.4889 18.4547 10.5022 19.4046C10.5096 19.9296 10.0559 20.9644 9.41391 20.9993C9.01756 21.0209 8.88283 20.5468 8.75481 20.2558L7.52234 17.4544C7.2276 16.7845 7.21552 16.7724 6.54556 16.4777L3.74415 15.2452C3.45318 15.1172 2.97914 14.9824 3.00071 14.5861C3.03565 13.9441 4.07036 13.4904 4.59536 13.4978C5.54532 13.5111 6.86122 13.7724 7.73734 13.3608C8.11142 13.1851 8.37724 12.8507 8.90888 12.1819L10.3373L4.22103 6.47489C3.71845 6.15946 3.69872 5.83597 4.08755 5.44715C4.8185 4.7162 5.48851 4.52214 6.53377 4.77718L11.7791 6.05703C12.4797 6.22798 13.1605 6.41343 13.8179 6.0154C14.679 5.49411 15.0866 4.41074 15.8667 3.7804Z"/></svg>',
+                'ship' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 21.1932C2.68524 22.2443 3.57104 22.2443 4.27299 21.1932C6.52985 17.7408 8.67954 23.6764 10.273 21.2321C12.703 17.5694 14.4508 23.9218 16.273 21.1932C18.6492 17.5582 20.1295 23.5776 22 21.5842"/><path d="M3.57228 17L2.07481 12.6457C1.80373 11.8574 2.30283 11 3.03273 11H20.8582C23.9522 11 19.9943 17 17.9966 17"/><path d="M18 11L15.201 7.50122C14.4419 6.55236 13.2926 6 12.0775 6H8C6.89543 6 6 6.89543 6 8V11"/><path d="M10 6V3C10 2.44772 9.55228 2 9 2H8"/></svg>',
+                'land' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="19" r="3"></circle><path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"></path></svg>'
+            ];
+
+            foreach ($travel_stats as $cat => $data): 
+                if ($data['count'] === 0 && $cat !== 'plane') continue;
+                $has_stats = true;
+            ?>
+                <div class="stat-card" style="--accent: <?= $data['accent'] ?>;">
+                    <div class="stat-icon <?= $data['color'] ?>">
+                        <?= $stat_icons[$cat] ?>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label"><?= $data['label'] ?></div>
+                        <div class="stat-value" style="font-size: 1.5rem;">
+                            <?= number_format($data['value'], 0) ?> 
+                            <small style="font-size: 0.8rem; opacity: 0.7;"><?= $data['unit'] ?></small>
+                        </div>
+                        <div class="stat-meta" style="font-size: 0.75rem; color: #64748b;">
+                            <?= $data['count'] ?> <?= __('admin.routes') ?? 'routes' ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
+            <?php if (!$has_stats): ?>
+                <p class="text-muted text-center w-100 p-4"><?= __('messages.no_data') ?? 'No travel routes found yet.' ?></p>
+            <?php endif; ?>
         </div>
     </div>
 </div>
