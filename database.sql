@@ -122,7 +122,8 @@ INSERT INTO settings (setting_key, setting_value, setting_type, description) VAL
 ('site_description', 'Explora mis viajes por el mundo con mapas interactivos, rutas y fotografías', 'string', 'Descripción del sitio para SEO'),
 ('site_favicon', '', 'string', 'URL del favicon (ejemplo: /TravelMap/uploads/favicon.ico)'),
 ('site_analytics_code', '', 'string', 'Código de Google Analytics u otro script de análisis'),
-('trip_tags_enabled', 'true', 'boolean', 'Habilitar sistema de etiquetas en los viajes');
+('trip_tags_enabled', 'true', 'boolean', 'Habilitar sistema de etiquetas en los viajes'),
+('distance_unit', 'km', 'string', 'Unidad de distancia preferida (km para Kilómetros, mi para Millas)');
 
 -- ============================================
 -- Datos iniciales (opcional)
