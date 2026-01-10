@@ -35,24 +35,16 @@ try {
         $convertedValue = 0;
         $unitLabel = '';
         
-        // Lógica de conversión según tipo de transporte y preferencia
-        if ($type === 'plane') {
-            // Aviones siempre en Millas (mi)
+        // Determinar unidad a usar según configuración global
+        if ($preferredUnit === 'mi') {
             $convertedValue = $meters / 1609.344;
             $unitLabel = 'mi';
-        } elseif ($type === 'ship') {
-            // Barcos siempre en Millas Náuticas (nm)
+        } elseif ($preferredUnit === 'nm') {
             $convertedValue = $meters / 1852;
             $unitLabel = 'nm';
         } else {
-            // Otros según configuración (km o mi)
-            if ($preferredUnit === 'mi') {
-                $convertedValue = $meters / 1609.344;
-                $unitLabel = 'mi';
-            } else {
-                $convertedValue = $meters / 1000;
-                $unitLabel = 'km';
-            }
+            $convertedValue = $meters / 1000;
+            $unitLabel = 'km';
         }
         
         $formattedStats[] = [

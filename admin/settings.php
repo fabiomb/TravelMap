@@ -655,12 +655,12 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="form-group" style="margin-top: 24px;">
-                    <label for="distance_unit" class="form-label"><?= __('settings.distance_unit') ?? 'Unidad de Distancia Preferida' ?></label>
+                    <label for="distance_unit" class="form-label"><?= __('settings.distance_unit_fallback') ?? 'Unidad de Distancia (Servidor / Predeterminada)' ?></label>
                     <select class="form-control form-select" id="distance_unit" name="distance_unit">
-                        <option value="km" <?= ($currentSettings['distance_unit'] ?? 'km') === 'km' ? 'selected' : '' ?>>Kilómetros (km)</option>
-                        <option value="mi" <?= ($currentSettings['distance_unit'] ?? 'km') === 'mi' ? 'selected' : '' ?>>Millas (mi)</option>
+                        <option value="km" <?= ($currentSettings['distance_unit'] ?? 'km') === 'km' ? 'selected' : '' ?>><?= __('settings.unit_km') ?? 'Kilómetros (km)' ?></option>
+                        <option value="mi" <?= ($currentSettings['distance_unit'] ?? 'km') === 'mi' ? 'selected' : '' ?>><?= __('settings.unit_mi') ?? 'Millas (mi)' ?></option>
                     </select>
-                    <div class="form-hint"><?= __('settings.distance_unit_description') ?? 'Unidad usada para viajes en tierra (auto, tren, caminata, etc.)' ?></div>
+                    <div class="form-hint"><?= __('settings.distance_unit_fallback_description') ?? 'Unidad usada como respaldo si no se detecta la preferencia del navegador del usuario.' ?></div>
                 </div>
             </div>
         </div>
@@ -703,7 +703,7 @@ require_once __DIR__ . '/../includes/header.php';
                                    value="<?= htmlspecialchars($color) ?>">
                             <input type="text" class="form-control" value="<?= htmlspecialchars($color) ?>" 
                                    id="<?= $key ?>_text" readonly style="flex: 1;">
-        </div>
+                        </div>
                     </div>
                     <?php endforeach; ?>
                 </div>

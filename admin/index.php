@@ -62,9 +62,9 @@ try {
     $preferredUnit = $settingsModel->get('distance_unit', 'km');
     
     $travel_stats = [
-        'plane' => ['value' => 0, 'unit' => 'mi', 'count' => 0, 'label' => __('admin.travel_stats_air') ?? 'Air Travel', 'color' => 'blue', 'accent' => '#3b82f6'],
-        'ship' => ['value' => 0, 'unit' => 'nm', 'count' => 0, 'label' => __('admin.travel_stats_sea') ?? 'Sea Travel', 'color' => 'cyan', 'accent' => '#06b6d4'],
-        'land' => ['value' => 0, 'unit' => $preferredUnit, 'count' => 0, 'label' => __('admin.travel_stats_land') ?? 'Land Travel', 'color' => 'green', 'accent' => '#10b981']
+        'plane' => ['meters' => 0, 'count' => 0, 'label' => __('admin.travel_stats_air') ?? 'Air Travel', 'color' => 'blue', 'accent' => '#3b82f6', 'type' => 'air'],
+        'ship' => ['meters' => 0, 'count' => 0, 'label' => __('admin.travel_stats_sea') ?? 'Sea Travel', 'color' => 'cyan', 'accent' => '#06b6d4', 'type' => 'sea'],
+        'land' => ['meters' => 0, 'count' => 0, 'label' => __('admin.travel_stats_land') ?? 'Land Travel', 'color' => 'green', 'accent' => '#10b981', 'type' => 'land']
     ];
     
     $typeToCategory = [
@@ -75,16 +75,21 @@ try {
     
     foreach ($travel_stats_base as $stat) {
         $cat = $typeToCategory[$stat['transport_type']] ?? 'land';
-        $meters = (float)$stat['total_meters'];
-        
-        $conv = 0;
-        if ($cat === 'plane') $conv = $meters / 1609.344;
-        elseif ($cat === 'ship') $conv = $meters / 1852;
-        else $conv = ($preferredUnit === 'mi') ? $meters / 1609.344 : $meters / 1000;
-        
-        $travel_stats[$cat]['value'] += $conv;
+        $travel_stats[$cat]['meters'] += (float)$stat['total_meters'];
         $travel_stats[$cat]['count'] += (int)$stat['route_count'];
     }
+    
+    // Fallback formatting for initial search engine index / static render
+    foreach ($travel_stats as $cat => &$data) {
+        if ($preferredUnit === 'mi') {
+            $data['value'] = number_format($data['meters'] / 1609.344, 0);
+            $data['unit'] = 'mi';
+        } else {
+            $data['value'] = number_format($data['meters'] / 1000, 0);
+            $data['unit'] = 'km';
+        }
+    }
+    unset($data);
     
 } catch (PDOException $e) {
     $total_trips = $public_trips = $total_points = $total_users = 0;
@@ -188,8 +193,8 @@ try {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label"><?= $data['label'] ?></div>
-                        <div class="stat-value" style="font-size: 1.5rem;">
-                            <?= number_format($data['value'], 0) ?> 
+                        <div class="stat-value" style="font-size: 1.5rem;" data-meters="<?= $data['meters'] ?>" data-cat="<?= $cat ?>">
+                            <?= $data['value'] ?> 
                             <small style="font-size: 0.8rem; opacity: 0.7;"><?= $data['unit'] ?></small>
                         </div>
                         <div class="stat-meta" style="font-size: 0.75rem; color: #64748b;">
@@ -343,5 +348,24 @@ try {
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof UnitManager !== 'undefined') {
+        document.querySelectorAll('.stat-value[data-meters]').forEach(function(el) {
+            const meters = parseFloat(el.getAttribute('data-meters'));
+            const cat = el.getAttribute('data-cat');
+            const formatted = UnitManager.formatDistance(meters);
+            // formatDistance returns "X km" or "X mi"
+            const parts = formatted.split(' ');
+            if (parts.length === 2) {
+                el.innerHTML = `${parts[0]} <small style="font-size: 0.8rem; opacity: 0.7;">${parts[1]}</small>`;
+            } else {
+                el.innerText = formatted;
+            }
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

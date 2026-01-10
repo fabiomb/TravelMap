@@ -346,27 +346,10 @@
     function formatDistance(meters, transportType, isRoundTrip) {
         if (!meters || meters <= 0) return '';
 
-        const unit = appConfig?.map?.distanceUnit || 'km';
-        let value, label;
-
-        if (transportType === 'plane') {
-            value = meters / 1609.344;
-            label = 'mi';
-        } else if (transportType === 'ship') {
-            value = meters / 1852;
-            label = 'nm';
-        } else {
-            if (unit === 'mi') {
-                value = meters / 1609.344;
-                label = 'mi';
-            } else {
-                value = meters / 1000;
-                label = 'km';
-            }
-        }
-
+        const formatted = UnitManager.formatDistance(meters);
         const roundTripIcon = isRoundTrip ? ` <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ms-1 text-warning" style="vertical-align: text-bottom;" title="${__('routes.is_round_trip') || 'Ida y Vuelta'}"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>` : '';
-        return ` · ${Math.round(value).toLocaleString()} ${label}${roundTripIcon}`;
+
+        return ` · ${formatted}${roundTripIcon}`;
     }
 
     /**
@@ -390,7 +373,7 @@
 
         // Detect current language for map labels
         const currentLang = window.i18n?.currentLang || document.documentElement.lang || 'en';
-        
+
         /**
          * IMPORTANTE: Los tiles raster tienen soporte limitado de idiomas
          * 
@@ -403,7 +386,7 @@
          * 3. Proxy local que modifica tiles - implementación compleja
          * 4. OSM Carto con rendering local - requiere servidor
          */
-        
+
         // Por ahora, usar CARTO que aunque no cambia idioma dinámicamente,
         // tiene un mejor balance de nombres internacionales
         const tileStyles = {
@@ -428,7 +411,7 @@
                 subdomains: 'abc'
             }
         };
-        
+
         // Get configured style or default to voyager
         const mapStyleKey = mapConfig.style || 'voyager';
         const tileConfig = tileStyles[mapStyleKey] || tileStyles['voyager'];
@@ -440,7 +423,7 @@
             maxZoom: 19,
             subdomains: tileConfig.subdomains || 'abc'
         }).addTo(map);
-        
+
         // Log warning about language limitations
         if (currentLang !== 'en') {
             console.warn(`[TravelMap] Leaflet con tiles raster tiene soporte limitado para idioma "${currentLang}". Para mejor soporte multilingüe, cambia a MapLibre GL en Configuración > Mapa.`);
@@ -767,8 +750,8 @@
                                 <span class="trip-details">
                                     ${formatDateRange(trip.start_date, trip.end_date)}
                                     <span class="trip-counts">
-                                        <span title="Rutas">${routeIcon} ${routesCount}</span>
-                                        <span title="Puntos">${pointIcon} ${pointsCount}</span>
+                                        <span title="${__('map.routes')}">${routeIcon} ${routesCount}</span>
+                                        <span title="${__('map.points')}">${pointIcon} ${pointsCount}</span>
                                     </span>
                                 </span>
                                 ${tagsHtml}

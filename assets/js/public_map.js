@@ -27,7 +27,7 @@
     function getMapStyleUrl(styleKey) {
         // Detect current language
         const currentLang = window.i18n?.currentLang || document.documentElement.lang || 'en';
-        
+
         // Base style URLs
         const baseStyles = {
             'positron': 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -35,10 +35,10 @@
             'dark-matter': 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
             'osm-liberty': 'https://tiles.openfreemap.org/styles/liberty'
         };
-        
+
         return baseStyles[styleKey] || baseStyles['voyager'];
     }
-    
+
     // Map style URLs (all free, no API key needed)
     const MAP_STYLES = {
         'positron': 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -253,25 +253,25 @@
      */
     function applyLanguageToMap(lang) {
         if (!map || !map.getStyle()) return;
-        
+
         // Get the current map style
         const style = map.getStyle();
         if (!style || !style.layers) return;
-        
+
         // Language field mapping for OpenStreetMap data
         // name:XX where XX is the language code
         const langField = `name:${lang}`;
-        
+
         // Process each layer that has text labels
         style.layers.forEach(layer => {
             if (layer.layout && layer.layout['text-field']) {
                 const currentTextField = layer.layout['text-field'];
-                
+
                 // Skip if it's already a complex expression
                 if (Array.isArray(currentTextField) && currentTextField[0] === 'coalesce') {
                     return;
                 }
-                
+
                 // Create a coalesce expression that tries:
                 // 1. Localized name (name:es, name:en, etc.)
                 // 2. Fallback to default name
@@ -283,12 +283,12 @@
                     ['get', 'name:en'],
                     ['get', 'name']
                 ];
-                
+
                 // Update the layer's text-field
                 map.setLayoutProperty(layer.id, 'text-field', newTextField);
             }
         });
-        
+
         console.log(`Map labels updated to language: ${lang}`);
     }
 
@@ -324,27 +324,10 @@
     function formatDistance(meters, transportType, isRoundTrip) {
         if (!meters || meters <= 0) return '';
 
-        const unit = appConfig?.map?.distanceUnit || 'km';
-        let value, label;
-
-        if (transportType === 'plane') {
-            value = meters / 1609.344;
-            label = 'mi';
-        } else if (transportType === 'ship') {
-            value = meters / 1852;
-            label = 'nm';
-        } else {
-            if (unit === 'mi') {
-                value = meters / 1609.344;
-                label = 'mi';
-            } else {
-                value = meters / 1000;
-                label = 'km';
-            }
-        }
-
+        const formatted = UnitManager.formatDistance(meters);
         const roundTripIcon = isRoundTrip ? ` <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ms-1 text-warning" style="vertical-align: text-bottom;" title="${__('routes.is_round_trip') || 'Ida y Vuelta'}"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>` : '';
-        return ` · ${Math.round(value).toLocaleString()} ${label}${roundTripIcon}`;
+
+        return ` · ${formatted}${roundTripIcon}`;
     }
 
     /**
@@ -354,7 +337,7 @@
         // Get configured map style or default to voyager
         const mapStyleKey = appConfig?.map?.style || 'voyager';
         const mapStyleUrl = MAP_STYLES[mapStyleKey] || MAP_STYLES['voyager'];
-        
+
         // Detect current language for map labels
         const currentLang = window.i18n?.currentLang || document.documentElement.lang || 'en';
 
@@ -412,10 +395,10 @@
             console.log('MapLibre GL map loaded');
             // Set default cursor - use the map container element
             document.getElementById('map').style.cursor = 'default';
-            
+
             // Apply language to map labels
             applyLanguageToMap(currentLang);
-            
+
             loadData();
         });
 
@@ -1257,6 +1240,9 @@
                     tagsHtml += '</div>';
                 }
 
+                const routesCount = trip.routes ? trip.routes.length : 0;
+                const pointsCount = trip.points ? trip.points.length : 0;
+
                 $yearTrips.append(`
                     <div class="${itemClass}">
                         <div class="form-check d-flex align-items-start gap-2">
@@ -1264,7 +1250,13 @@
                             <div class="trip-color-dot mt-1" style="background-color: ${colorIndicator};"></div>
                             <label class="form-check-label flex-grow-1" for="trip-${trip.id}">
                                 <span class="trip-title">${escapeHtml(trip.title)}</span>
-                                <span class="trip-details">${formatDateRange(trip.start_date, trip.end_date)}</span>
+                                <span class="trip-details">
+                                    ${formatDateRange(trip.start_date, trip.end_date)}
+                                    <span class="trip-counts">
+                                        <span title="${__('map.routes')}">${statsIcons.routes} ${routesCount}</span>
+                                        <span title="${__('map.points')}">${statsIcons.points} ${pointsCount}</span>
+                                    </span>
+                                </span>
                                 ${tagsHtml}
                             </label>
                         </div>

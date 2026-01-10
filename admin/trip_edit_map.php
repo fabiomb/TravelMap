@@ -317,6 +317,7 @@ const PHP_TRANSLATIONS = <?= $lang->getTranslationsAsJson() ?>;
 i18n.init();
 </script>
 
+
 <!-- Script del mapa -->
 <script src="<?= ASSETS_URL ?>/js/trip_map.js?v=<?php echo $version; ?>"></script>
 

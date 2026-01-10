@@ -45,12 +45,34 @@ $user_id = get_current_user_id();
     <link rel="icon" type="image/x-icon" href="<?= ASSETS_URL ?>/favicon.ico">
     
     <!-- Prevent sidebar flash: apply collapsed state before render -->
+    <!-- Unit Manager and early scripts -->
+    <script src="<?= ASSETS_URL ?>/js/unit_manager.js?v=<?= $version ?>"></script>
     <script>
         (function() {
             if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
                 document.documentElement.classList.add('sidebar-collapsed');
             }
         })();
+
+        // Unit manager initialization and events (wait for DOM)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof UnitManager !== 'undefined') {
+                const currentUnit = UnitManager.getUnit();
+                const unitButtons = document.querySelectorAll('.sidebar-unit-toggle .unit-btn');
+                
+                unitButtons.forEach(btn => {
+                    if (btn.dataset.unit === currentUnit) {
+                        btn.classList.add('active');
+                    }
+                    
+                    btn.addEventListener('click', function() {
+                        const newUnit = this.dataset.unit;
+                        UnitManager.setUnit(newUnit);
+                        window.location.reload();
+                    });
+                });
+            }
+        });
     </script>
 </head>
 <body>
@@ -196,12 +218,20 @@ $user_id = get_current_user_id();
             
             <!-- Footer -->
             <div class="sidebar-footer">
-                <!-- Language Toggle -->
-                <div class="sidebar-lang-toggle">
-                    <a href="?lang=en" class="lang-btn <?= current_lang() === 'en' ? 'active' : '' ?>">EN</a>
-                    <a href="?lang=es" class="lang-btn <?= current_lang() === 'es' ? 'active' : '' ?>">ES</a>
+                <!-- Language & Unit Toggles -->
+                <div class="sidebar-toggles">
+                    <!-- Language Toggle -->
+                    <div class="sidebar-lang-toggle">
+                        <a href="?lang=en" class="lang-btn <?= current_lang() === 'en' ? 'active' : '' ?>" title="<?= __('settings.switch_lang_en') ?>">EN</a>
+                        <a href="?lang=es" class="lang-btn <?= current_lang() === 'es' ? 'active' : '' ?>" title="<?= __('settings.switch_lang_es') ?>">ES</a>
+                    </div>
+                    
+                    <!-- Unit Toggle -->
+                    <div class="sidebar-unit-toggle">
+                        <button type="button" class="unit-btn km" data-unit="km" title="<?= __('settings.switch_unit_km') ?>">KM</button>
+                        <button type="button" class="unit-btn mi" data-unit="mi" title="<?= __('settings.switch_unit_mi') ?>">MI</button>
+                    </div>
                 </div>
-                
                 <!-- User Info with Logout -->
                 <div class="sidebar-user">
                     <a href="<?= BASE_URL ?>/admin/user_form.php?id=<?= $user_id ?>" class="sidebar-user-link">

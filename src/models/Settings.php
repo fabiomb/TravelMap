@@ -185,7 +185,8 @@ class Settings {
             'train' => $this->get('transport_color_train', '#FF8800'),
             'walk' => $this->get('transport_color_walk', '#44FF44'),
             'bus' => $this->get('transport_color_bus', '#9C27B0'),
-            'aerial' => $this->get('transport_color_aerial', '#E91E63')
+            'aerial' => $this->get('transport_color_aerial', '#E91E63'),
+            'bike' => $this->get('transport_color_bike', '#b88907')
         ];
         
         return $colors;

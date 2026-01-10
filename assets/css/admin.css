@@ -9,40 +9,40 @@
     --admin-primary: #1e293b;
     --admin-primary-hover: #334155;
     --admin-primary-light: #475569;
-    
+
     /* Text colors */
     --admin-text: #1e293b;
     --admin-text-muted: #64748b;
     --admin-text-light: #94a3b8;
-    
+
     /* Background colors */
     --admin-bg: #f8fafc;
     --admin-bg-alt: #f1f5f9;
     --admin-bg-card: #ffffff;
-    
+
     /* Border colors */
     --admin-border: #e2e8f0;
     --admin-border-dark: #cbd5e1;
-    
+
     /* Status colors */
     --admin-success: #10b981;
     --admin-warning: #f59e0b;
     --admin-danger: #ef4444;
     --admin-info: #3b82f6;
-    
+
     /* Sidebar dimensions */
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 70px;
-    
+
     /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.2s ease;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    
+
     /* Border radius */
     --radius-sm: 4px;
     --radius-md: 6px;
@@ -57,7 +57,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     height: 100%;
 }
 
@@ -441,14 +442,22 @@ html.sidebar-collapsed .sidebar-user-link {
     flex-shrink: 0;
 }
 
-/* Language toggle in sidebar */
-.sidebar-lang-toggle {
+/* Toggles in sidebar footer */
+.sidebar-toggles {
     display: flex;
-    gap: 4px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
-.lang-btn {
+.sidebar-lang-toggle,
+.sidebar-unit-toggle {
+    display: flex;
+    gap: 4px;
+}
+
+.lang-btn,
+.unit-btn {
     flex: 1;
     padding: 6px;
     border: 1px solid var(--admin-border);
@@ -461,16 +470,40 @@ html.sidebar-collapsed .sidebar-user-link {
     transition: all var(--transition-fast);
     text-decoration: none;
     text-align: center;
+    line-height: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }
 
-.lang-btn:hover {
+.lang-btn:hover,
+.unit-btn:hover {
     background: var(--admin-bg-alt);
+    color: var(--admin-text);
 }
 
-.lang-btn.active {
+.lang-btn.active,
+.unit-btn.active {
     background: var(--admin-primary);
     color: white;
     border-color: var(--admin-primary);
+}
+
+/* Collapsed sidebar adjustments */
+.admin-sidebar.collapsed .sidebar-toggles {
+    gap: 4px;
+}
+
+.admin-sidebar.collapsed .sidebar-lang-toggle,
+.admin-sidebar.collapsed .sidebar-unit-toggle {
+    flex-direction: column;
+}
+
+.admin-sidebar.collapsed .lang-btn,
+.admin-sidebar.collapsed .unit-btn {
+    padding: 6px 4px;
+    font-size: 10px;
 }
 
 /* Sidebar Toggle Button */
@@ -517,7 +550,7 @@ html.sidebar-collapsed .sidebar-user-link {
     transition: margin-left var(--transition-normal);
 }
 
-.admin-sidebar.collapsed ~ .admin-main {
+.admin-sidebar.collapsed~.admin-main {
     margin-left: var(--sidebar-collapsed-width);
 }
 
@@ -666,19 +699,22 @@ html.sidebar-collapsed .sidebar-user-link {
     height: 22px;
 }
 
-.stat-icon.blue { 
+.stat-icon.blue {
     background: rgba(59, 130, 246, 0.1);
     color: #3b82f6;
 }
-.stat-icon.green { 
+
+.stat-icon.green {
     background: rgba(16, 185, 129, 0.1);
     color: #10b981;
 }
-.stat-icon.amber { 
+
+.stat-icon.amber {
     background: rgba(245, 158, 11, 0.1);
     color: #f59e0b;
 }
-.stat-icon.cyan { 
+
+.stat-icon.cyan {
     background: rgba(6, 182, 212, 0.1);
     color: #06b6d4;
 }
@@ -1327,23 +1363,23 @@ html.sidebar-collapsed .sidebar-user-link {
     .admin-sidebar {
         transform: translateX(-100%);
     }
-    
+
     .admin-sidebar.show {
         transform: translateX(0);
     }
-    
+
     .admin-main {
         margin-left: 0;
     }
-    
+
     .admin-content {
         padding: 20px;
     }
-    
+
     .mobile-menu-toggle {
         display: flex !important;
     }
-    
+
     .sidebar-overlay {
         display: block;
         position: fixed;
@@ -1357,7 +1393,7 @@ html.sidebar-collapsed .sidebar-user-link {
         visibility: hidden;
         transition: all var(--transition-normal);
     }
-    
+
     .sidebar-overlay.show {
         opacity: 1;
         visibility: visible;
@@ -1600,29 +1636,81 @@ html.sidebar-collapsed .sidebar-user-link {
 }
 
 /* ========== Utilities ========== */
-.text-muted { color: var(--admin-text-muted); }
-.text-success { color: var(--admin-success); }
-.text-danger { color: var(--admin-danger); }
-.text-warning { color: var(--admin-warning); }
+.text-muted {
+    color: var(--admin-text-muted);
+}
 
-.mb-0 { margin-bottom: 0; }
-.mb-1 { margin-bottom: 4px; }
-.mb-2 { margin-bottom: 8px; }
-.mb-3 { margin-bottom: 16px; }
-.mb-4 { margin-bottom: 24px; }
+.text-success {
+    color: var(--admin-success);
+}
 
-.mt-0 { margin-top: 0; }
-.mt-2 { margin-top: 8px; }
-.mt-3 { margin-top: 16px; }
-.mt-4 { margin-top: 24px; }
+.text-danger {
+    color: var(--admin-danger);
+}
 
-.d-flex { display: flex; }
-.align-items-center { align-items: center; }
-.justify-content-between { justify-content: space-between; }
-.gap-2 { gap: 8px; }
-.gap-3 { gap: 16px; }
+.text-warning {
+    color: var(--admin-warning);
+}
 
-.w-100 { width: 100%; }
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.mb-1 {
+    margin-bottom: 4px;
+}
+
+.mb-2 {
+    margin-bottom: 8px;
+}
+
+.mb-3 {
+    margin-bottom: 16px;
+}
+
+.mb-4 {
+    margin-bottom: 24px;
+}
+
+.mt-0 {
+    margin-top: 0;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+.mt-3 {
+    margin-top: 16px;
+}
+
+.mt-4 {
+    margin-top: 24px;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.gap-2 {
+    gap: 8px;
+}
+
+.gap-3 {
+    gap: 16px;
+}
+
+.w-100 {
+    width: 100%;
+}
 
 /* ========== Leaflet Map Overrides (for trip/point editors) ========== */
 .map-container {
@@ -1709,12 +1797,13 @@ html.sidebar-collapsed .sidebar-user-link {
 
 /* ========== Print Styles ========== */
 @media print {
+
     .admin-sidebar,
     .sidebar-overlay,
     .mobile-menu-toggle {
         display: none !important;
     }
-    
+
     .admin-main {
         margin-left: 0 !important;
     }

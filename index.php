@@ -44,6 +44,8 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
         echo SITE_ANALYTICS_CODE . "\n";
     endif; 
     ?>
+    <!-- Unit Manager -->
+    <script src="<?= ASSETS_URL ?>/js/unit_manager.js?v=<?php echo $version; ?>"></script>
 </head>
 <body>
     <!-- Mapa a pantalla completa -->
@@ -163,12 +165,23 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center">
-                    <!-- Language Toggle -->
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Language">
-                        <input type="radio" class="btn-check" name="langToggle" id="langEn" value="en" <?= current_lang() === 'en' ? 'checked' : '' ?>>
-                        <label class="btn btn-outline-secondary" for="langEn">EN</label>
-                        <input type="radio" class="btn-check" name="langToggle" id="langEs" value="es" <?= current_lang() === 'es' ? 'checked' : '' ?>>
-                        <label class="btn btn-outline-secondary" for="langEs">ES</label>
+                    <!-- Language and Unit Toggles -->
+                    <div class="d-flex gap-2 align-items-center">
+                        <!-- Language Toggle -->
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Language">
+                            <input type="radio" class="btn-check" name="langToggle" id="langEn" value="en" <?= current_lang() === 'en' ? 'checked' : '' ?>>
+                            <label class="btn btn-outline-secondary" for="langEn" title="<?= __('settings.switch_lang_en') ?>">EN</label>
+                            <input type="radio" class="btn-check" name="langToggle" id="langEs" value="es" <?= current_lang() === 'es' ? 'checked' : '' ?>>
+                            <label class="btn btn-outline-secondary" for="langEs" title="<?= __('settings.switch_lang_es') ?>">ES</label>
+                        </div>
+
+                        <!-- Distance Unit Toggle -->
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Distance Unit">
+                            <input type="radio" class="btn-check" name="unitToggle" id="unitKm" value="km">
+                            <label class="btn btn-outline-secondary" for="unitKm" title="<?= __('settings.switch_unit_km') ?>">KM</label>
+                            <input type="radio" class="btn-check" name="unitToggle" id="unitMi" value="mi">
+                            <label class="btn btn-outline-secondary" for="unitMi" title="<?= __('settings.switch_unit_mi') ?>">MI</label>
+                        </div>
                     </div>
                     
                     <small class="text-muted">
@@ -287,15 +300,29 @@ $footerNoteText = $settingsModel->get('footer_note_text', '');
             document.querySelectorAll('input[name="langToggle"]').forEach(function(radio) {
                 radio.addEventListener('change', function() {
                     const newLang = this.value;
-                    console.log('Language changed to:', newLang);
                     i18n.setLanguage(newLang, function() {
                         window.location.reload();
                     });
                 });
             });
+
+            // Unit toggle initialization
+            const currentUnit = UnitManager.getUnit();
+            const unitRadio = document.getElementById(currentUnit === 'mi' ? 'unitMi' : 'unitKm');
+            if (unitRadio) unitRadio.checked = true;
+
+            // Unit toggle event
+            document.querySelectorAll('input[name="unitToggle"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    const newUnit = this.value;
+                    UnitManager.setUnit(newUnit);
+                    window.location.reload(); // Reload to refresh all distances easily
+                });
+            });
         })();
     </script>
     
+
     <!-- Public Map JS -->
     <?php if ($mapRenderer === 'leaflet'): ?>
     <script src="<?= ASSETS_URL ?>/js/public_map_leaflet.js?v=<?php echo $version; ?>"></script>
