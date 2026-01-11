@@ -3,7 +3,7 @@
  * Caches map tiles for faster loading and offline support
  */
 
-const CACHE_NAME = 'travelmap-tiles-v2';  // Incremented to force cache refresh
+const CACHE_NAME = 'travelmap-tiles-v3';  // Incremented to force cache refresh after CARTO migration
 const CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Tile domains to cache

@@ -423,6 +423,11 @@
             maxZoom: 19,
             subdomains: tileConfig.subdomains || 'abc'
         }).addTo(map);
+        
+        // Debug log to verify which tiles are being used
+        console.log('[TravelMap] Tiles cargados:', tileConfig.url);
+        console.log('[TravelMap] Si ves "tile.openstreetmap.org" arriba, limpia la caché del navegador.');
+        console.log('[TravelMap] Debería mostrar "basemaps.cartocdn.com" para CARTO tiles.');
 
         // Log warning about language limitations
         if (currentLang !== 'en') {
