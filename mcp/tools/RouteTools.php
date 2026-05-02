@@ -396,8 +396,9 @@ final class RouteTools
         $tempRelPath = $p['temp_path'];
 
         // Validar que temp_path esté dentro de mcp_temp (evitar path traversal)
-        $tempDir  = realpath(ROOT_PATH . '/uploads/mcp_temp');
-        $absPath  = realpath(ROOT_PATH . '/' . $tempRelPath);
+        // Normalizar separadores para compatibilidad Windows (realpath devuelve backslashes)
+        $tempDir  = str_replace('\\', '/', realpath(ROOT_PATH . '/uploads/mcp_temp'));
+        $absPath  = str_replace('\\', '/', realpath(ROOT_PATH . '/' . $tempRelPath));
         if ($absPath === false || $tempDir === false || !str_starts_with($absPath, $tempDir . '/')) {
             throw new ToolException('temp_path inválido o fuera del directorio permitido', 'INVALID_PATH', -32602);
         }
