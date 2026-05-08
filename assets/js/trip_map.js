@@ -1071,6 +1071,9 @@
             // Inicializar unsaved changes warning
             initUnsavedChangesWarning();
 
+            // Inicializar auto-route si está habilitado
+            initAutoRoute();
+
             // Configurar event handlers
             setupEventHandlers();
         });
@@ -1734,6 +1737,237 @@ const resetImagePlaceholder = function() {
             $('#routeImagePlaceholder').show();
             $('#routeRemoveImageBtn').hide();
         });
+    }
+
+    // =============================================
+    // Automated Route Generation
+    // =============================================
+
+    /**
+     * Initialize auto-route button and modal handlers.
+     * Only shows the button if routing service is enabled in config.
+     */
+    function initAutoRoute() {
+        const isEnabled = appConfig && appConfig.routingServiceEnabled;
+
+        if (!isEnabled) {
+            // Hide the button if it exists
+            $('#autoRouteBtn').hide();
+            return;
+        }
+
+        // Show button before the save form
+        const $saveForm = $('#routesForm');
+        if ($saveForm.length && $('#autoRouteBtn').length === 0) {
+            const btnHtml = `
+                <button type="button" class="btn btn-outline-info btn-lg w-100 mb-3" id="autoRouteBtn" data-bs-toggle="modal" data-bs-target="#autoRouteModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="19" r="3"></circle>
+                        <path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"></path>
+                    </svg>
+                    ${__('routes.auto_route') || 'Create Automated Route'}
+                </button>
+            `;
+            $saveForm.before(btnHtml);
+        }
+
+        // Setup geocoding search for origin
+        setupAutoRouteSearch('autoRouteOriginSearch', 'autoRouteOriginSearchBtn', 'autoRouteOriginResults', 'autoRouteFromLat', 'autoRouteFromLng');
+        // Setup geocoding search for destination
+        setupAutoRouteSearch('autoRouteDestSearch', 'autoRouteDestSearchBtn', 'autoRouteDestResults', 'autoRouteToLat', 'autoRouteToLng');
+
+        // Validate form to enable/disable submit button
+        $('#autoRouteFromLat, #autoRouteFromLng, #autoRouteToLat, #autoRouteToLng').on('input', validateAutoRouteForm);
+
+        // Submit handler
+        $('#autoRouteSubmit').off('click').on('click', submitAutoRoute);
+
+        // Reset when modal is hidden
+        $('#autoRouteModal').on('hidden.bs.modal', function () {
+            $('#autoRouteOriginSearch, #autoRouteDestSearch, #autoRouteName').val('');
+            $('#autoRouteFromLat, #autoRouteFromLng, #autoRouteToLat, #autoRouteToLng').val('');
+            $('#autoRouteError').hide();
+            $('#autoRouteSubmit').prop('disabled', true);
+            $('#autoRouteSpinner').hide();
+            $('#autoRouteOriginResults, #autoRouteDestResults').hide().empty();
+        });
+    }
+
+    /**
+     * Setup geocoding search for an auto-route input field.
+     */
+    function setupAutoRouteSearch(searchInputId, searchBtnId, resultsId, latInputId, lngInputId) {
+        const $searchInput = $(`#${searchInputId}`);
+        const $searchBtn = $(`#${searchBtnId}`);
+        const $results = $(`#${resultsId}`);
+        const $latInput = $(`#${latInputId}`);
+        const $lngInput = $(`#${lngInputId}`);
+
+        function doSearch() {
+            const query = $searchInput.val().trim();
+            if (!query) return;
+
+            $.ajax({
+                url: BASE_URL + '/api/geocode.php',
+                data: { q: query },
+                dataType: 'json'
+            }).done(function (data) {
+                $results.empty().hide();
+                if (data && data.length > 0) {
+                    data.forEach(function (place) {
+                        const item = $(`<a href="#" class="list-group-item list-group-item-action py-1 px-2">${place.display_name}</a>`);
+                        item.on('click', function (e) {
+                            e.preventDefault();
+                            $latInput.val(parseFloat(place.lat).toFixed(6));
+                            $lngInput.val(parseFloat(place.lon).toFixed(6));
+                            $searchInput.val(place.display_name);
+                            $results.hide();
+                            validateAutoRouteForm();
+                        });
+                        $results.append(item);
+                    });
+                    $results.show();
+                }
+            });
+        }
+
+        $searchBtn.on('click', doSearch);
+        $searchInput.on('keypress', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                doSearch();
+            }
+        });
+    }
+
+    /**
+     * Validate auto-route form fields and enable/disable submit.
+     */
+    function validateAutoRouteForm() {
+        const fromLat = parseFloat($('#autoRouteFromLat').val());
+        const fromLng = parseFloat($('#autoRouteFromLng').val());
+        const toLat = parseFloat($('#autoRouteToLat').val());
+        const toLng = parseFloat($('#autoRouteToLng').val());
+
+        const valid = !isNaN(fromLat) && !isNaN(fromLng) && !isNaN(toLat) && !isNaN(toLng) &&
+                      fromLat >= -90 && fromLat <= 90 && toLat >= -90 && toLat <= 90 &&
+                      fromLng >= -180 && fromLng <= 180 && toLng >= -180 && toLng <= 180;
+
+        $('#autoRouteSubmit').prop('disabled', !valid);
+    }
+
+    /**
+     * Submit the auto-route request to the API.
+     */
+    function submitAutoRoute() {
+        const $btn = $('#autoRouteSubmit');
+        const $spinner = $('#autoRouteSpinner');
+        const $error = $('#autoRouteError');
+
+        $btn.prop('disabled', true);
+        $spinner.show();
+        $error.hide();
+
+        const postData = {
+            trip_id: tripId,
+            from_lat: parseFloat($('#autoRouteFromLat').val()),
+            from_lng: parseFloat($('#autoRouteFromLng').val()),
+            to_lat: parseFloat($('#autoRouteToLat').val()),
+            to_lng: parseFloat($('#autoRouteToLng').val()),
+            transport_type: $('#autoRouteTransport').val(),
+            name: $('#autoRouteName').val()
+        };
+
+        $.ajax({
+            url: BASE_URL + '/api/get_route_from_service.php',
+            method: 'POST',
+            data: postData,
+            dataType: 'json'
+        }).done(function (response) {
+            if (response.success && response.data) {
+                // Add the route to the map
+                addAutoRouteToMap(response.data);
+
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance($('#autoRouteModal')[0]);
+                if (modal) modal.hide();
+
+                hasUnsavedChanges = true;
+            } else {
+                $error.text(response.error || 'Unknown error').show();
+                $btn.prop('disabled', false);
+            }
+        }).fail(function (xhr) {
+            let msg = 'Error connecting to routing service';
+            try {
+                const resp = JSON.parse(xhr.responseText);
+                if (resp.error) msg = resp.error;
+            } catch (e) {}
+            $error.text(msg).show();
+            $btn.prop('disabled', false);
+        }).always(function () {
+            $spinner.hide();
+        });
+    }
+
+    /**
+     * Add a route returned by the routing service to the map and routes list.
+     */
+    function addAutoRouteToMap(data) {
+        const geojson = data.geojson;
+        const coordinates = geojson.geometry.coordinates;
+        const color = data.color || transportColors[data.transport_type] || '#3388ff';
+
+        // Convert [lng, lat] to Leaflet [lat, lng]
+        const latLngs = coordinates.map(function (c) {
+            return [c[1], c[0]];
+        });
+
+        // Create polyline and add to map
+        const polyline = L.polyline(latLngs, {
+            color: color,
+            weight: 4,
+            opacity: 0.8
+        });
+
+        // Set layer properties so updateRoutesData() can read them on form submit
+        polyline.transportType = data.transport_type;
+        polyline.color = color;
+        polyline.isRoundTrip = false;
+        polyline.routeName = data.name || '';
+        polyline.routeDescription = '';
+        polyline.routeImagePath = '';
+        polyline.startDatetime = '';
+        polyline.endDatetime = '';
+        polyline.routeLinks = [];
+
+        drawnItems.addLayer(polyline);
+
+        // Add to routesData
+        routesData.push({
+            layer: polyline,
+            transport_type: data.transport_type,
+            color: color,
+            is_round_trip: false,
+            distance_meters: data.distance_meters || 0,
+            name: data.name || '',
+            description: '',
+            image_path: '',
+            start_datetime: '',
+            end_datetime: '',
+            links: [],
+            geojson: geojson
+        });
+
+        // Re-render routes list
+        renderRoutesList();
+
+        // Fit map to show the new route
+        if (latLngs.length > 0) {
+            map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+        }
+
+        console.log('Auto-route added:', data.transport_type, data.distance_meters, 'm');
     }
 
 })();

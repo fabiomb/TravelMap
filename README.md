@@ -10,6 +10,7 @@ Aplicación web para crear y visualizar mapas interactivos de viajes con puntos 
 - Gestión de viajes (título, descripción, fechas, color, tags, estado de publicación)
 - Puntos de interés con coordenadas, descripción, galería de imágenes y links externos tipificados
 - Editor de rutas visual con clasificación por tipo de transporte
+- Generación automática de rutas entre dos puntos (BRouter / Google Maps, opcional)
 - Gestión de usuarios y configuración global del sitio
 - Importadores: vuelos (FlightRadar CSV), estadías (Airbnb CSV), rutas (BRouter, GPX/OpenRailRouting), imágenes con geolocalización EXIF
 

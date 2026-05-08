@@ -41,6 +41,7 @@ try {
             'tripTagsEnabled' => $tripTagsEnabled,
             'tripPageEnabled' => $tripPageEnabled,
             'tripTooltipConfig' => $tripTooltipConfig,
+            'routingServiceEnabled' => (bool) $settingsModel->get('routing_service_enabled', false),
         ]
     ];
     

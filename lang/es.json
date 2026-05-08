@@ -414,10 +414,15 @@
     "end_datetime": "Fin",
     "external_links": "Links Externos",
     "add_link": "Agregar link",
-    "link_label_optional": "Etiqueta (opcional)"
+    "link_label_optional": "Etiqueta (opcional)",
+    "auto_route": "Crear Ruta Automática",
+    "origin": "Origen",
+    "destination": "Destino",
+    "search_place": "Buscar lugar...",
+    "generate_route": "Generar Ruta",
+    "route_name_placeholder": "Ej: Madrid a Barcelona"
   },
   "users": {
-    "title": "Usuarios",
     "management": "Gestión de Usuarios",
     "manage_users": "Administra los usuarios del sistema",
     "new_user": "Nuevo Usuario",
@@ -635,7 +640,21 @@
     "trip_poi_fly_speed_slow": "Lenta",
     "trip_poi_fly_speed_normal": "Normal",
     "trip_poi_fly_speed_fast": "Rápida",
-    "preview": "Vista previa"
+    "preview": "Vista previa",
+    "routes": "Rutas",
+    "routing_service_configuration": "Configuración del Servicio de Rutas",
+    "routing_service_description": "Configura un servicio externo de rutas para generar rutas automáticamente entre dos puntos. Cuando está habilitado, aparecerá un botón en el editor de mapa para crear rutas especificando origen, destino y tipo de transporte.",
+    "routing_service_enabled": "Habilitar Servicio de Rutas",
+    "routing_service_enabled_desc": "Cuando está habilitado, aparecerá un botón para crear rutas automáticas en el editor de mapa.",
+    "routing_service_type": "Proveedor de Servicio",
+    "routing_brouter_online": "BRouter (brouter.de - Gratis)",
+    "routing_brouter_custom": "BRouter (Auto-alojado / Docker)",
+    "routing_google_maps": "Google Maps Directions API",
+    "routing_brouter_url": "URL del Servidor BRouter",
+    "routing_brouter_url_desc": "URL base de tu instancia de BRouter. Por defecto: https://brouter.de/brouter",
+    "routing_google_api_key": "Clave API de Google Maps",
+    "routing_google_api_key_desc": "Clave API con Directions API habilitado. Obtén una en console.cloud.google.com",
+    "routing_note": "BRouter (brouter.de) es gratis y no requiere clave API. Para instancias propias, instala BRouter vía Docker. Google Maps requiere una clave API válida con facturación habilitada. Las rutas de Avión, Barco y Aéreo se generan como arcos de círculo máximo sin servicio externo."
   },
   "original_settings": {
     "title": "Configuración del Sistema",
@@ -753,7 +772,9 @@
     "you": "Tú",
     "note": "Nota",
     "copy": "Copiar",
-    "copied": "¡Copiado!"
+    "copied": "¡Copiado!",
+    "latitude": "Latitud",
+    "longitude": "Longitud"
   },
   "messages": {
     "confirm_delete": "¿Estás seguro de que deseas eliminar este elemento?",
