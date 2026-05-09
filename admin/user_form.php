@@ -284,7 +284,9 @@ $form_data = [
     </div>
 </div>
 
-<?php if ($is_edit): ?>
+<?php if ($is_edit):
+    $mcpEndpoint = htmlspecialchars(BASE_URL . '/mcp/http.php');
+?>
 <div class="row">
     <div class="col-lg-6">
         <div class="card mb-3">
@@ -352,7 +354,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "url": "http://192.168.3.195:32080/mcp/http.php",
+      "url": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
@@ -368,7 +370,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "url": "http://192.168.3.195:32080/mcp/http.php",
+      "url": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
@@ -384,7 +386,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "serverUrl": "http://192.168.3.195:32080/mcp/http.php",
+      "serverUrl": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
@@ -400,7 +402,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "serverUrl": "http://192.168.3.195:32080/mcp/http.php",
+      "serverUrl": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
@@ -416,7 +418,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "url": "http://192.168.3.195:32080/mcp/http.php",
+      "url": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
@@ -432,7 +434,7 @@ $form_data = [
                         <pre class="mb-0" style="font-size:11px">{
   "mcpServers": {
     "travelmap": {
-      "url": "http://192.168.3.195:32080/mcp/http.php",
+      "url": "<?= $mcpEndpoint ?>",
       "headers": {
         "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
       }
