@@ -11,24 +11,24 @@ final class RouteTools
     public static function register(Dispatcher $d): void
     {
         $d->register('plan_route',
-            'Calcula una ruta terrestre entre dos puntos usando BRouter (brouter.de). ' .
-            'Guarda el resultado en un archivo temporal server-side y devuelve SOLO metadata liviana ' .
-            '(distancia, duración, temp_path). Usa commit_route con ese temp_path para guardar la ruta en la BD. ' .
-            'Tipos soportados: car, bike, walk, train, bus. ' .
-            'NO soporta: plane, ship, aerial (trayectos no terrestres).',
+            'Calculates a land route between two points using BRouter (brouter.de). ' .
+            'Saves the result to a server-side temp file and returns ONLY lightweight metadata ' .
+            '(distance, duration, temp_path). Use commit_route with that temp_path to persist the route to the DB. ' .
+            'Supported types: car, bike, walk, train, bus. ' .
+            'NOT supported: plane, ship, aerial (non-land segments).',
         [
             'type'       => 'object',
             'required'   => ['from_lat', 'from_lon', 'to_lat', 'to_lon', 'transport_type'],
             'properties' => [
-                'from_lat'       => ['type' => 'number', 'minimum' => -90,  'maximum' => 90,  'description' => 'Latitud del punto de origen.'],
-                'from_lon'       => ['type' => 'number', 'minimum' => -180, 'maximum' => 180, 'description' => 'Longitud del punto de origen.'],
-                'to_lat'         => ['type' => 'number', 'minimum' => -90,  'maximum' => 90,  'description' => 'Latitud del punto de destino.'],
-                'to_lon'         => ['type' => 'number', 'minimum' => -180, 'maximum' => 180, 'description' => 'Longitud del punto de destino.'],
+                'from_lat'       => ['type' => 'number', 'minimum' => -90,  'maximum' => 90,  'description' => 'Latitude of the origin point.'],
+                'from_lon'       => ['type' => 'number', 'minimum' => -180, 'maximum' => 180, 'description' => 'Longitude of the origin point.'],
+                'to_lat'         => ['type' => 'number', 'minimum' => -90,  'maximum' => 90,  'description' => 'Latitude of the destination point.'],
+                'to_lon'         => ['type' => 'number', 'minimum' => -180, 'maximum' => 180, 'description' => 'Longitude of the destination point.'],
                 'transport_type' => ['type' => 'string', 'enum' => ['car', 'bike', 'walk', 'train', 'bus']],
                 'via' => [
                     'type'        => 'array',
                     'maxItems'    => 8,
-                    'description' => 'Waypoints intermedios por los que debe pasar la ruta (opcional).',
+                    'description' => 'Optional intermediate waypoints the route must pass through.',
                     'items' => [
                         'type'       => 'object',
                         'required'   => ['lat', 'lon'],
@@ -44,12 +44,12 @@ final class RouteTools
         ], [self::class, 'planRoute']);
 
         $d->register('create_route',
-            'Crea una ruta para un viaje. Proporciona EXACTAMENTE UNA fuente de geometría: ' .
-            'geojson_data (GeoJSON como string), brouter_csv_text (contenido CSV de BRouter) ' .
-            'o brouter_csv_base64 (CSV de BRouter codificado en base64). ' .
-            'Para rutas de tipo "plane", "ship" o "aerial" NO uses plan_route (BRouter no cubre trayectos no terrestres): ' .
-            'construye un GeoJSON LineString con solo dos coordenadas (origen y destino) y pásalo en geojson_data. ' .
-            'Ejemplo mínimo: {"type":"Feature","geometry":{"type":"LineString","coordinates":[[lon_origen,lat_origen],[lon_destino,lat_destino]]},"properties":{}}',
+            'Creates a route for a trip. Provide EXACTLY ONE geometry source: ' .
+            'geojson_data (GeoJSON as string), brouter_csv_text (raw BRouter CSV content) ' .
+            'or brouter_csv_base64 (BRouter CSV encoded in base64). ' .
+            'For routes of type "plane", "ship" or "aerial" do NOT use plan_route (BRouter does not cover non-land segments): ' .
+            'build a GeoJSON LineString with only two coordinates (origin and destination) and pass it in geojson_data. ' .
+            'Minimal example: {"type":"Feature","geometry":{"type":"LineString","coordinates":[[lon_origin,lat_origin],[lon_dest,lat_dest]]},"properties":{}}',
         [
             'type'       => 'object',
             'required'   => ['trip_id', 'transport_type'],
@@ -59,9 +59,9 @@ final class RouteTools
                 'name'               => ['type' => 'string', 'maxLength' => 200],
                 'description'        => ['type' => 'string', 'maxLength' => 5000],
                 'is_round_trip'      => ['type' => 'boolean'],
-                'color'              => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Color de la ruta en hexadecimal CSS. Ejemplo: "#e63946". Por defecto "#3388ff".'],
-                'start_datetime'     => ['type' => 'string', 'description' => 'Fecha y hora de inicio. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 09:30:00".'],
-                'end_datetime'       => ['type' => 'string', 'description' => 'Fecha y hora de fin. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 18:00:00".'],
+                'color'              => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Route color as a CSS hex string. Example: "#e63946". Default: "#3388ff".'],
+                'start_datetime'     => ['type' => 'string', 'description' => 'Start date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 09:30:00".'],
+                'end_datetime'       => ['type' => 'string', 'description' => 'End date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 18:00:00".'],
                 'geojson_data'       => ['type' => 'string', 'maxLength' => 5000000],
                 'brouter_csv_text'   => ['type' => 'string', 'maxLength' => 5242880],
                 'brouter_csv_base64' => ['type' => 'string', 'maxLength' => 7340032],
@@ -74,7 +74,7 @@ final class RouteTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -84,23 +84,23 @@ final class RouteTools
         ], [self::class, 'createRoute']);
 
         $d->register('commit_route',
-            'Guarda en la BD una ruta calculada previamente con plan_route. ' .
-            'Lee el GeoJSON del archivo temporal server-side (temp_path devuelto por plan_route) ' .
-            'y crea la ruta directamente sin pasar las coordenadas por el contexto. ' .
-            'El archivo temporal se elimina automáticamente tras el commit.',
+            'Persists to the DB a route previously calculated with plan_route. ' .
+            'Reads the GeoJSON from the server-side temp file (temp_path returned by plan_route) ' .
+            'and creates the route directly without passing coordinates through the context. ' .
+            'The temp file is automatically deleted after the commit.',
         [
             'type'       => 'object',
             'required'   => ['trip_id', 'temp_path', 'transport_type'],
             'properties' => [
                 'trip_id'        => ['type' => 'integer', 'minimum' => 1],
-                'temp_path'      => ['type' => 'string', 'description' => 'Valor de temp_path devuelto por plan_route.'],
+                'temp_path'      => ['type' => 'string', 'description' => 'The temp_path value returned by plan_route.'],
                 'transport_type' => ['type' => 'string', 'enum' => self::ALLOWED_TRANSPORT],
                 'name'           => ['type' => 'string', 'maxLength' => 200],
                 'description'    => ['type' => 'string', 'maxLength' => 5000],
                 'is_round_trip'  => ['type' => 'boolean'],
-                'color'          => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Color de la ruta en hexadecimal CSS. Ejemplo: "#e63946". Por defecto "#3388ff".'],
-                'start_datetime' => ['type' => 'string', 'description' => 'Fecha y hora de inicio. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 09:30:00".'],
-                'end_datetime'   => ['type' => 'string', 'description' => 'Fecha y hora de fin. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 18:00:00".'],
+                'color'          => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Route color as a CSS hex string. Example: "#e63946". Default: "#3388ff".'],
+                'start_datetime' => ['type' => 'string', 'description' => 'Start date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 09:30:00".'],
+                'end_datetime'   => ['type' => 'string', 'description' => 'End date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 18:00:00".'],
                 'links' => [
                     'type'     => 'array',
                     'maxItems' => 10,
@@ -110,7 +110,7 @@ final class RouteTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -120,9 +120,9 @@ final class RouteTools
         ], [self::class, 'commitRoute']);
 
         $d->register('update_route',
-            'Actualiza los metadatos de una ruta existente. Solo se modifican los campos proporcionados. ' .
-            'La geometría (geojson) no se puede cambiar desde esta tool. ' .
-            'Para actualizar los links proporciona el array completo (reemplaza los existentes).',
+            'Updates the metadata of an existing route. Only the provided fields are modified. ' .
+            'Route geometry (geojson) cannot be changed through this tool. ' .
+            'To update links supply the full array (replaces existing ones).',
         [
             'type'       => 'object',
             'required'   => ['id'],
@@ -131,10 +131,10 @@ final class RouteTools
                 'name'           => ['type' => 'string', 'maxLength' => 200],
                 'description'    => ['type' => 'string', 'maxLength' => 5000],
                 'transport_type' => ['type' => 'string', 'enum' => self::ALLOWED_TRANSPORT],
-                'color'          => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Color de la ruta en hexadecimal CSS. Ejemplo: "#e63946". Por defecto "#3388ff".'],
+                'color'          => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Route color as a CSS hex string. Example: "#e63946". Default: "#3388ff".'],
                 'is_round_trip'  => ['type' => 'boolean'],
-                'start_datetime' => ['type' => 'string', 'description' => 'Fecha y hora de inicio. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 09:30:00".'],
-                'end_datetime'   => ['type' => 'string', 'description' => 'Fecha y hora de fin. Formato "YYYY-MM-DD HH:MM:SS". También acepta solo fecha "YYYY-MM-DD". Ejemplo: "2024-07-15 18:00:00".'],
+                'start_datetime' => ['type' => 'string', 'description' => 'Start date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 09:30:00".'],
+                'end_datetime'   => ['type' => 'string', 'description' => 'End date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 18:00:00".'],
                 'links' => [
                     'type'     => 'array',
                     'maxItems' => 10,
@@ -144,7 +144,7 @@ final class RouteTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -161,7 +161,7 @@ final class RouteTools
         $tripId = (int)$p['trip_id'];
         self::assertTripExists($tripId);
 
-        // Validar que exactamente una fuente de geometría esté presente
+        // Validate that exactly one geometry source is present
         $hasCsvBase64 = isset($p['brouter_csv_base64']) && $p['brouter_csv_base64'] !== '';
         $hasCsvText   = isset($p['brouter_csv_text'])   && $p['brouter_csv_text']   !== '';
         $hasGeojson   = isset($p['geojson_data'])        && $p['geojson_data']        !== '';
@@ -169,13 +169,13 @@ final class RouteTools
         $sourceCount = (int)$hasCsvBase64 + (int)$hasCsvText + (int)$hasGeojson;
         if ($sourceCount === 0) {
             throw new ToolException(
-                'Debes proporcionar exactamente una fuente de geometría: geojson_data, brouter_csv_text o brouter_csv_base64',
+                'You must provide exactly one geometry source: geojson_data, brouter_csv_text or brouter_csv_base64',
                 'INVALID_INPUT', -32602
             );
         }
         if ($sourceCount > 1) {
             throw new ToolException(
-                'Solo se permite una fuente de geometría a la vez (geojson_data, brouter_csv_text o brouter_csv_base64)',
+                'Only one geometry source is allowed at a time (geojson_data, brouter_csv_text or brouter_csv_base64)',
                 'INVALID_INPUT', -32602
             );
         }
@@ -185,17 +185,17 @@ final class RouteTools
         $distanceKm     = null;
 
         if ($hasCsvBase64) {
-            // Validar y decodificar base64
+            // Validate and decode base64
             $raw = $p['brouter_csv_base64'];
             if (strlen($raw) > 7_340_032) {
-                throw new ToolException('El archivo CSV base64 supera el límite de 7 MB', 'FILE_TOO_LARGE');
+                throw new ToolException('The base64 CSV file exceeds the 7 MB limit', 'FILE_TOO_LARGE');
             }
             $bytes = base64_decode($raw, true);
             if ($bytes === false) {
-                throw new ToolException('La cadena brouter_csv_base64 no es base64 válida', 'INVALID_BASE64');
+                throw new ToolException('brouter_csv_base64 is not valid base64', 'INVALID_BASE64');
             }
             if (strlen($bytes) > 5 * 1024 * 1024) {
-                throw new ToolException('El CSV decodificado supera 5 MB', 'FILE_TOO_LARGE');
+                throw new ToolException('The decoded CSV exceeds 5 MB', 'FILE_TOO_LARGE');
             }
             $result = self::parseBRouterBytes($bytes);
             $geojsonData    = $result['geojson_data'];
@@ -205,7 +205,7 @@ final class RouteTools
         } elseif ($hasCsvText) {
             $bytes = $p['brouter_csv_text'];
             if (strlen($bytes) > 5 * 1024 * 1024) {
-                throw new ToolException('El CSV de texto supera 5 MB', 'FILE_TOO_LARGE');
+                throw new ToolException('The CSV text exceeds 5 MB', 'FILE_TOO_LARGE');
             }
             $result = self::parseBRouterBytes($bytes);
             $geojsonData    = $result['geojson_data'];
@@ -216,14 +216,14 @@ final class RouteTools
             // geojson_data
             $decoded = json_decode($p['geojson_data'], true);
             if ($decoded === null) {
-                throw new ToolException('geojson_data no es JSON válido', 'INVALID_INPUT', -32602);
+                throw new ToolException('geojson_data is not valid JSON', 'INVALID_INPUT', -32602);
             }
             $type = $decoded['type'] ?? '';
             if (!in_array($type, ['Feature', 'FeatureCollection'], true)) {
-                throw new ToolException('geojson_data debe ser un Feature o FeatureCollection GeoJSON', 'INVALID_INPUT', -32602);
+                throw new ToolException('geojson_data must be a GeoJSON Feature or FeatureCollection', 'INVALID_INPUT', -32602);
             }
             $geojsonData = $p['geojson_data'];
-            // Intentar extraer waypoints
+            // Try to extract waypoints count
             $coords = $decoded['geometry']['coordinates'] ?? $decoded['features'][0]['geometry']['coordinates'] ?? [];
             $waypointsCount = count($coords);
         }
@@ -243,10 +243,10 @@ final class RouteTools
         $routeModel = new Route();
         $id = $routeModel->create($data);
         if (!$id) {
-            throw new ToolException('No se pudo crear la ruta en la base de datos', 'DB_ERROR');
+            throw new ToolException('Could not create the route in the database', 'DB_ERROR');
         }
 
-        // Leer distancia calculada por el modelo (Haversine)
+        // Read distance calculated by the model (Haversine)
         $created = $routeModel->getById((int)$id);
         $distanceMeters = $created ? (int)$created['distance_meters'] : 0;
 
@@ -286,10 +286,10 @@ final class RouteTools
         $routeModel = new Route();
         $current = $routeModel->getById($id);
         if (!$current) {
-            throw new ToolException("Ruta con id={$id} no encontrada", 'ROUTE_NOT_FOUND');
+            throw new ToolException("Route with id={$id} not found", 'ROUTE_NOT_FOUND');
         }
 
-        // Mezclar campos actuales con los proporcionados; la geometría nunca cambia
+        // Merge current fields with provided ones; geometry is never changed
         $data = [
             'transport_type' => $p['transport_type'] ?? $current['transport_type'],
             'name'           => array_key_exists('name', $p)           ? $p['name']           : $current['name'],
@@ -303,7 +303,7 @@ final class RouteTools
         ];
 
         if (!$routeModel->update($id, $data)) {
-            throw new ToolException('No se pudo actualizar la ruta', 'DB_ERROR');
+            throw new ToolException('Could not update the route', 'DB_ERROR');
         }
 
         if (array_key_exists('links', $p)) {
@@ -353,7 +353,7 @@ final class RouteTools
             throw new ToolException($result['error'], 'BROUTER_ERROR');
         }
 
-        // Guardar GeoJSON en disco — no pasa por el contexto de Claude
+        // Save GeoJSON to disk — does not pass through the LLM context
         $tempDir = ROOT_PATH . '/uploads/mcp_temp';
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0750, true);
@@ -363,7 +363,7 @@ final class RouteTools
         $tempRelPath  = 'uploads/mcp_temp/' . $tempFilename;
 
         if (file_put_contents($tempAbsPath, $result['geojson_data']) === false) {
-            throw new ToolException('No se pudo guardar el archivo temporal de ruta', 'SERVER_ERROR');
+            throw new ToolException('Could not save the route temp file', 'SERVER_ERROR');
         }
 
         McpLogger::info('plan_route OK', [
@@ -386,7 +386,7 @@ final class RouteTools
             'start'           => $result['start'],
             'end'             => $result['end'],
             'bbox'            => $result['bbox'],
-            'hint'            => 'Usa commit_route con trip_id y temp_path para guardar la ruta en la BD.',
+            'hint'            => 'Use commit_route with trip_id and temp_path to persist the route to the DB.',
         ];
     }
 
@@ -395,20 +395,20 @@ final class RouteTools
         $tripId      = (int)$p['trip_id'];
         $tempRelPath = $p['temp_path'];
 
-        // Validar que temp_path esté dentro de mcp_temp (evitar path traversal)
-        // Normalizar separadores para compatibilidad Windows (realpath devuelve backslashes)
+        // Validate that temp_path is inside mcp_temp (prevent path traversal)
+        // Normalize separators for Windows compatibility (realpath returns backslashes)
         $tempDir  = str_replace('\\', '/', realpath(ROOT_PATH . '/uploads/mcp_temp'));
         $absPath  = str_replace('\\', '/', realpath(ROOT_PATH . '/' . $tempRelPath));
         if ($absPath === false || $tempDir === false || !str_starts_with($absPath, $tempDir . '/')) {
-            throw new ToolException('temp_path inválido o fuera del directorio permitido', 'INVALID_PATH', -32602);
+            throw new ToolException('Invalid temp_path or outside the allowed directory', 'INVALID_PATH', -32602);
         }
         if (!file_exists($absPath)) {
-            throw new ToolException('El archivo temporal no existe. Vuelve a ejecutar plan_route.', 'TEMP_NOT_FOUND');
+            throw new ToolException('Temp file not found. Run plan_route again.', 'TEMP_NOT_FOUND');
         }
 
         $geojsonData = file_get_contents($absPath);
         if ($geojsonData === false) {
-            throw new ToolException('No se pudo leer el archivo temporal', 'READ_ERROR');
+            throw new ToolException('Could not read the temp file', 'READ_ERROR');
         }
 
         self::assertTripExists($tripId);
@@ -431,7 +431,7 @@ final class RouteTools
         @unlink($absPath);
 
         if (!$id) {
-            throw new ToolException('No se pudo crear la ruta en la base de datos', 'DB_ERROR');
+            throw new ToolException('Could not create the route in the database', 'DB_ERROR');
         }
 
         if (!empty($p['links'])) {
@@ -466,7 +466,7 @@ final class RouteTools
     {
         $tmpFile = tempnam(sys_get_temp_dir(), 'mcp_brouter_');
         if ($tmpFile === false) {
-            throw new ToolException('No se pudo crear archivo temporal para el CSV', 'SERVER_ERROR');
+            throw new ToolException('Could not create temp file for the CSV', 'SERVER_ERROR');
         }
         try {
             file_put_contents($tmpFile, $bytes);
@@ -476,7 +476,7 @@ final class RouteTools
         }
 
         if (!$result['success']) {
-            throw new ToolException($result['error'] ?? 'Error al parsear el CSV de BRouter', 'PARSE_FAILED');
+            throw new ToolException($result['error'] ?? 'Failed to parse BRouter CSV', 'PARSE_FAILED');
         }
 
         return $result;
@@ -486,7 +486,7 @@ final class RouteTools
     {
         $tripModel = new Trip();
         if (!$tripModel->getById($tripId)) {
-            throw new ToolException("Viaje con id={$tripId} no encontrado", 'TRIP_NOT_FOUND');
+            throw new ToolException("Trip with id={$tripId} not found", 'TRIP_NOT_FOUND');
         }
     }
 }
