@@ -415,7 +415,13 @@
     "end_datetime": "End",
     "external_links": "External Links",
     "add_link": "Add link",
-    "link_label_optional": "Label (optional)"
+    "link_label_optional": "Label (optional)",
+    "auto_route": "Create Automated Route",
+    "origin": "Origin",
+    "destination": "Destination",
+    "search_place": "Search place...",
+    "generate_route": "Generate Route",
+    "route_name_placeholder": "e.g. Madrid to Barcelona"
   },
   "users": {
     "title": "Users",
@@ -660,7 +666,21 @@
     "trip_poi_fly_speed_slow": "Slow",
     "trip_poi_fly_speed_normal": "Normal",
     "trip_poi_fly_speed_fast": "Fast",
-    "preview": "Preview"
+    "preview": "Preview",
+    "routes": "Routes",
+    "routing_service_configuration": "Routing Service Configuration",
+    "routing_service_description": "Configure an external routing service to automatically generate routes between two points. When enabled, a button will appear in the map editor to create routes by specifying origin, destination and transport type.",
+    "routing_service_enabled": "Enable Routing Service",
+    "routing_service_enabled_desc": "When enabled, a button to create automated routes will appear in the map editor.",
+    "routing_service_type": "Service Provider",
+    "routing_brouter_online": "BRouter (brouter.de - Free)",
+    "routing_brouter_custom": "BRouter (Self-hosted / Docker)",
+    "routing_google_maps": "Google Maps Directions API",
+    "routing_brouter_url": "BRouter Server URL",
+    "routing_brouter_url_desc": "Base URL of your BRouter instance. Default: https://brouter.de/brouter",
+    "routing_google_api_key": "Google Maps API Key",
+    "routing_google_api_key_desc": "API key with Directions API enabled. Get one at console.cloud.google.com",
+    "routing_note": "BRouter (brouter.de) is free and does not require an API key. For self-hosted instances, install BRouter via Docker. Google Maps requires a valid API key with billing enabled. Routes for Plane, Ship and Aerial are generated as great-circle arcs without an external service."
   },
   "auth": {
     "login": "Login",
@@ -730,7 +750,9 @@
     "you": "You",
     "note": "Note",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "latitude": "Latitude",
+    "longitude": "Longitude"
   },
   "messages": {
     "confirm_delete": "Are you sure you want to delete this item?",

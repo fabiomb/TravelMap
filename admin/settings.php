@@ -246,6 +246,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             'value' => isset($_POST['requires_pass']) && $_POST['requires_pass'] === '1',
             'type' => 'boolean'
         ];
+
+        // Routing service settings
+        $updates['routing_service_enabled'] = [
+            'value' => isset($_POST['routing_service_enabled']) && $_POST['routing_service_enabled'] === '1',
+            'type' => 'boolean'
+        ];
+        if (isset($_POST['routing_service_type'])) {
+            $allowedServiceTypes = ['brouter_online', 'brouter_custom', 'google_maps'];
+            if (in_array($_POST['routing_service_type'], $allowedServiceTypes)) {
+                $updates['routing_service_type'] = [
+                    'value' => $_POST['routing_service_type'],
+                    'type' => 'string'
+                ];
+            }
+        }
+        if (isset($_POST['routing_brouter_url'])) {
+            $updates['routing_brouter_url'] = [
+                'value' => trim($_POST['routing_brouter_url']),
+                'type' => 'string'
+            ];
+        }
+        if (isset($_POST['routing_google_api_key'])) {
+            $updates['routing_google_api_key'] = [
+                'value' => trim($_POST['routing_google_api_key']),
+                'type' => 'string'
+            ];
+        }
+
         if ($settingsModel->updateMultiple($updates)) {
             $_SESSION['success_message'] = __('settings.updated_successfully');
         } else {
@@ -375,6 +403,16 @@ require_once __DIR__ . '/../includes/header.php';
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
             <?= __('settings.site') ?? 'Site' ?>
+        </button>
+    </li>
+    <li class="tab-item">
+        <button class="tab-link" data-tab="routes">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="19" r="3"></circle>
+                <path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"></path>
+            </svg>
+            <?= __('settings.routes') ?? 'Routes' ?>
         </button>
     </li>
     <li class="tab-item">
@@ -1083,6 +1121,72 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
     
+    <!-- Routes Tab -->
+    <div class="tab-content" id="tab-routes">
+        <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title"><?= __('settings.routing_service_configuration') ?? 'Routing Service Configuration' ?></h3>
+            </div>
+            <div class="admin-card-body">
+                <p class="form-hint" style="margin-bottom: 20px;"><?= __('settings.routing_service_description') ?? 'Configure an external routing service to automatically generate routes between two points. When enabled, a button will appear in the map editor to create routes by specifying origin, destination and transport type.' ?></p>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="routing_service_enabled" name="routing_service_enabled" value="1"
+                               <?= ($currentSettings['routing_service_enabled'] ?? false) ? 'checked' : '' ?>>
+                        <span class="form-check-label"><?= __('settings.routing_service_enabled') ?? 'Enable Routing Service' ?></span>
+                    </label>
+                    <div class="form-hint" style="margin-left: 44px;"><?= __('settings.routing_service_enabled_desc') ?? 'When enabled, a button to create automated routes will appear in the map editor.' ?></div>
+                </div>
+
+                <div id="routing-service-options" style="<?= ($currentSettings['routing_service_enabled'] ?? false) ? '' : 'opacity: 0.5; pointer-events: none;' ?>">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="routing_service_type" class="form-label"><?= __('settings.routing_service_type') ?? 'Service Provider' ?></label>
+                        <?php $currentServiceType = $currentSettings['routing_service_type'] ?? 'brouter_online'; ?>
+                        <select class="form-control form-select" id="routing_service_type" name="routing_service_type">
+                            <option value="brouter_online" <?= $currentServiceType === 'brouter_online' ? 'selected' : '' ?>>
+                                <?= __('settings.routing_brouter_online') ?? 'BRouter (brouter.de - Free)' ?>
+                            </option>
+                            <option value="brouter_custom" <?= $currentServiceType === 'brouter_custom' ? 'selected' : '' ?>>
+                                <?= __('settings.routing_brouter_custom') ?? 'BRouter (Self-hosted / Docker)' ?>
+                            </option>
+                            <option value="google_maps" <?= $currentServiceType === 'google_maps' ? 'selected' : '' ?>>
+                                <?= __('settings.routing_google_maps') ?? 'Google Maps Directions API' ?>
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- BRouter custom URL -->
+                    <div id="routing-brouter-custom-options" class="form-group" style="margin-bottom: 20px; <?= $currentServiceType === 'brouter_custom' ? '' : 'display: none;' ?>">
+                        <label for="routing_brouter_url" class="form-label"><?= __('settings.routing_brouter_url') ?? 'BRouter Server URL' ?></label>
+                        <input type="url" class="form-control" id="routing_brouter_url" name="routing_brouter_url"
+                               value="<?= htmlspecialchars($currentSettings['routing_brouter_url'] ?? 'https://brouter.de/brouter') ?>"
+                               placeholder="https://brouter.de/brouter">
+                        <div class="form-hint"><?= __('settings.routing_brouter_url_desc') ?? 'Base URL of your BRouter instance. Default: https://brouter.de/brouter' ?></div>
+                    </div>
+
+                    <!-- Google Maps API Key -->
+                    <div id="routing-google-options" class="form-group" style="margin-bottom: 20px; <?= $currentServiceType === 'google_maps' ? '' : 'display: none;' ?>">
+                        <label for="routing_google_api_key" class="form-label"><?= __('settings.routing_google_api_key') ?? 'Google Maps API Key' ?></label>
+                        <input type="password" class="form-control" id="routing_google_api_key" name="routing_google_api_key"
+                               value="<?= htmlspecialchars($currentSettings['routing_google_api_key'] ?? '') ?>"
+                               placeholder="AIza...">
+                        <div class="form-hint"><?= __('settings.routing_google_api_key_desc') ?? 'API key with Directions API enabled. Get one at console.cloud.google.com' ?></div>
+                    </div>
+
+                    <div class="alert alert-info alert-permanent mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span><?= __('settings.routing_note') ?? 'BRouter (brouter.de) is free and does not require an API key. For self-hosted instances, install BRouter via Docker. Google Maps requires a valid API key with billing enabled. Routes for Plane, Ship and Aerial are generated as great-circle arcs without an external service.' ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Server Tab -->
     <div class="tab-content" id="tab-server">
         <?php
@@ -1463,6 +1567,29 @@ document.getElementById('session_lifetime').addEventListener('change', function(
 // Initialize values
 document.getElementById('max_upload_size').dispatchEvent(new Event('change'));
 document.getElementById('session_lifetime').dispatchEvent(new Event('change'));
+
+// Routing service settings toggle
+(function() {
+    const enabledCheckbox = document.getElementById('routing_service_enabled');
+    const optionsPanel = document.getElementById('routing-service-options');
+    const serviceTypeSelect = document.getElementById('routing_service_type');
+    const brouterCustomOptions = document.getElementById('routing-brouter-custom-options');
+    const googleOptions = document.getElementById('routing-google-options');
+
+    if (enabledCheckbox && optionsPanel) {
+        enabledCheckbox.addEventListener('change', function() {
+            optionsPanel.style.opacity = this.checked ? '1' : '0.5';
+            optionsPanel.style.pointerEvents = this.checked ? 'auto' : 'none';
+        });
+    }
+
+    if (serviceTypeSelect) {
+        serviceTypeSelect.addEventListener('change', function() {
+            if (brouterCustomOptions) brouterCustomOptions.style.display = this.value === 'brouter_custom' ? '' : 'none';
+            if (googleOptions) googleOptions.style.display = this.value === 'google_maps' ? '' : 'none';
+        });
+    }
+})();
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

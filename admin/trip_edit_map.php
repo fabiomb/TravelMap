@@ -251,6 +251,107 @@ require_once __DIR__ . '/../includes/header.php';
                 </button>
             </div>
         </form>
+
+<!-- Modal: Automated Route -->
+<div class="modal fade" id="autoRouteModal" tabindex="-1" aria-labelledby="autoRouteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="autoRouteModalLabel">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="19" r="3"></circle>
+                        <path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"></path>
+                    </svg>
+                    <?= __('routes.auto_route') ?? 'Create Automated Route' ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Origin -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><?= __('routes.origin') ?? 'Origin' ?></label>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="autoRouteOriginSearch" placeholder="<?= __('routes.search_place') ?? 'Search place...' ?>" autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="autoRouteOriginSearchBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="autoRouteOriginResults" class="list-group mb-2" style="display: none; max-height: 150px; overflow-y: auto; font-size: 13px;"></div>
+                    <div class="row g-2">
+                        <div class="col">
+                            <input type="number" class="form-control form-control-sm" id="autoRouteFromLat" placeholder="<?= __('common.latitude') ?? 'Latitude' ?>" step="any" min="-90" max="90">
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control form-control-sm" id="autoRouteFromLng" placeholder="<?= __('common.longitude') ?? 'Longitude' ?>" step="any" min="-180" max="180">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destination -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><?= __('routes.destination') ?? 'Destination' ?></label>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="autoRouteDestSearch" placeholder="<?= __('routes.search_place') ?? 'Search place...' ?>" autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="autoRouteDestSearchBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="autoRouteDestResults" class="list-group mb-2" style="display: none; max-height: 150px; overflow-y: auto; font-size: 13px;"></div>
+                    <div class="row g-2">
+                        <div class="col">
+                            <input type="number" class="form-control form-control-sm" id="autoRouteToLat" placeholder="<?= __('common.latitude') ?? 'Latitude' ?>" step="any" min="-90" max="90">
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control form-control-sm" id="autoRouteToLng" placeholder="<?= __('common.longitude') ?? 'Longitude' ?>" step="any" min="-180" max="180">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transport Type -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><?= __('routes.transport_type') ?? 'Transport Type' ?></label>
+                    <select class="form-select" id="autoRouteTransport">
+                        <?php
+                        $autoRouteTransportTypes = [
+                            'plane' => __('settings.transport_plane') ?? 'Plane',
+                            'car' => __('settings.transport_car') ?? 'Car',
+                            'bike' => __('settings.transport_bike') ?? 'Bike',
+                            'train' => __('settings.transport_train') ?? 'Train',
+                            'ship' => __('settings.transport_ship') ?? 'Ship',
+                            'walk' => __('settings.transport_walk') ?? 'Walk',
+                            'bus' => __('settings.transport_bus') ?? 'Bus',
+                            'aerial' => __('settings.transport_aerial') ?? 'Aerial'
+                        ];
+                        foreach ($autoRouteTransportTypes as $value => $label):
+                        ?>
+                            <option value="<?= $value ?>"><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Route Name (optional) -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><?= __('routes.route_name') ?? 'Route Name' ?> <small class="text-muted">(<?= __('common.optional') ?? 'optional' ?>)</small></label>
+                    <input type="text" class="form-control" id="autoRouteName" placeholder="<?= __('routes.route_name_placeholder') ?? 'e.g. Madrid to Barcelona' ?>">
+                </div>
+
+                <!-- Error message area -->
+                <div id="autoRouteError" class="alert alert-danger" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('common.cancel') ?? 'Cancel' ?></button>
+                <button type="button" class="btn btn-primary" id="autoRouteSubmit" disabled>
+                    <span class="spinner-border spinner-border-sm me-1" role="status" style="display: none;" id="autoRouteSpinner"></span>
+                    <?= __('routes.generate_route') ?? 'Generate Route' ?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
     </div>
 
     <!-- Panel de ayuda -->

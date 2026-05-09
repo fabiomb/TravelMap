@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "travelmap": {
+      "url": "http://localhost:32080/mcp/http.php",
+      "headers": {
+        "Authorization": "Bearer tmk_ce3ae78a3a87ad0d8e8f518aaf3aa3af134a579b5aaf39f863d7075303163a6e"
+      }
+    }
+  }
+}

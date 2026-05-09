@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.267] – 2026-05-08
+### Automated Routing Module
+- New optional routing service to generate routes between two points automatically
+- Support for BRouter (brouter.de free online), BRouter (self-hosted/Docker), and Google Maps Directions API
+- New "Routes" tab in Settings to enable/configure the service and API keys
+- New "Create Automated Route" button in the map editor (visible only when enabled)
+- Modal with origin/destination geocoding search, transport type selection, and route name
+- Routes for Plane, Ship and Aerial are generated as great-circle arcs (no external service needed)
+- API endpoint `api/get_route_from_service.php` for automated route generation
+- Service helper class `src/helpers/RoutingService.php` with BRouter and Google Maps integration
+- Migration 024: routing service settings in database
+- Exposed `routingServiceEnabled` flag in `api/get_config.php`
+
 ## [1.0.251] – 2026-04-17
 - Agregar imagen a rutas/trayectos del viaje
 - Endpoint API `upload_route_image.php` para subir imágenes de rutas

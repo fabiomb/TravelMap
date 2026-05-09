@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__TravelMap__create_trip",
+      "mcp__TravelMap__search_location",
+      "mcp__TravelMap__create_poi",
+      "mcp__TravelMap__create_route",
+      "mcp__TravelMap__plan_route",
+      "mcp__TravelMap__commit_route"
+    ]
+  }
+}
