@@ -8,7 +8,7 @@ final class PoiTools
 {
     public static function register(Dispatcher $d): void
     {
-        $d->register('search_pois', 'Busca POIs por texto libre, viaje o tipo.', [
+        $d->register('search_pois', 'Searches POIs by free text, trip or type.', [
             'type' => 'object',
             'properties' => [
                 'query'   => ['type' => 'string', 'maxLength' => 200],
@@ -20,21 +20,21 @@ final class PoiTools
         ], [self::class, 'searchPois']);
 
         $d->register('create_poi',
-            'Crea un punto de interés. Si adjuntas una foto con GPS EXIF, las coordenadas y ' .
-            'fecha se auto-rellenan si no las proporcionas. El output incluye suggested_place ' .
-            '(ciudad sugerida por Nominatim) para que puedas decidir el título.',
+            'Creates a point of interest. If you attach a photo with GPS EXIF, coordinates and ' .
+            'date are auto-filled if not provided. The output includes suggested_place ' .
+            '(city suggested by Nominatim) to help you choose the title.',
         [
             'type'       => 'object',
             'required'   => ['trip_id', 'type'],
             'properties' => [
                 'trip_id'         => ['type' => 'integer', 'minimum' => 1],
                 'title'           => ['type' => 'string', 'maxLength' => 200],
-                'type'            => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": alojamiento (hotel, hostel). "visit": lugar turístico o atracción. "food": restaurante, bar, café. "waypoint": punto de paso o referencia genérico.'],
+                'type'            => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café. "waypoint": waypoint or generic reference.'],
                 'latitude'        => ['type' => 'number', 'minimum' => -90,  'maximum' => 90],
                 'longitude'       => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
                 'description'     => ['type' => 'string', 'maxLength' => 5000],
-                'icon'            => ['type' => 'string', 'maxLength' => 64, 'description' => 'Nombre del icono. Si se omite se usa "default". Valores sugeridos según type: stay→"hotel", visit→"camera", food→"restaurant".'],
-                'visit_date'      => ['type' => 'string', 'description' => 'Fecha y hora de la visita. Formatos aceptados: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Incluir la hora si se conoce.'],
+                'icon'            => ['type' => 'string', 'maxLength' => 64, 'description' => 'Icon name. Defaults to "default" if omitted. Suggested values by type: stay→"hotel", visit→"camera", food→"restaurant".'],
+                'visit_date'      => ['type' => 'string', 'description' => 'Date and time of the visit. Accepted formats: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Include the time if known.'],
                 'photo_base64'    => ['type' => 'string', 'maxLength' => 14000000],
                 'photo_filename'  => ['type' => 'string', 'maxLength' => 255],
                 'links' => [
@@ -46,7 +46,7 @@ final class PoiTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -56,21 +56,21 @@ final class PoiTools
         ], [self::class, 'createPoi']);
 
         $d->register('update_poi',
-            'Actualiza los datos de un POI existente. Solo se modifican los campos proporcionados. ' .
-            'Para actualizar los links proporciona el array completo (reemplaza los existentes). ' .
-            'No soporta cambio de foto; para eso crea un nuevo POI.',
+            'Updates the data of an existing POI. Only the provided fields are modified. ' .
+            'To update links supply the full array (replaces existing ones). ' .
+            'Photo change is not supported; create a new POI for that.',
         [
             'type'       => 'object',
             'required'   => ['id'],
             'properties' => [
                 'id'          => ['type' => 'integer', 'minimum' => 1],
                 'title'       => ['type' => 'string', 'maxLength' => 200],
-                'type'        => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": alojamiento (hotel, hostel). "visit": lugar turístico o atracción. "food": restaurante, bar, café. "waypoint": punto de paso o referencia genérico.'],
+                'type'        => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café. "waypoint": waypoint or generic reference.'],
                 'latitude'    => ['type' => 'number', 'minimum' => -90,  'maximum' => 90],
                 'longitude'   => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
                 'description' => ['type' => 'string', 'maxLength' => 5000],
-                'icon'        => ['type' => 'string', 'maxLength' => 64, 'description' => 'Nombre del icono. Si se omite se usa "default". Valores sugeridos según type: stay→"hotel", visit→"camera", food→"restaurant".'],
-                'visit_date'  => ['type' => 'string', 'description' => 'Fecha y hora de la visita. Formatos aceptados: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Incluir la hora si se conoce.'],
+                'icon'        => ['type' => 'string', 'maxLength' => 64, 'description' => 'Icon name. Defaults to "default" if omitted. Suggested values by type: stay→"hotel", visit→"camera", food→"restaurant".'],
+                'visit_date'  => ['type' => 'string', 'description' => 'Date and time of the visit. Accepted formats: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Include the time if known.'],
                 'links' => [
                     'type'     => 'array',
                     'maxItems' => 10,
@@ -80,7 +80,7 @@ final class PoiTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -116,33 +116,33 @@ final class PoiTools
         $autoFilled    = [];
         $exifData      = null;
 
-        // ── Procesar foto ──────────────────────────────────────────────────────
+        // ── Process photo ──────────────────────────────────────────────────────
         if (!empty($p['photo_base64'])) {
             if (empty($p['photo_filename'])) {
-                throw new ToolException('photo_filename es obligatorio cuando se proporciona photo_base64', 'INVALID_INPUT', -32602);
+                throw new ToolException('photo_filename is required when photo_base64 is provided', 'INVALID_INPUT', -32602);
             }
             $uploadResult = FileHelper::saveImageFromBase64(
                 $p['photo_base64'],
                 $p['photo_filename']
             );
             if (!$uploadResult['success']) {
-                throw new ToolException($uploadResult['error'] ?? 'Error al guardar la foto', 'UPLOAD_FAILED');
+                throw new ToolException($uploadResult['error'] ?? 'Error saving the photo', 'UPLOAD_FAILED');
             }
             $imagePath     = $uploadResult['path'];
             $thumbnailPath = $uploadResult['thumbnail_path'];
 
-            // Extraer EXIF de la imagen guardada
+            // Extract EXIF from the saved image
             $fullPath = ROOT_PATH . '/' . $imagePath;
             $exifData = ExifExtractor::readFromFile($fullPath, $p['photo_filename']);
 
-            McpLogger::info('create_poi: foto subida', [
+            McpLogger::info('create_poi: photo uploaded', [
                 'path'    => $imagePath,
                 'size_kb' => round(strlen($p['photo_base64']) * 0.75 / 1024),
             ]);
 
         }
 
-        // ── Auto-fill desde EXIF ───────────────────────────────────────────────
+        // ── Auto-fill from EXIF ────────────────────────────────────────────────
         $latitude  = isset($p['latitude'])  ? (float)$p['latitude']  : null;
         $longitude = isset($p['longitude']) ? (float)$p['longitude'] : null;
         $visitDate = $p['visit_date'] ?? null;
@@ -162,7 +162,7 @@ final class PoiTools
 
         if ($latitude === null || $longitude === null) {
             throw new ToolException(
-                'No se pudieron determinar las coordenadas. Proporciona latitude/longitude o una foto con GPS EXIF.',
+                'Could not determine coordinates. Provide latitude/longitude or a photo with GPS EXIF.',
                 'COORDINATES_REQUIRED', -32602
             );
         }
@@ -172,12 +172,12 @@ final class PoiTools
         try {
             $suggestedPlace = Geocoder::reverseLookup($latitude, $longitude);
         } catch (Exception $e) {
-            // silencioso — no es crítico
-            McpLogger::error('Geocoder falló en create_poi: ' . $e->getMessage());
+            // silent — non-critical
+            McpLogger::error('Geocoder failed in create_poi: ' . $e->getMessage());
         }
 
-        // ── Crear POI ──────────────────────────────────────────────────────────
-        $title = isset($p['title']) && $p['title'] !== '' ? trim($p['title']) : 'POI sin título';
+        // ── Create POI ─────────────────────────────────────────────────────────
+        $title = isset($p['title']) && $p['title'] !== '' ? trim($p['title']) : 'Untitled POI';
 
         $data = [
             'trip_id'    => $tripId,
@@ -194,12 +194,12 @@ final class PoiTools
         $pointModel = new Point();
         $errors     = $pointModel->validate($data);
         if (!empty($errors)) {
-            throw new ToolException('Datos de POI inválidos', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
+            throw new ToolException('Invalid POI data', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
         }
 
         $id = $pointModel->create($data);
         if (!$id) {
-            throw new ToolException('No se pudo crear el POI en la base de datos', 'DB_ERROR');
+            throw new ToolException('Could not create the POI in the database', 'DB_ERROR');
         }
 
         if (!empty($p['links'])) {
@@ -242,7 +242,7 @@ final class PoiTools
         $pointModel = new Point();
         $current = $pointModel->getById($id);
         if (!$current) {
-            throw new ToolException("POI con id={$id} no encontrado", 'POI_NOT_FOUND');
+            throw new ToolException("POI with id={$id} not found", 'POI_NOT_FOUND');
         }
 
         $data = [
@@ -258,7 +258,7 @@ final class PoiTools
         ];
 
         if (!$pointModel->update($id, $data)) {
-            throw new ToolException('No se pudo actualizar el POI', 'DB_ERROR');
+            throw new ToolException('Could not update the POI', 'DB_ERROR');
         }
 
         if (array_key_exists('links', $p)) {
@@ -307,7 +307,7 @@ final class PoiTools
     {
         $tripModel = new Trip();
         if (!$tripModel->getById($tripId)) {
-            throw new ToolException("Viaje con id={$tripId} no encontrado", 'TRIP_NOT_FOUND');
+            throw new ToolException("Trip with id={$tripId} not found", 'TRIP_NOT_FOUND');
         }
     }
 

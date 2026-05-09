@@ -8,30 +8,30 @@ final class TripTools
 {
     public static function register(Dispatcher $d): void
     {
-        $d->register('list_trips', 'Lista viajes almacenados. Usa search_trips para búsqueda por texto.', [
+        $d->register('list_trips', 'Lists stored trips. Use search_trips for text search.', [
             'type' => 'object',
             'properties' => [
-                'status' => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": borrador no visible al público. "published": publicado y visible. "planned": futuro planificado.'],
+                'status' => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": not visible to the public. "published": published and visible. "planned": future planned trip.'],
                 'limit'  => ['type' => 'integer', 'minimum' => 1, 'maximum' => 200],
-                'order'  => ['type' => 'string', 'enum' => ['recent', 'oldest', 'start_date_desc', 'start_date_asc', 'title'], 'description' => '"recent"/"oldest": por fecha de creación. "start_date_desc"/"start_date_asc": por fecha de inicio del viaje. "title": orden alfabético.'],
+                'order'  => ['type' => 'string', 'enum' => ['recent', 'oldest', 'start_date_desc', 'start_date_asc', 'title'], 'description' => '"recent"/"oldest": by creation date. "start_date_desc"/"start_date_asc": by trip start date. "title": alphabetical order.'],
             ],
             'additionalProperties' => false,
         ], [self::class, 'listTrips']);
 
-        $d->register('search_trips', 'Busca viajes por texto libre en título/descripción, tag o rango de fechas.', [
+        $d->register('search_trips', 'Searches trips by free text in title/description, tag or date range.', [
             'type' => 'object',
             'properties' => [
                 'query'     => ['type' => 'string', 'maxLength' => 200],
                 'tag'       => ['type' => 'string', 'maxLength' => 60],
-                'date_from' => ['type' => 'string', 'description' => 'Fecha mínima en formato YYYY-MM-DD. Filtra viajes que terminan en o después de esta fecha.'],
-                'date_to'   => ['type' => 'string', 'description' => 'Fecha máxima en formato YYYY-MM-DD. Filtra viajes que comienzan en o antes de esta fecha.'],
-                'status'    => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": borrador. "published": publicado. "planned": planificado.'],
+                'date_from' => ['type' => 'string', 'description' => 'Minimum date in YYYY-MM-DD format. Filters trips ending on or after this date.'],
+                'date_to'   => ['type' => 'string', 'description' => 'Maximum date in YYYY-MM-DD format. Filters trips starting on or before this date.'],
+                'status'    => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": draft. "published": published. "planned": planned.'],
                 'limit'     => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100],
             ],
             'additionalProperties' => false,
         ], [self::class, 'searchTrips']);
 
-        $d->register('get_trip', 'Obtiene un viaje completo con sus rutas, POIs y tags.', [
+        $d->register('get_trip', 'Retrieves a full trip with its routes, POIs and tags.', [
             'type'       => 'object',
             'required'   => ['id'],
             'properties' => [
@@ -42,8 +42,8 @@ final class TripTools
         ], [self::class, 'getTrip']);
 
         $d->register('update_trip',
-            'Actualiza los datos de un viaje existente. Solo se modifican los campos proporcionados. ' .
-            'Para tags y links proporciona el array completo (reemplaza los existentes).',
+            'Updates the data of an existing trip. Only the provided fields are modified. ' .
+            'For tags and links supply the full array (replaces existing ones).',
         [
             'type'       => 'object',
             'required'   => ['id'],
@@ -51,11 +51,11 @@ final class TripTools
                 'id'          => ['type' => 'integer', 'minimum' => 1],
                 'title'       => ['type' => 'string', 'minLength' => 1, 'maxLength' => 200],
                 'description' => ['type' => 'string', 'maxLength' => 5000],
-                'start_date'  => ['type' => 'string', 'description' => 'Fecha de inicio en formato YYYY-MM-DD. Ejemplo: "2024-07-15".'],
-                'end_date'    => ['type' => 'string', 'description' => 'Fecha de fin en formato YYYY-MM-DD. Ejemplo: "2024-08-03".'],
-                'color_hex'   => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Color del viaje en hexadecimal CSS. Ejemplo: "#3388ff".'],
-                'status'      => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": borrador no visible. "published": publicado y visible. "planned": futuro planificado.'],
-                'show_routes_in_timeline' => ['type' => ['boolean', 'null'], 'description' => 'Si las rutas se muestran en la línea de tiempo del viaje. null = hereda la configuración global del sitio.'],
+                'start_date'  => ['type' => 'string', 'description' => 'Start date in YYYY-MM-DD format. Example: "2024-07-15".'],
+                'end_date'    => ['type' => 'string', 'description' => 'End date in YYYY-MM-DD format. Example: "2024-08-03".'],
+                'color_hex'   => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Trip color as a CSS hex string. Example: "#3388ff".'],
+                'status'      => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": draft, not visible. "published": published and visible. "planned": future planned trip.'],
+                'show_routes_in_timeline' => ['type' => ['boolean', 'null'], 'description' => 'Whether routes are shown in the trip timeline. null = inherits the global site setting.'],
                 'tags'        => ['type' => 'array', 'maxItems' => 20, 'items' => ['type' => 'string', 'maxLength' => 60]],
                 'links' => [
                     'type'     => 'array',
@@ -66,7 +66,7 @@ final class TripTools
                         'properties' => [
                             'url'       => ['type' => 'string', 'maxLength' => 500],
                             'label'     => ['type' => 'string', 'maxLength' => 100],
-                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Tipo de enlace. Valores: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
+                            'link_type' => ['type' => 'string', 'maxLength' => 40, 'description' => 'Link type. Values: "website", "google_maps", "instagram", "facebook", "twitter", "tripadvisor", "booking", "airbnb", "youtube", "wikipedia", "google_photos", "other" (default).'],
                         ],
                         'additionalProperties' => false,
                     ],
@@ -75,17 +75,17 @@ final class TripTools
             'additionalProperties' => false,
         ], [self::class, 'updateTrip']);
 
-        $d->register('create_trip', 'Crea un nuevo viaje. Devuelve el id creado.', [
+        $d->register('create_trip', 'Creates a new trip. Returns the created id.', [
             'type'       => 'object',
             'required'   => ['title'],
             'properties' => [
                 'title'       => ['type' => 'string', 'minLength' => 1, 'maxLength' => 200],
                 'description' => ['type' => 'string', 'maxLength' => 5000],
-                'start_date'  => ['type' => 'string', 'description' => 'Fecha de inicio en formato YYYY-MM-DD. Ejemplo: "2024-07-15".'],
-                'end_date'    => ['type' => 'string', 'description' => 'Fecha de fin en formato YYYY-MM-DD. Ejemplo: "2024-08-03".'],
-                'color_hex'   => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Color del viaje en hexadecimal CSS. Ejemplo: "#3388ff". Por defecto "#3388ff".'],
-                'status'      => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": borrador no visible. "published": publicado y visible. "planned": futuro planificado.'],
-                'show_routes_in_timeline' => ['type' => ['boolean', 'null'], 'description' => 'Si las rutas se muestran en la línea de tiempo del viaje. null = hereda la configuración global del sitio.'],
+                'start_date'  => ['type' => 'string', 'description' => 'Start date in YYYY-MM-DD format. Example: "2024-07-15".'],
+                'end_date'    => ['type' => 'string', 'description' => 'End date in YYYY-MM-DD format. Example: "2024-08-03".'],
+                'color_hex'   => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Trip color as a CSS hex string. Example: "#3388ff". Default: "#3388ff".'],
+                'status'      => ['type' => 'string', 'enum' => ['draft', 'published', 'planned'], 'description' => '"draft": draft, not visible. "published": published and visible. "planned": future planned trip.'],
+                'show_routes_in_timeline' => ['type' => ['boolean', 'null'], 'description' => 'Whether routes are shown in the trip timeline. null = inherits the global site setting.'],
                 'tags'        => ['type' => 'array', 'maxItems' => 20, 'items' => ['type' => 'string', 'maxLength' => 60]],
             ],
             'additionalProperties' => false,
@@ -145,7 +145,7 @@ final class TripTools
         $trip      = $tripModel->getById((int)$p['id']);
 
         if (!$trip) {
-            throw new ToolException("Viaje con id={$p['id']} no encontrado", 'TRIP_NOT_FOUND');
+            throw new ToolException("Trip with id={$p['id']} not found", 'TRIP_NOT_FOUND');
         }
 
         $routeModel = new Route();
@@ -238,12 +238,12 @@ final class TripTools
 
         $errors = $tripModel->validate($data);
         if (!empty($errors)) {
-            throw new ToolException('Datos de viaje inválidos', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
+            throw new ToolException('Invalid trip data', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
         }
 
         $id = $tripModel->create($data);
         if (!$id) {
-            throw new ToolException('No se pudo crear el viaje en la base de datos', 'DB_ERROR');
+            throw new ToolException('Could not create the trip in the database', 'DB_ERROR');
         }
 
         $tags = $p['tags'] ?? [];
@@ -268,7 +268,7 @@ final class TripTools
         $tripModel = new Trip();
         $trip = $tripModel->getById($id);
         if (!$trip) {
-            throw new ToolException("Viaje con id={$id} no encontrado", 'TRIP_NOT_FOUND');
+            throw new ToolException("Trip with id={$id} not found", 'TRIP_NOT_FOUND');
         }
 
         $updatableFields = ['title', 'description', 'start_date', 'end_date', 'color_hex', 'status', 'show_routes_in_timeline'];
@@ -291,10 +291,10 @@ final class TripTools
                 'status'    => $trip['status'],
             ], $data));
             if (!empty($errors)) {
-                throw new ToolException('Datos de viaje inválidos', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
+                throw new ToolException('Invalid trip data', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
             }
             if (!$tripModel->update($id, $data)) {
-                throw new ToolException('No se pudo actualizar el viaje', 'DB_ERROR');
+                throw new ToolException('Could not update the trip', 'DB_ERROR');
             }
         }
 
