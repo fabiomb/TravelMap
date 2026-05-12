@@ -157,7 +157,7 @@ final class ExifExtractor
         $withGps       = [];
 
         foreach ($images as $idx => &$img) {
-            if ($img['has_gps']) {
+            if ($img['has_gps'] && $img['timestamp'] !== null) {
                 $withGps[$idx] = $img;
             } elseif ($img['has_date'] && $img['timestamp'] !== null) {
                 $needsEstimate[$idx] = $img;

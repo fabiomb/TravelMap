@@ -610,7 +610,10 @@ class FileHelper {
             }
 
             // 7. MIME check vía finfo
-            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo === false) {
+                return ['success' => false, 'error' => 'No se pudo inicializar finfo (extensión fileinfo no disponible)'];
+            }
             $mimeReal = finfo_file($finfo, $tmpFile);
             finfo_close($finfo);
             $allowedMime = defined('ALLOWED_IMAGE_TYPES') ? ALLOWED_IMAGE_TYPES : ['image/jpeg', 'image/jpg', 'image/png'];

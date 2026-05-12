@@ -30,8 +30,9 @@ final class Schema
                     $passing++;
                 }
             }
-            if ($passing === 0) {
+            if ($passing !== 1) {
                 $errors[$path ?: 'root'] = 'Debe cumplir exactamente una de las condiciones oneOf';
+                return $errors;
             }
             // No retornamos aquí: seguimos validando el resto del schema
         }
@@ -147,12 +148,14 @@ final class Schema
     {
         switch ($type) {
             case 'object':
-                if (!is_array($data) || self::isIndexed($data)) {
+                // json_decode('{}', true) → [], so empty arrays count as objects
+                if (!is_array($data) || (!empty($data) && self::isIndexed($data))) {
                     return 'Se esperaba un objeto';
                 }
                 break;
             case 'array':
-                if (!is_array($data) || !self::isIndexed($data)) {
+                // empty [] is valid array (and also valid object — ambiguous in PHP)
+                if (!is_array($data) || (!empty($data) && !self::isIndexed($data))) {
                     return 'Se esperaba un array';
                 }
                 break;
@@ -162,7 +165,7 @@ final class Schema
                 }
                 break;
             case 'integer':
-                if (!is_int($data) && !(is_numeric($data) && floor((float)$data) == (float)$data)) {
+                if (!is_int($data)) {
                     return 'Se esperaba un entero';
                 }
                 break;

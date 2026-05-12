@@ -269,7 +269,7 @@ class Point {
                 if ($date !== false) break;
             }
             if (!$date) {
-                $errors['visit_date'] = 'La fecha debe estar en formato YYYY-MM-DD o YYYY-MM-DD HH:MM:SS';
+                $errors['visit_date'] = 'La fecha debe estar en formato YYYY-MM-DD, YYYY-MM-DD HH:MM, YYYY-MM-DD HH:MM:SS o ISO 8601 (YYYY-MM-DDTHH:MM:SS)';
             }
         }
 

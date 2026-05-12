@@ -2,10 +2,13 @@
 /**
  * API: MCP API Key
  *
- * GET  → devuelve la API key actual del usuario (null si no tiene).
- * POST → genera y guarda una nueva API key. Requiere token CSRF en el
- *        header X-CSRF-Token o en el body JSON { "csrf_token": "..." }.
- *        Solo accesible para usuarios con sesión activa (admin).
+ * GET    → devuelve la API key actual del usuario (null si no tiene).
+ * POST   → genera y guarda una nueva API key.
+ * DELETE → revoca (elimina) la API key del usuario.
+ *
+ * POST y DELETE requieren token CSRF en el header X-CSRF-Token
+ * o en el body JSON { "csrf_token": "..." }.
+ * Solo accesible para usuarios con sesión activa (admin).
  */
 
 require_once __DIR__ . '/../config/config.php';
@@ -46,6 +49,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $model->setMcpApiKey($userId, $key);
 
     echo json_encode(['success' => true, 'api_key' => $key]);
+
+} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+
+    $csrfFromHeader = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if ($csrfFromHeader === '') {
+        $body = json_decode(file_get_contents('php://input'), true);
+        $csrfFromHeader = $body['csrf_token'] ?? '';
+    }
+
+    csrf_verify($csrfFromHeader);
+
+    $model->setMcpApiKey($userId, null);
+
+    echo json_encode(['success' => true, 'api_key' => null]);
 
 } else {
     http_response_code(405);

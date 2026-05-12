@@ -5,7 +5,7 @@
 # Uso: bash mcp/tests/run_tests.sh [--keep-data]
 #   --keep-data   No elimina los registros creados en la DB durante los tests.
 #
-# Requiere: php, jq (para parsear JSON)
+# Requiere: php, jq (para parsear JSON), bc (para comparar floats)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail

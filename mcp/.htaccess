@@ -1,5 +1,4 @@
-# Solo http.php es accesible vía web.
-# server.php es exclusivamente para stdio (CLI); tests/ y el resto nunca expuestos.
-<FilesMatch "^(?!http\.php$).*\.php$">
-    Require all denied
-</FilesMatch>
+Require all denied
+<Files "http.php">
+    Require all granted
+</Files>

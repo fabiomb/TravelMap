@@ -184,7 +184,7 @@ final class BRouterClient
         if ($body === false) {
             return [
                 'success' => false,
-                'error'   => 'No se pudo conectar con BRouter (' . self::DEFAULT_API_URL . '). Verificá la conexión a internet.',
+                'error'   => 'No se pudo conectar con BRouter (' . $url . '). Verificá la conexión a internet.',
             ];
         }
 

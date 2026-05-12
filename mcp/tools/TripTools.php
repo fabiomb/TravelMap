@@ -108,13 +108,9 @@ final class TripTools
         $limit   = min((int)($p['limit'] ?? 50), 200);
 
         $tripModel = new Trip();
-        $rows      = $tripModel->getAll($orderBy, $status);
-        $rows      = array_slice($rows, 0, $limit);
+        $rows      = $tripModel->getAll($orderBy, $status, $limit);
 
-        $trips = [];
-        foreach ($rows as $row) {
-            $trips[] = self::tripSummary($row, $tripModel);
-        }
+        $trips = self::buildSummaries($rows, $tripModel);
 
         return ['trips' => $trips, 'count' => count($trips)];
     }
@@ -131,10 +127,7 @@ final class TripTools
             (int)($p['limit'] ?? 25)
         );
 
-        $trips = [];
-        foreach ($rows as $row) {
-            $trips[] = self::tripSummary($row, $tripModel);
-        }
+        $trips = self::buildSummaries($rows, $tripModel);
 
         return ['trips' => $trips, 'count' => count($trips)];
     }
@@ -338,7 +331,21 @@ final class TripTools
         }, $rows);
     }
 
-    private static function tripSummary(array $row, Trip $tripModel): array
+    /**
+     * Builds summaries for a list of trip rows using batch queries to avoid N+1.
+     */
+    private static function buildSummaries(array $rows, Trip $tripModel): array
+    {
+        if (empty($rows)) return [];
+        $ids    = array_column($rows, 'id');
+        $counts = $tripModel->getBatchCounts($ids);
+        return array_map(
+            fn($row) => self::tripSummary($row, $counts['route_counts'], $counts['poi_counts']),
+            $rows
+        );
+    }
+
+    private static function tripSummary(array $row, array $routeCounts, array $poiCounts): array
     {
         $id = (int)$row['id'];
         return [
@@ -352,8 +359,8 @@ final class TripTools
             'show_routes_in_timeline' => isset($row['show_routes_in_timeline'])
                 ? (is_null($row['show_routes_in_timeline']) ? null : (bool)$row['show_routes_in_timeline'])
                 : null,
-            'route_count'             => $tripModel->countRoutes($id),
-            'poi_count'               => $tripModel->countPoints($id),
+            'route_count'             => (int)($routeCounts[$id] ?? 0),
+            'poi_count'               => (int)($poiCounts[$id] ?? 0),
         ];
     }
 }

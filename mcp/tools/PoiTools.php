@@ -257,6 +257,11 @@ final class PoiTools
             'visit_date'  => array_key_exists('visit_date', $p)  ? self::normalizeVisitDate($p['visit_date']) : $current['visit_date'],
         ];
 
+        $validationErrors = $pointModel->validate($data, true);
+        if (!empty($validationErrors)) {
+            throw new ToolException('Validation failed', 'INVALID_INPUT', -32602, ['fieldErrors' => $validationErrors]);
+        }
+
         if (!$pointModel->update($id, $data)) {
             throw new ToolException('Could not update the POI', 'DB_ERROR');
         }

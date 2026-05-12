@@ -183,7 +183,7 @@ class User {
         return $row['mcp_api_key'] ?? null;
     }
 
-    public function setMcpApiKey(int $userId, string $key): void
+    public function setMcpApiKey(int $userId, ?string $key): void
     {
         $stmt = $this->db->prepare('UPDATE users SET mcp_api_key = :key WHERE id = :id');
         $stmt->execute(['key' => $key, 'id' => $userId]);

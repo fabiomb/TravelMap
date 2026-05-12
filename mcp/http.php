@@ -80,8 +80,17 @@ if (preg_match('/^Bearer\s+(tmk_[0-9a-f]{64})$/', $authHeader, $m)) {
     }
 }
 
-// Capa B: sesión web (cookie PHPSESSID)
+// Capa B: sesión web (cookie PHPSESSID) — solo para same-origin
 if (!$authOk && !empty($_COOKIE['PHPSESSID'])) {
+    $origin   = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $host     = $_SERVER['HTTP_HOST'] ?? '';
+    $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $expected = $scheme . '://' . $host;
+    if ($origin !== '' && $origin !== $expected) {
+        http_response_code(403);
+        rpcError(null, -32001, 'Forbidden: cross-origin session auth not allowed');
+        exit;
+    }
     session_name('PHPSESSID');
     session_start();
     if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_id'])) {

@@ -222,9 +222,17 @@ final class RouteTools
             if (!in_array($type, ['Feature', 'FeatureCollection'], true)) {
                 throw new ToolException('geojson_data must be a GeoJSON Feature or FeatureCollection', 'INVALID_INPUT', -32602);
             }
-            $geojsonData = $p['geojson_data'];
-            // Try to extract waypoints count
-            $coords = $decoded['geometry']['coordinates'] ?? $decoded['features'][0]['geometry']['coordinates'] ?? [];
+            // Normalize FeatureCollection → Feature (model expects a single Feature)
+            if ($type === 'FeatureCollection') {
+                if (empty($decoded['features'])) {
+                    throw new ToolException('FeatureCollection must contain at least one Feature', 'INVALID_INPUT', -32602);
+                }
+                $decoded     = $decoded['features'][0];
+                $geojsonData = json_encode($decoded);
+            } else {
+                $geojsonData = $p['geojson_data'];
+            }
+            $coords         = $decoded['geometry']['coordinates'] ?? [];
             $waypointsCount = count($coords);
         }
 
