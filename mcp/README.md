@@ -54,7 +54,7 @@ La API Key se genera desde **Admin → Usuarios → editar → card "Acceso MCP"
 
 ---
 
-## Tools disponibles (13)
+## Tools disponibles (15)
 
 ### Viajes
 | Tool | Descripción |
@@ -70,15 +70,17 @@ La API Key se genera desde **Admin → Usuarios → editar → card "Acceso MCP"
 |---|---|
 | `plan_route` | Calcula ruta via BRouter y guarda temporal |
 | `commit_route` | Persiste la ruta de `plan_route` en BD |
-| `create_route` | Crea ruta desde GeoJSON o CSV BRouter externo |
+| `create_route` | Crea ruta desde coordenadas estructuradas |
 | `update_route` | Actualiza metadatos de una ruta |
 
 ### POIs
 | Tool | Descripción |
 |---|---|
 | `search_pois` | Busca POIs por texto, viaje o tipo |
-| `create_poi` | Crea un POI; auto-rellena coords/fecha desde EXIF |
-| `update_poi` | Actualiza datos de un POI |
+| `create_poi` | Crea un POI; puede consumir `photo_token` y auto-rellenar coords/fecha desde EXIF |
+| `update_poi` | Actualiza datos de un POI; puede reemplazar foto con `photo_token` |
+| `inspect_uploaded_photo` | Inspecciona metadata EXIF de una foto temporal |
+| `cleanup_uploaded_photo` | Elimina una foto temporal no consumida |
 
 ### Localización
 | Tool | Descripción |

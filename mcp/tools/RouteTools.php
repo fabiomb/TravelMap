@@ -44,15 +44,12 @@ final class RouteTools
         ], [self::class, 'planRoute']);
 
         $d->register('create_route',
-            'Creates a route for a trip. Provide EXACTLY ONE geometry source: ' .
-            'geojson_data (GeoJSON as string), brouter_csv_text (raw BRouter CSV content) ' .
-            'or brouter_csv_base64 (BRouter CSV encoded in base64). ' .
-            'For routes of type "plane", "ship" or "aerial" do NOT use plan_route (BRouter does not cover non-land segments): ' .
-            'build a GeoJSON LineString with only two coordinates (origin and destination) and pass it in geojson_data. ' .
-            'Minimal example: {"type":"Feature","geometry":{"type":"LineString","coordinates":[[lon_origin,lat_origin],[lon_dest,lat_dest]]},"properties":{}}',
+            'Creates a route for a trip from a small structured coordinate list. ' .
+            'For detailed land routes use plan_route then commit_route so geometry stays server-side. ' .
+            'For plane, ship or aerial segments, provide two coordinates: origin and destination.',
         [
             'type'       => 'object',
-            'required'   => ['trip_id', 'transport_type'],
+            'required'   => ['trip_id', 'transport_type', 'coordinates'],
             'properties' => [
                 'trip_id'            => ['type' => 'integer', 'minimum' => 1],
                 'transport_type'     => ['type' => 'string', 'enum' => self::ALLOWED_TRANSPORT],
@@ -62,9 +59,21 @@ final class RouteTools
                 'color'              => ['type' => 'string', 'pattern' => '^#[0-9A-Fa-f]{6}$', 'description' => 'Route color as a CSS hex string. Example: "#e63946". Default: "#3388ff".'],
                 'start_datetime'     => ['type' => 'string', 'description' => 'Start date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 09:30:00".'],
                 'end_datetime'       => ['type' => 'string', 'description' => 'End date and time. Format "YYYY-MM-DD HH:MM:SS". Also accepts date only "YYYY-MM-DD". Example: "2024-07-15 18:00:00".'],
-                'geojson_data'       => ['type' => 'string', 'maxLength' => 5000000],
-                'brouter_csv_text'   => ['type' => 'string', 'maxLength' => 5242880],
-                'brouter_csv_base64' => ['type' => 'string', 'maxLength' => 7340032],
+                'coordinates' => [
+                    'type' => 'array',
+                    'minItems' => 2,
+                    'maxItems' => 500,
+                    'description' => 'Coordinate list in order. Each item is {lat, lon}.',
+                    'items' => [
+                        'type' => 'object',
+                        'required' => ['lat', 'lon'],
+                        'properties' => [
+                            'lat' => ['type' => 'number', 'minimum' => -90, 'maximum' => 90],
+                            'lon' => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                ],
                 'links' => [
                     'type'     => 'array',
                     'maxItems' => 10,
@@ -161,80 +170,9 @@ final class RouteTools
         $tripId = (int)$p['trip_id'];
         self::assertTripExists($tripId);
 
-        // Validate that exactly one geometry source is present
-        $hasCsvBase64 = isset($p['brouter_csv_base64']) && $p['brouter_csv_base64'] !== '';
-        $hasCsvText   = isset($p['brouter_csv_text'])   && $p['brouter_csv_text']   !== '';
-        $hasGeojson   = isset($p['geojson_data'])        && $p['geojson_data']        !== '';
-
-        $sourceCount = (int)$hasCsvBase64 + (int)$hasCsvText + (int)$hasGeojson;
-        if ($sourceCount === 0) {
-            throw new ToolException(
-                'You must provide exactly one geometry source: geojson_data, brouter_csv_text or brouter_csv_base64',
-                'INVALID_INPUT', -32602
-            );
-        }
-        if ($sourceCount > 1) {
-            throw new ToolException(
-                'Only one geometry source is allowed at a time (geojson_data, brouter_csv_text or brouter_csv_base64)',
-                'INVALID_INPUT', -32602
-            );
-        }
-
-        $geojsonData    = null;
-        $waypointsCount = null;
-        $distanceKm     = null;
-
-        if ($hasCsvBase64) {
-            // Validate and decode base64
-            $raw = $p['brouter_csv_base64'];
-            if (strlen($raw) > 7_340_032) {
-                throw new ToolException('The base64 CSV file exceeds the 7 MB limit', 'FILE_TOO_LARGE');
-            }
-            $bytes = base64_decode($raw, true);
-            if ($bytes === false) {
-                throw new ToolException('brouter_csv_base64 is not valid base64', 'INVALID_BASE64');
-            }
-            if (strlen($bytes) > 5 * 1024 * 1024) {
-                throw new ToolException('The decoded CSV exceeds 5 MB', 'FILE_TOO_LARGE');
-            }
-            $result = self::parseBRouterBytes($bytes);
-            $geojsonData    = $result['geojson_data'];
-            $waypointsCount = $result['waypoints_count'];
-            $distanceKm     = $result['distance_km'];
-
-        } elseif ($hasCsvText) {
-            $bytes = $p['brouter_csv_text'];
-            if (strlen($bytes) > 5 * 1024 * 1024) {
-                throw new ToolException('The CSV text exceeds 5 MB', 'FILE_TOO_LARGE');
-            }
-            $result = self::parseBRouterBytes($bytes);
-            $geojsonData    = $result['geojson_data'];
-            $waypointsCount = $result['waypoints_count'];
-            $distanceKm     = $result['distance_km'];
-
-        } else {
-            // geojson_data
-            $decoded = json_decode($p['geojson_data'], true);
-            if ($decoded === null) {
-                throw new ToolException('geojson_data is not valid JSON', 'INVALID_INPUT', -32602);
-            }
-            $type = $decoded['type'] ?? '';
-            if (!in_array($type, ['Feature', 'FeatureCollection'], true)) {
-                throw new ToolException('geojson_data must be a GeoJSON Feature or FeatureCollection', 'INVALID_INPUT', -32602);
-            }
-            // Normalize FeatureCollection → Feature (model expects a single Feature)
-            if ($type === 'FeatureCollection') {
-                if (empty($decoded['features'])) {
-                    throw new ToolException('FeatureCollection must contain at least one Feature', 'INVALID_INPUT', -32602);
-                }
-                $decoded     = $decoded['features'][0];
-                $geojsonData = json_encode($decoded);
-            } else {
-                $geojsonData = $p['geojson_data'];
-            }
-            $coords         = $decoded['geometry']['coordinates'] ?? [];
-            $waypointsCount = count($coords);
-        }
+        $normalized = self::normalizeGeoJsonLineString(self::geoJsonFromCoordinates($p['coordinates']));
+        $geojsonData = $normalized['geojson_data'];
+        $waypointsCount = $normalized['waypoints_count'];
 
         $data = [
             'trip_id'        => $tripId,
@@ -418,6 +356,7 @@ final class RouteTools
         if ($geojsonData === false) {
             throw new ToolException('Could not read the temp file', 'READ_ERROR');
         }
+        $geojsonData = self::normalizeGeoJsonLineString($geojsonData)['geojson_data'];
 
         self::assertTripExists($tripId);
 
@@ -470,24 +409,90 @@ final class RouteTools
 
     // ──────────────────────────────────────────────────────────────────────────
 
-    private static function parseBRouterBytes(string $bytes): array
+    private static function geoJsonFromCoordinates(array $coordinates): string
     {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'mcp_brouter_');
-        if ($tmpFile === false) {
-            throw new ToolException('Could not create temp file for the CSV', 'SERVER_ERROR');
-        }
-        try {
-            file_put_contents($tmpFile, $bytes);
-            $result = BRouterParser::parseFromFile($tmpFile);
-        } finally {
-            @unlink($tmpFile);
+        $coords = [];
+        foreach ($coordinates as $i => $coord) {
+            if (!isset($coord['lat'], $coord['lon'])) {
+                throw new ToolException("Coordinate {$i} must include lat and lon", 'INVALID_INPUT', -32602);
+            }
+            $coords[] = [(float)$coord['lon'], (float)$coord['lat']];
         }
 
-        if (!$result['success']) {
-            throw new ToolException($result['error'] ?? 'Failed to parse BRouter CSV', 'PARSE_FAILED');
+        $json = json_encode([
+            'type' => 'Feature',
+            'properties' => new stdClass(),
+            'geometry' => [
+                'type' => 'LineString',
+                'coordinates' => $coords,
+            ],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($json === false) {
+            throw new ToolException('Could not serialize route coordinates', 'INVALID_INPUT', -32602);
         }
 
-        return $result;
+        return $json;
+    }
+
+    private static function normalizeGeoJsonLineString(string $geojson): array
+    {
+        $decoded = json_decode($geojson, true);
+        if (!is_array($decoded)) {
+            throw new ToolException('geojson_data is not valid JSON', 'INVALID_INPUT', -32602);
+        }
+
+        $type = $decoded['type'] ?? '';
+        if ($type === 'FeatureCollection') {
+            if (empty($decoded['features']) || !is_array($decoded['features'])) {
+                throw new ToolException('FeatureCollection must contain at least one Feature', 'INVALID_INPUT', -32602);
+            }
+            $decoded = $decoded['features'][0];
+        } elseif ($type !== 'Feature') {
+            throw new ToolException('geojson_data must be a GeoJSON Feature or FeatureCollection', 'INVALID_INPUT', -32602);
+        }
+
+        if (($decoded['type'] ?? '') !== 'Feature') {
+            throw new ToolException('GeoJSON item must be a Feature', 'INVALID_INPUT', -32602);
+        }
+
+        $geometry = $decoded['geometry'] ?? null;
+        if (!is_array($geometry) || ($geometry['type'] ?? '') !== 'LineString') {
+            throw new ToolException('GeoJSON geometry must be a LineString', 'INVALID_INPUT', -32602);
+        }
+
+        $coords = $geometry['coordinates'] ?? null;
+        if (!is_array($coords) || count($coords) < 2) {
+            throw new ToolException('GeoJSON LineString must contain at least two coordinates', 'INVALID_INPUT', -32602);
+        }
+
+        $normalizedCoords = [];
+        foreach ($coords as $i => $coord) {
+            if (!is_array($coord) || count($coord) < 2 || !is_numeric($coord[0]) || !is_numeric($coord[1])) {
+                throw new ToolException("Invalid coordinate at index {$i}", 'INVALID_INPUT', -32602);
+            }
+            $lon = (float)$coord[0];
+            $lat = (float)$coord[1];
+            if (!is_finite($lon) || !is_finite($lat) || $lon < -180 || $lon > 180 || $lat < -90 || $lat > 90) {
+                throw new ToolException("Coordinate out of range at index {$i}", 'INVALID_INPUT', -32602);
+            }
+            $normalizedCoords[] = [$lon, $lat];
+        }
+
+        $decoded['geometry']['coordinates'] = $normalizedCoords;
+        if (!isset($decoded['properties']) || !is_array($decoded['properties'])) {
+            $decoded['properties'] = new stdClass();
+        }
+
+        $encoded = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded === false) {
+            throw new ToolException('Could not serialize normalized GeoJSON', 'INVALID_INPUT', -32602);
+        }
+
+        return [
+            'geojson_data' => $encoded,
+            'waypoints_count' => count($normalizedCoords),
+        ];
     }
 
     private static function assertTripExists(int $tripId): void

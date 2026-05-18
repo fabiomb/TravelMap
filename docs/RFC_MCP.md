@@ -22,7 +22,7 @@ El stack actual de TravelMap es PHP 8 + PDO/MySQL sobre Apache. La evaluación c
 
 ### 2.2 Argumentos a favor de PHP
 
-**Reutilización directa del stack existente.** El servidor MCP puede importar los modelos (`Trip`, `Route`, `Point`), helpers (`BRouterParser`, `ExifExtractor`, `Geocoder`, `FileHelper`) y la conexión PDO sin ninguna capa de adaptación. Una implementación en Python requeriría reimplementar esta lógica o invocarla como subproceso, añadiendo complejidad y puntos de fallo.
+**Reutilización directa del stack existente.** El servidor MCP puede importar los modelos (`Trip`, `Route`, `Point`), helpers (`BRouterClient`, `ExifExtractor`, `Geocoder`, `FileHelper`) y la conexión PDO sin ninguna capa de adaptación. Una implementación en Python requeriría reimplementar esta lógica o invocarla como subproceso, añadiendo complejidad y puntos de fallo.
 
 **Sin dependencias adicionales en producción.** El servidor PHP corre bajo el mismo Apache y la misma instalación de PHP que la web. Un proceso Python requeriría instalar y mantener un runtime separado (`venv`, dependencias pip, versión de Python) en el servidor, con su ciclo de actualizaciones propio.
 
@@ -42,7 +42,7 @@ Se elige PHP. El beneficio de mantener un único lenguaje y stack en el proyecto
 
 ## 3. Transporte
 
-El servidor expone el mismo conjunto de 13 herramientas a través de dos transportes independientes. El modo de transporte se selecciona por punto de entrada, no por configuración en tiempo de ejecución.
+El servidor expone el mismo conjunto de 15 herramientas a través de dos transportes independientes. El modo de transporte se selecciona por punto de entrada, no por configuración en tiempo de ejecución.
 
 ### 3.1 stdio (local)
 
@@ -125,7 +125,7 @@ ALTER TABLE users
 
 ## 5. Herramientas (Tools)
 
-El servidor expone 13 herramientas agrupadas en cuatro categorías. Todas aceptan y devuelven JSON. El esquema de cada herramienta se valida antes de ejecutar la operación; los errores de validación se devuelven como JSON-RPC error con código `-32602`.
+El servidor expone 15 herramientas agrupadas en cuatro categorías. Todas aceptan y devuelven JSON. El esquema de cada herramienta se valida antes de ejecutar la operación; los errores de validación se devuelven como JSON-RPC error con código `-32602`.
 
 ### 5.1 Viajes
 
@@ -143,18 +143,20 @@ El servidor expone 13 herramientas agrupadas en cuatro categorías. Todas acepta
 |---|---|
 | `plan_route` | Calcula una ruta terrestre via BRouter y guarda el GeoJSON en disco temporal. Devuelve metadata (distancia, duración, `temp_path`) sin pasar la geometría por el contexto del LLM |
 | `commit_route` | Persiste en BD la ruta calculada por `plan_route` leyendo el archivo temporal; lo elimina tras persistir |
-| `create_route` | Crea una ruta desde geometría aportada directamente (`geojson_data`, `brouter_csv_text` o `brouter_csv_base64`) |
+| `create_route` | Crea una ruta desde una lista estructurada de coordenadas; no acepta blobs, CSV ni GeoJSON crudo en JSON-RPC |
 | `update_route` | Actualiza metadatos de una ruta; la geometría no puede modificarse |
 
-El flujo `plan_route` → `commit_route` existe para evitar que geometrías de cientos de kilobytes transiten por el contexto del modelo. El GeoJSON se guarda en `uploads/mcp_temp/` y el LLM solo recibe el path relativo.
+El flujo `plan_route` → `commit_route` existe para evitar que geometrías de cientos de kilobytes transiten por el contexto del modelo. El GeoJSON se guarda en `uploads/mcp_temp/` y el LLM solo recibe el path relativo. Para importaciones externas, `create_route` queda limitado a coordenadas estructuradas y acotadas; los blobs deben procesarse fuera del contexto del modelo antes de invocar la tool.
 
 ### 5.3 Puntos de interés (POIs)
 
 | Tool | Descripción |
 |---|---|
 | `search_pois` | Busca POIs por texto, viaje o tipo; sin filtros lista todos los POIs de un viaje |
-| `create_poi` | Crea un POI; si se adjunta foto JPEG con GPS, las coordenadas y fecha se extraen del EXIF automáticamente |
-| `update_poi` | Actualiza datos de un POI; no permite cambio de foto |
+| `create_poi` | Crea un POI; si recibe `photo_token`, consume la foto temporal y puede tomar coordenadas y fecha desde EXIF |
+| `update_poi` | Actualiza datos de un POI; puede reemplazar la foto con `photo_token` |
+| `inspect_uploaded_photo` | Inspecciona EXIF y ubicación sugerida para una foto temporal sin crear un POI |
+| `cleanup_uploaded_photo` | Descarta una foto temporal no consumida |
 
 ### 5.4 Localización
 
@@ -180,7 +182,7 @@ La herramienta `commit_route` valida que `temp_path` resuelva dentro de `uploads
 
 ### 6.4 Subida de archivos
 
-Los archivos enviados como base64 (`photo_base64`, `brouter_csv_base64`) se validan en tamaño antes de decodificar y se procesan con `GD`/`fileinfo` para verificar el tipo real antes de almacenar. El nombre de archivo original se sanitiza; la ruta de destino se genera en el servidor.
+Los archivos no se envían como base64 dentro de JSON-RPC. Las fotos se suben por `mcp/upload.php` usando `multipart/form-data`; el endpoint valida tamaño, tipo real con `fileinfo`/`GD`, extensión permitida y EXIF, guarda el archivo en un área temporal y devuelve un `photo_token`. Las tools de POI reciben solo ese token y lo consumen para mover la imagen al almacenamiento final.
 
 ### 6.5 Transporte HTTP
 
@@ -188,7 +190,7 @@ Se recomienda exponer `mcp/http.php` exclusivamente sobre HTTPS. Sin TLS el Bear
 
 ### 6.6 Logs
 
-El servidor registra todas las invocaciones en `logs/mcp.log`. Los payloads binarios (base64, GeoJSON) se loguean solo por tamaño, nunca con el contenido completo, para evitar que datos sensibles o fotos persistan en logs.
+El servidor registra todas las invocaciones en `logs/mcp.log`. Los binarios no pasan por JSON-RPC y los payloads grandes se loguean solo por tamaño, nunca con el contenido completo, para evitar que datos sensibles o fotos persistan en logs.
 
 ---
 

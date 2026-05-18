@@ -20,6 +20,7 @@ require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/JsonRpc.php';
 require_once __DIR__ . '/Schema.php';
 require_once __DIR__ . '/Dispatcher.php';
+require_once __DIR__ . '/UploadedFiles.php';
 require_once __DIR__ . '/tools/TripTools.php';
 require_once __DIR__ . '/tools/RouteTools.php';
 require_once __DIR__ . '/tools/PoiTools.php';

@@ -3,7 +3,7 @@
  * MCP Logger
  *
  * Escribe a logs/mcp.log con sanitización:
- * nunca loguea photo_base64, brouter_csv_*, ni geojson_data crudos.
+ * nunca loguea campos binarios o geometrías crudas.
  */
 
 final class McpLogger

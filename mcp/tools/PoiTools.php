@@ -13,30 +13,34 @@ final class PoiTools
             'properties' => [
                 'query'   => ['type' => 'string', 'maxLength' => 200],
                 'trip_id' => ['type' => 'integer', 'minimum' => 1],
-                'type'    => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint']],
+                'type'    => ['type' => 'string', 'enum' => ['stay', 'visit', 'food']],
                 'limit'   => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100],
             ],
             'additionalProperties' => false,
         ], [self::class, 'searchPois']);
 
         $d->register('create_poi',
-            'Creates a point of interest. If you attach a photo with GPS EXIF, coordinates and ' .
-            'date are auto-filled if not provided. The output includes suggested_place ' .
-            '(city suggested by Nominatim) to help you choose the title.',
+            'Creates a point of interest. ' .
+            'To attach a photo, first upload it via POST /mcp/upload.php (multipart/form-data, field "photo"). ' .
+            'That endpoint requires a Bearer token — always ask the user for their Bearer token before attempting any upload. ' .
+            'Pass the returned photo_token here. ' .
+            'Set use_exif to true only when the user explicitly confirms that coordinates and visit_date ' .
+            'should be extracted from the photo EXIF (e.g. the photo was personally taken at this location). ' .
+            'Never auto-fill from EXIF for planned/future trips or reference/decorative images.',
         [
             'type'       => 'object',
             'required'   => ['trip_id', 'type'],
             'properties' => [
                 'trip_id'         => ['type' => 'integer', 'minimum' => 1],
                 'title'           => ['type' => 'string', 'maxLength' => 200],
-                'type'            => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café. "waypoint": waypoint or generic reference.'],
+                'type'            => ['type' => 'string', 'enum' => ['stay', 'visit', 'food'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café.'],
                 'latitude'        => ['type' => 'number', 'minimum' => -90,  'maximum' => 90],
                 'longitude'       => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
                 'description'     => ['type' => 'string', 'maxLength' => 5000],
                 'icon'            => ['type' => 'string', 'maxLength' => 64, 'description' => 'Icon name. Defaults to "default" if omitted. Suggested values by type: stay→"hotel", visit→"camera", food→"restaurant".'],
                 'visit_date'      => ['type' => 'string', 'description' => 'Date and time of the visit. Accepted formats: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Include the time if known.'],
-                'photo_base64'    => ['type' => 'string', 'maxLength' => 14000000],
-                'photo_filename'  => ['type' => 'string', 'maxLength' => 255],
+                'photo_token'     => ['type' => 'string', 'pattern' => '^photo_[a-f0-9]{32}$', 'description' => 'Token returned by POST /mcp/upload.php. Requires Bearer token — ask the user before uploading.'],
+                'use_exif'        => ['type' => 'boolean', 'description' => 'If true, auto-fill missing latitude/longitude and visit_date from the photo GPS EXIF. Only set to true when the user explicitly confirms the photo was taken at this location. Default: false.'],
                 'links' => [
                     'type' => 'array',
                     'maxItems' => 10,
@@ -58,19 +62,26 @@ final class PoiTools
         $d->register('update_poi',
             'Updates the data of an existing POI. Only the provided fields are modified. ' .
             'To update links supply the full array (replaces existing ones). ' .
-            'Photo change is not supported; create a new POI for that.',
+            'To attach a photo, first upload it via POST /mcp/upload.php (multipart/form-data, field "photo"). ' .
+            'That endpoint requires a Bearer token — always ask the user for their Bearer token before attempting any upload. ' .
+            'Pass the returned photo_token here. ' .
+            'Set use_exif to true only when the user explicitly confirms that coordinates and visit_date ' .
+            'should be extracted from the photo EXIF (e.g. the photo was personally taken at this location). ' .
+            'Never auto-fill from EXIF for planned/future trips or reference/decorative images.',
         [
             'type'       => 'object',
             'required'   => ['id'],
             'properties' => [
-                'id'          => ['type' => 'integer', 'minimum' => 1],
-                'title'       => ['type' => 'string', 'maxLength' => 200],
-                'type'        => ['type' => 'string', 'enum' => ['stay', 'visit', 'food', 'waypoint'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café. "waypoint": waypoint or generic reference.'],
-                'latitude'    => ['type' => 'number', 'minimum' => -90,  'maximum' => 90],
-                'longitude'   => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
-                'description' => ['type' => 'string', 'maxLength' => 5000],
-                'icon'        => ['type' => 'string', 'maxLength' => 64, 'description' => 'Icon name. Defaults to "default" if omitted. Suggested values by type: stay→"hotel", visit→"camera", food→"restaurant".'],
-                'visit_date'  => ['type' => 'string', 'description' => 'Date and time of the visit. Accepted formats: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Include the time if known.'],
+                'id'             => ['type' => 'integer', 'minimum' => 1],
+                'title'          => ['type' => 'string', 'maxLength' => 200],
+                'type'           => ['type' => 'string', 'enum' => ['stay', 'visit', 'food'], 'description' => '"stay": accommodation (hotel, hostel). "visit": tourist spot or attraction. "food": restaurant, bar, café.'],
+                'latitude'       => ['type' => 'number', 'minimum' => -90,  'maximum' => 90],
+                'longitude'      => ['type' => 'number', 'minimum' => -180, 'maximum' => 180],
+                'description'    => ['type' => 'string', 'maxLength' => 5000],
+                'icon'           => ['type' => 'string', 'maxLength' => 64, 'description' => 'Icon name. Defaults to "default" if omitted. Suggested values by type: stay→"hotel", visit→"camera", food→"restaurant".'],
+                'visit_date'     => ['type' => 'string', 'description' => 'Date and time of the visit. Accepted formats: "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM", "YYYY-MM-DDTHH:MM", "YYYY-MM-DD". Include the time if known.'],
+                'photo_token'    => ['type' => 'string', 'pattern' => '^photo_[a-f0-9]{32}$', 'description' => 'Token returned by POST /mcp/upload.php. Requires Bearer token — ask the user before uploading.'],
+                'use_exif'       => ['type' => 'boolean', 'description' => 'If true, auto-fill missing latitude/longitude and visit_date from the photo GPS EXIF. Only set to true when the user explicitly confirms the photo was taken at this location. Default: false.'],
                 'links' => [
                     'type'     => 'array',
                     'maxItems' => 10,
@@ -88,6 +99,30 @@ final class PoiTools
             ],
             'additionalProperties' => false,
         ], [self::class, 'updatePoi']);
+
+        $d->register('inspect_uploaded_photo',
+            'Inspects a photo previously uploaded to /mcp/upload.php and returns EXIF-derived metadata ' .
+            '(GPS coordinates, capture date, MIME type, file size). ' .
+            'The upload endpoint requires a Bearer token — always ask the user for their Bearer token before attempting any upload.',
+        [
+            'type'       => 'object',
+            'required'   => ['photo_token'],
+            'properties' => [
+                'photo_token' => ['type' => 'string', 'pattern' => '^photo_[a-f0-9]{32}$'],
+            ],
+            'additionalProperties' => false,
+        ], [self::class, 'inspectUploadedPhoto']);
+
+        $d->register('cleanup_uploaded_photo',
+            'Deletes a temporary uploaded photo that will not be used.',
+        [
+            'type'       => 'object',
+            'required'   => ['photo_token'],
+            'properties' => [
+                'photo_token' => ['type' => 'string', 'pattern' => '^photo_[a-f0-9]{32}$'],
+            ],
+            'additionalProperties' => false,
+        ], [self::class, 'cleanupUploadedPhoto']);
 
     }
 
@@ -114,40 +149,19 @@ final class PoiTools
         $imagePath     = null;
         $thumbnailPath = null;
         $autoFilled    = [];
-        $exifData      = null;
-
-        // ── Process photo ──────────────────────────────────────────────────────
-        if (!empty($p['photo_base64'])) {
-            if (empty($p['photo_filename'])) {
-                throw new ToolException('photo_filename is required when photo_base64 is provided', 'INVALID_INPUT', -32602);
-            }
-            $uploadResult = FileHelper::saveImageFromBase64(
-                $p['photo_base64'],
-                $p['photo_filename']
-            );
-            if (!$uploadResult['success']) {
-                throw new ToolException($uploadResult['error'] ?? 'Error saving the photo', 'UPLOAD_FAILED');
-            }
-            $imagePath     = $uploadResult['path'];
-            $thumbnailPath = $uploadResult['thumbnail_path'];
-
-            // Extract EXIF from the saved image
-            $fullPath = ROOT_PATH . '/' . $imagePath;
-            $exifData = ExifExtractor::readFromFile($fullPath, $p['photo_filename']);
-
-            McpLogger::info('create_poi: photo uploaded', [
-                'path'    => $imagePath,
-                'size_kb' => round(strlen($p['photo_base64']) * 0.75 / 1024),
-            ]);
-
+        $photoToken    = $p['photo_token'] ?? null;
+        $photo         = $photoToken ? McpUploadedFiles::getPhoto($photoToken) : null;
+        if ($photoToken && $photo === null) {
+            throw new ToolException('photo_token inválido o expirado', 'PHOTO_NOT_FOUND', -32602);
         }
+        $exifData = $photo['exif'] ?? null;
 
-        // ── Auto-fill from EXIF ────────────────────────────────────────────────
+        // ── Auto-fill from EXIF (only when user explicitly requested it) ─────────
         $latitude  = isset($p['latitude'])  ? (float)$p['latitude']  : null;
         $longitude = isset($p['longitude']) ? (float)$p['longitude'] : null;
         $visitDate = $p['visit_date'] ?? null;
 
-        if ($exifData) {
+        if ($exifData && !empty($p['use_exif'])) {
             if ($latitude === null && $exifData['has_gps']) {
                 $latitude  = $exifData['latitude'];
                 $longitude = $exifData['longitude'];
@@ -187,7 +201,7 @@ final class PoiTools
             'longitude'  => $longitude,
             'description'=> $p['description'] ?? null,
             'icon'       => $p['icon']        ?? 'default',
-            'image_path' => $imagePath,
+            'image_path' => null,
             'visit_date' => self::normalizeVisitDate($visitDate),
         ];
 
@@ -197,8 +211,21 @@ final class PoiTools
             throw new ToolException('Invalid POI data', 'INVALID_INPUT', -32602, ['fieldErrors' => $errors]);
         }
 
+        if ($photoToken) {
+            $uploadResult = McpUploadedFiles::consumePhoto($photoToken);
+            if (!$uploadResult['success']) {
+                throw new ToolException($uploadResult['error'] ?? 'Error saving the photo', 'UPLOAD_FAILED');
+            }
+            $imagePath = $uploadResult['path'];
+            $thumbnailPath = $uploadResult['thumbnail_path'];
+            $data['image_path'] = $imagePath;
+        }
+
         $id = $pointModel->create($data);
         if (!$id) {
+            if ($imagePath) {
+                FileHelper::deleteFile($imagePath);
+            }
             throw new ToolException('Could not create the POI in the database', 'DB_ERROR');
         }
 
@@ -245,16 +272,44 @@ final class PoiTools
             throw new ToolException("POI with id={$id} not found", 'POI_NOT_FOUND');
         }
 
+        $imagePath     = $current['image_path'];
+        $thumbnailPath = null;
+        $autoFilled    = [];
+        $photoToken    = $p['photo_token'] ?? null;
+        $photo         = $photoToken ? McpUploadedFiles::getPhoto($photoToken) : null;
+        if ($photoToken && $photo === null) {
+            throw new ToolException('photo_token inválido o expirado', 'PHOTO_NOT_FOUND', -32602);
+        }
+        $exifData = $photo['exif'] ?? null;
+
+        // ── Auto-fill coords/date from EXIF (only when user explicitly requested it) ──
+        $latitude  = isset($p['latitude'])  ? (float)$p['latitude']  : null;
+        $longitude = isset($p['longitude']) ? (float)$p['longitude'] : null;
+        $visitDate = array_key_exists('visit_date', $p) ? $p['visit_date'] : null;
+
+        if ($exifData && !empty($p['use_exif'])) {
+            if ($latitude === null && $exifData['has_gps']) {
+                $latitude  = $exifData['latitude'];
+                $longitude = $exifData['longitude'];
+                $autoFilled['latitude']  = $latitude;
+                $autoFilled['longitude'] = $longitude;
+            }
+            if ($visitDate === null && $exifData['has_date']) {
+                $visitDate = $exifData['date'];
+                $autoFilled['visit_date'] = $visitDate;
+            }
+        }
+
         $data = [
             'trip_id'     => (int)$current['trip_id'],
             'title'       => array_key_exists('title', $p)       ? trim($p['title'])        : $current['title'],
             'type'        => $p['type']        ?? $current['type'],
-            'latitude'    => isset($p['latitude'])  ? (float)$p['latitude']  : (float)$current['latitude'],
-            'longitude'   => isset($p['longitude']) ? (float)$p['longitude'] : (float)$current['longitude'],
+            'latitude'    => $latitude  !== null ? $latitude  : (float)$current['latitude'],
+            'longitude'   => $longitude !== null ? $longitude : (float)$current['longitude'],
             'description' => array_key_exists('description', $p) ? $p['description']        : $current['description'],
             'icon'        => $p['icon']        ?? $current['icon'],
-            'image_path'  => $current['image_path'],
-            'visit_date'  => array_key_exists('visit_date', $p)  ? self::normalizeVisitDate($p['visit_date']) : $current['visit_date'],
+            'image_path'  => $imagePath,
+            'visit_date'  => $visitDate !== null ? self::normalizeVisitDate($visitDate) : $current['visit_date'],
         ];
 
         $validationErrors = $pointModel->validate($data, true);
@@ -262,7 +317,21 @@ final class PoiTools
             throw new ToolException('Validation failed', 'INVALID_INPUT', -32602, ['fieldErrors' => $validationErrors]);
         }
 
+        $newImagePath = null;
+        if ($photoToken) {
+            $uploadResult = McpUploadedFiles::consumePhoto($photoToken);
+            if (!$uploadResult['success']) {
+                throw new ToolException($uploadResult['error'] ?? 'Error saving the photo', 'UPLOAD_FAILED');
+            }
+            $newImagePath = $uploadResult['path'];
+            $thumbnailPath = $uploadResult['thumbnail_path'];
+            $data['image_path'] = $newImagePath;
+        }
+
         if (!$pointModel->update($id, $data)) {
+            if ($newImagePath) {
+                FileHelper::deleteFile($newImagePath);
+            }
             throw new ToolException('Could not update the POI', 'DB_ERROR');
         }
 
@@ -283,17 +352,43 @@ final class PoiTools
         McpLogger::info('update_poi OK', ['id' => $id]);
 
         return [
-            'id'        => $id,
-            'title'     => $updated['title'],
-            'type'      => $updated['type'],
-            'latitude'  => (float)$updated['latitude'],
-            'longitude' => (float)$updated['longitude'],
-            'links'     => array_map(fn($l) => ['url' => $l['url'], 'label' => $l['label'], 'link_type' => $l['link_type']], $updLinks),
-            'admin_url' => '/admin/point_form.php?id=' . $id,
+            'id'             => $id,
+            'title'          => $updated['title'],
+            'type'           => $updated['type'],
+            'latitude'       => (float)$updated['latitude'],
+            'longitude'      => (float)$updated['longitude'],
+            'image_path'     => $updated['image_path'],
+            'thumbnail_path' => $thumbnailPath,
+            'auto_filled'    => $autoFilled ?: null,
+            'links'          => array_map(fn($l) => ['url' => $l['url'], 'label' => $l['label'], 'link_type' => $l['link_type']], $updLinks),
+            'admin_url'      => '/admin/point_form.php?id=' . $id,
         ];
     }
 
     // ──────────────────────────────────────────────────────────────────────────
+
+    public static function inspectUploadedPhoto(array $p): array
+    {
+        $photo = McpUploadedFiles::getPhoto($p['photo_token']);
+        if ($photo === null) {
+            throw new ToolException('photo_token inválido o expirado', 'PHOTO_NOT_FOUND', -32602);
+        }
+
+        $info = McpUploadedFiles::publicPhotoInfo($photo);
+        if ($info['has_gps']) {
+            $info['suggested_place'] = self::suggestPlace((float)$info['latitude'], (float)$info['longitude']);
+        }
+
+        return $info;
+    }
+
+    public static function cleanupUploadedPhoto(array $p): array
+    {
+        return [
+            'photo_token' => $p['photo_token'],
+            'deleted' => McpUploadedFiles::deletePhoto($p['photo_token']),
+        ];
+    }
 
     private static function normalizeVisitDate(?string $date): ?string
     {
@@ -313,6 +408,16 @@ final class PoiTools
         $tripModel = new Trip();
         if (!$tripModel->getById($tripId)) {
             throw new ToolException("Trip with id={$tripId} not found", 'TRIP_NOT_FOUND');
+        }
+    }
+
+    private static function suggestPlace(float $latitude, float $longitude): ?array
+    {
+        try {
+            return Geocoder::reverseLookup($latitude, $longitude);
+        } catch (Exception $e) {
+            McpLogger::error('Geocoder failed in POI photo flow: ' . $e->getMessage());
+            return null;
         }
     }
 

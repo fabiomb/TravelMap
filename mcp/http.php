@@ -19,10 +19,28 @@
 
 define('ROOT_PATH', dirname(__DIR__));
 
+const MCP_HTTP_MAX_BODY_BYTES = 15 * 1024 * 1024;
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($origin !== '') {
+    $host     = $_SERVER['HTTP_HOST'] ?? '';
+    $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $sameOrigin = $host !== '' && $origin === $scheme . '://' . $host;
+    $allowedOrigins = array_filter(array_map('trim', explode(',', getenv('MCP_ALLOWED_ORIGINS') ?: '')));
+    $corsAllowed = $sameOrigin || in_array($origin, $allowedOrigins, true) || in_array('*', $allowedOrigins, true);
+
+    if ($corsAllowed) {
+        header('Access-Control-Allow-Origin: ' . (in_array('*', $allowedOrigins, true) ? '*' : $origin));
+        header('Vary: Origin');
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(403);
+        exit;
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -37,6 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 header('Content-Type: application/json; charset=utf-8');
+
+$contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int)$_SERVER['CONTENT_LENGTH'] : 0;
+if ($contentLength > MCP_HTTP_MAX_BODY_BYTES) {
+    http_response_code(413);
+    echo json_encode(['error' => 'Payload Too Large']);
+    exit;
+}
 
 // ── Helpers de respuesta ──────────────────────────────────────────────────────
 function rpcResult($id, $result): void
@@ -82,7 +107,6 @@ if (preg_match('/^Bearer\s+(tmk_[0-9a-f]{64})$/', $authHeader, $m)) {
 
 // Capa B: sesión web (cookie PHPSESSID) — solo para same-origin
 if (!$authOk && !empty($_COOKIE['PHPSESSID'])) {
-    $origin   = $_SERVER['HTTP_ORIGIN'] ?? '';
     $host     = $_SERVER['HTTP_HOST'] ?? '';
     $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $expected = $scheme . '://' . $host;
@@ -108,6 +132,7 @@ if (!$authOk) {
 require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/Schema.php';
 require_once __DIR__ . '/Dispatcher.php';
+require_once __DIR__ . '/UploadedFiles.php';
 require_once __DIR__ . '/tools/TripTools.php';
 require_once __DIR__ . '/tools/RouteTools.php';
 require_once __DIR__ . '/tools/PoiTools.php';

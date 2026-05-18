@@ -2,3 +2,6 @@ Require all denied
 <Files "http.php">
     Require all granted
 </Files>
+<Files "upload.php">
+    Require all granted
+</Files>

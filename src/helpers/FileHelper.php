@@ -569,6 +569,9 @@ class FileHelper {
             $base64 = preg_replace('/^data:image\/[^;]+;base64,/i', '', $base64);
         }
 
+        // 1b. Strip whitespace (handles line-wrapped base64 from tools/LLMs)
+        $base64 = preg_replace('/\s+/', '', $base64);
+
         // 2. Cap pre-decode: ~14 MB → decoded ~10 MB
         if (strlen($base64) > 14_000_000) {
             return ['success' => false, 'error' => 'La imagen base64 supera el límite de tamaño (14 MB codificada)'];
@@ -665,6 +668,87 @@ class FileHelper {
         } finally {
             @unlink($tmpFile);
         }
+    }
+
+    /**
+     * Guarda una imagen ya existente en disco en la carpeta final de la app.
+     * Se usa para flujos en dos fases: upload temporal + commit por token.
+     *
+     * @param string $sourcePath    Ruta absoluta al archivo temporal.
+     * @param string $originalName  Nombre original para validar extensión.
+     * @param string $destFolder    Carpeta destino relativa a ROOT_PATH.
+     * @return array {success, path, thumbnail_path, filename, error?}
+     */
+    public static function saveImageFromPath(
+        string $sourcePath,
+        string $originalName,
+        string $destFolder = 'uploads/points'
+    ): array {
+        if (!is_file($sourcePath) || !is_readable($sourcePath)) {
+            return ['success' => false, 'error' => 'Archivo temporal no encontrado o ilegible'];
+        }
+
+        $maxSize = defined('MAX_UPLOAD_SIZE') ? MAX_UPLOAD_SIZE : 8 * 1024 * 1024;
+        $size = filesize($sourcePath);
+        if ($size === false || $size > $maxSize) {
+            $maxMb = round($maxSize / 1024 / 1024, 1);
+            return ['success' => false, 'error' => "La imagen supera {$maxMb} MB"];
+        }
+
+        $safeBasename = basename($originalName);
+        if ($safeBasename === '' || strpbrk($safeBasename, "\0\r\n") !== false) {
+            return ['success' => false, 'error' => 'Nombre de archivo inválido'];
+        }
+        $ext = strtolower(pathinfo($safeBasename, PATHINFO_EXTENSION));
+        $allowedExt = defined('ALLOWED_IMAGE_EXTENSIONS') ? ALLOWED_IMAGE_EXTENSIONS : ['jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowedExt, true)) {
+            return ['success' => false, 'error' => 'Extensión no permitida. Solo JPG, JPEG y PNG'];
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return ['success' => false, 'error' => 'No se pudo inicializar finfo (extensión fileinfo no disponible)'];
+        }
+        $mimeReal = finfo_file($finfo, $sourcePath);
+        finfo_close($finfo);
+        $allowedMime = defined('ALLOWED_IMAGE_TYPES') ? ALLOWED_IMAGE_TYPES : ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!in_array($mimeReal, $allowedMime, true)) {
+            return ['success' => false, 'error' => 'UNSUPPORTED_MIME: tipo de imagen no permitido'];
+        }
+
+        $bytes = file_get_contents($sourcePath);
+        if ($bytes === false) {
+            return ['success' => false, 'error' => 'No se pudo leer la imagen temporal'];
+        }
+        $gdRes = @imagecreatefromstring($bytes);
+        if ($gdRes === false) {
+            return ['success' => false, 'error' => 'El archivo no es una imagen válida (fallo de decodificación GD)'];
+        }
+        imagedestroy($gdRes);
+
+        $uniqueName = self::generateUniqueFileName($ext);
+        $fullDest = ROOT_PATH . '/' . $destFolder;
+        if (!is_dir($fullDest)) {
+            mkdir($fullDest, 0755, true);
+        }
+        $baseReal = realpath($fullDest);
+        if ($baseReal === false) {
+            return ['success' => false, 'error' => 'No se pudo resolver la carpeta de destino'];
+        }
+        $targetPath = $baseReal . '/' . $uniqueName;
+        if (!copy($sourcePath, $targetPath)) {
+            return ['success' => false, 'error' => 'Error al guardar la imagen en el destino'];
+        }
+        chmod($targetPath, 0644);
+
+        [$thumbnailPath] = self::postProcessImage($targetPath, $destFolder, $uniqueName);
+
+        return [
+            'success'        => true,
+            'path'           => $destFolder . '/' . $uniqueName,
+            'thumbnail_path' => $thumbnailPath,
+            'filename'       => $uniqueName,
+        ];
     }
 
     /**

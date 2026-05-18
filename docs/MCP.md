@@ -45,6 +45,10 @@ Content-Type: application/json
 Authorization: Bearer <api-key>
 ```
 
+El endpoint rechaza cuerpos mayores a 15 MB antes de leer el JSON. CORS está restringido por defecto
+a same-origin; para permitir orígenes de navegador adicionales, definir `MCP_ALLOWED_ORIGINS` como
+lista separada por comas (por ejemplo `https://cliente.example`). Usar `*` solo en entornos confiables.
+
 ---
 
 ## Autenticación (HTTP)
@@ -139,7 +143,7 @@ ALTER TABLE users
 |---|---|---|---|
 | `plan_route` | Calcula ruta terrestre via BRouter y guarda un temporal. Usar `commit_route` para persistir. Transportes: `car`, `bike`, `walk`, `train`, `bus` | `from_lat`, `from_lon`, `to_lat`, `to_lon`, `transport_type` | `via[]` (máx 8 waypoints intermedios) |
 | `commit_route` | Persiste la ruta calculada por `plan_route`; elimina el temporal | `trip_id`, `temp_path`, `transport_type` | `name`, `description`, `is_round_trip`, `color`, `start_datetime`, `end_datetime`, `links[]` |
-| `create_route` | Crea una ruta desde geometría externa. Exactamente una fuente: `geojson_data`, `brouter_csv_text` o `brouter_csv_base64` | `trip_id`, `transport_type` + una fuente | `name`, `description`, `is_round_trip`, `color`, `start_datetime`, `end_datetime`, `links[]` |
+| `create_route` | Crea una ruta desde una lista estructurada de coordenadas. No acepta blobs, CSV ni GeoJSON crudo en JSON-RPC | `trip_id`, `transport_type`, `coordinates[]` | `name`, `description`, `is_round_trip`, `color`, `start_datetime`, `end_datetime`, `links[]` |
 | `update_route` | Actualiza metadatos de una ruta (no la geometría). Links se reemplazan completos si se incluyen | `id` | `name`, `description`, `transport_type`, `color`, `is_round_trip`, `start_datetime`, `end_datetime`, `links[]` |
 
 Transportes válidos en `update_route`: `plane`, `car`, `bike`, `walk`, `ship`, `train`, `bus`, `aerial`.
@@ -148,9 +152,11 @@ Transportes válidos en `update_route`: `plane`, `car`, `bike`, `walk`, `ship`, 
 
 | Tool | Descripción | Params requeridos | Params opcionales |
 |---|---|---|---|
-| `search_pois` | Busca POIs por texto, viaje o tipo — cruza todos los viajes | — | `query`, `trip_id`, `type` (`stay`/`visit`/`food`/`waypoint`), `limit` |
-| `create_poi` | Crea un POI. Con foto JPEG, auto-rellena coords y fecha desde EXIF. Devuelve `suggested_place` (Nominatim) | `trip_id`, `type` | `title`, `latitude`, `longitude`, `description`, `icon`, `visit_date`, `photo_base64`+`photo_filename`, `links[]` |
-| `update_poi` | Actualiza datos de un POI. No soporta cambio de foto | `id` | `title`, `type`, `latitude`, `longitude`, `description`, `icon`, `visit_date`, `links[]` |
+| `search_pois` | Busca POIs por texto, viaje o tipo — cruza todos los viajes | — | `query`, `trip_id`, `type` (`stay`/`visit`/`food`), `limit` |
+| `create_poi` | Crea un POI. Con `photo_token`, auto-rellena coords y fecha desde EXIF. Devuelve `suggested_place` (Nominatim) | `trip_id`, `type` | `title`, `latitude`, `longitude`, `description`, `icon`, `visit_date`, `photo_token`, `links[]` |
+| `update_poi` | Actualiza datos de un POI. Puede reemplazar la foto con `photo_token` | `id` | `title`, `type`, `latitude`, `longitude`, `description`, `icon`, `visit_date`, `photo_token`, `links[]` |
+| `inspect_uploaded_photo` | Inspecciona una foto subida por `mcp/upload.php` sin crear ni actualizar POIs | `photo_token` | — |
+| `cleanup_uploaded_photo` | Elimina una foto temporal subida por `mcp/upload.php` | `photo_token` | — |
 
 ### Localización — `LocationTools`
 
@@ -174,24 +180,27 @@ Transportes válidos en `update_route`: `plane`, `car`, `bike`, `walk`, `ship`, 
 
 ```
 1. create_trip   → title, dates, status
-2. create_route  → trip_id, brouter_csv_base64 / geojson_data
+2. convertir archivo externo fuera del contexto del LLM
+3. create_route  → trip_id, transport_type, coordinates[]
 ```
 
 ### Añadir POI con foto
 
 ```
-1. search_location  → nombre del lugar  →  lat/lng
-2. create_poi       → trip_id, type, lat, lng, photo_base64, photo_filename
-                    →  suggested_place (decidir título)
-3. update_poi       → id, title  (si se quiere ajustar)
+1. POST /mcp/upload.php  → multipart/form-data, campo photo  →  photo_token + EXIF
+2. inspect_uploaded_photo → photo_token  →  metadata EXIF y suggested_place
+3. create_poi            → trip_id, type, photo_token
+                         →  usa coords/fecha EXIF si no se envían manualmente
+4. update_poi            → id, title  (si se quiere ajustar)
 ```
 
 ---
 
 ## Logs
 
-El servidor escribe en `logs/mcp.log`. Los payloads binarios (base64, GeoJSON) se loguean
-solo por tamaño, nunca con el contenido completo.
+El servidor escribe en `logs/mcp.log`. Los uploads binarios no viajan por JSON-RPC:
+se suben por multipart a `mcp/upload.php` y las tools reciben solo tokens temporales.
+Los payloads grandes se loguean por tamaño, nunca con el contenido completo.
 
 ```bash
 tail -f logs/mcp.log
@@ -202,7 +211,7 @@ tail -f logs/mcp.log
 ## Tests
 
 ```bash
-# Requiere: php, jq
+# Requiere: php
 bash mcp/tests/run_tests.sh
 
 # Sin limpiar los registros creados:
@@ -210,7 +219,7 @@ bash mcp/tests/run_tests.sh --keep-data
 ```
 
 Los tests verifican el handshake, la presencia de todas las tools, operaciones CRUD básicas
-y casos de seguridad (path traversal, base64 inválido, trip inexistente, JSON malformado).
+y casos de seguridad (token de foto inválido, trip inexistente, JSON malformado).
 
 ---
 
@@ -220,6 +229,8 @@ y casos de seguridad (path traversal, base64 inválido, trip inexistente, JSON m
 mcp/
 ├── server.php          Entrada stdio
 ├── http.php            Entrada HTTP (remoto)
+├── upload.php          Upload multipart de fotos; devuelve photo_token
+├── UploadedFiles.php   Gestión de uploads temporales y consumo por POIs
 ├── bootstrap.php       Carga config, DB, helpers y modelos
 ├── Dispatcher.php      Registro y enrutado de tools
 ├── JsonRpc.php         Framing NDJSON para stdio
@@ -228,6 +239,6 @@ mcp/
 └── tools/
     ├── TripTools.php       list_trips, search_trips, get_trip, create_trip, update_trip
     ├── RouteTools.php      plan_route, commit_route, create_route, update_route
-    ├── PoiTools.php        search_pois, create_poi, update_poi
+    ├── PoiTools.php        search_pois, create_poi, update_poi, inspect_uploaded_photo, cleanup_uploaded_photo
     └── LocationTools.php   search_location
 ```
