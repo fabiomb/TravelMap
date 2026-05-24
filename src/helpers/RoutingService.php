@@ -66,7 +66,7 @@ class RoutingService
      * @return array{geojson: array, distance_meters: int} GeoJSON Feature + distance
      * @throws Exception on failure
      */
-    public function getRoute(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport): array
+    public function getRoute(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport, array $via = []): array
     {
         if (!$this->isEnabled()) {
             throw new Exception('Routing service is not enabled');
@@ -74,18 +74,23 @@ class RoutingService
 
         // For plane/ship/aerial, generate a great-circle arc (no external service needed)
         if (in_array($transport, ['plane', 'ship', 'aerial'])) {
-            return $this->generateGreatCircleArc($fromLat, $fromLng, $toLat, $toLng);
+            error_log("[RoutingService] service=great_circle_arc transport=$transport");
+            $arc = $this->generateGreatCircleArc($fromLat, $fromLng, $toLat, $toLng);
+            $arc['service_type'] = 'great_circle_arc';
+            return $arc;
         }
 
         $serviceType = $this->getServiceType();
+        $viaCount = count($via);
+        error_log("[RoutingService] service=$serviceType transport=$transport via={$viaCount} from=$fromLat,$fromLng to=$toLat,$toLng");
 
         switch ($serviceType) {
             case 'brouter_online':
             case 'brouter_custom':
-                return $this->routeViaBRouter($fromLat, $fromLng, $toLat, $toLng, $transport, $serviceType);
+                return $this->routeViaBRouter($fromLat, $fromLng, $toLat, $toLng, $transport, $serviceType, $via);
 
             case 'google_maps':
-                return $this->routeViaGoogleMaps($fromLat, $fromLng, $toLat, $toLng, $transport);
+                return $this->routeViaGoogleMaps($fromLat, $fromLng, $toLat, $toLng, $transport, $via);
 
             default:
                 throw new Exception("Unknown routing service type: $serviceType");
@@ -95,7 +100,7 @@ class RoutingService
     /**
      * Route via BRouter API.
      */
-    private function routeViaBRouter(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport, string $serviceType): array
+    private function routeViaBRouter(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport, string $serviceType, array $via = []): array
     {
         $profile = self::$brouterProfiles[$transport] ?? 'car-fast';
 
@@ -105,8 +110,12 @@ class RoutingService
             $baseUrl = 'https://brouter.de/brouter';
         }
 
-        // BRouter API: /brouter?lonlats=lon1,lat1|lon2,lat2&profile=...&alternativeidx=0&format=geojson
-        $lonlats = sprintf('%s,%s|%s,%s', $fromLng, $fromLat, $toLng, $toLat);
+        // BRouter API: /brouter?lonlats=lon1,lat1|...|lon2,lat2&profile=...&alternativeidx=0&format=geojson
+        $lonlats = sprintf('%s,%s', $fromLng, $fromLat);
+        foreach ($via as $wp) {
+            $lonlats .= sprintf('|%s,%s', (float)($wp['lon'] ?? $wp['lng'] ?? 0), (float)($wp['lat'] ?? 0));
+        }
+        $lonlats .= sprintf('|%s,%s', $toLng, $toLat);
         $url = $baseUrl . '?' . http_build_query([
             'lonlats'        => $lonlats,
             'profile'        => $profile,
@@ -139,16 +148,19 @@ class RoutingService
             'properties' => $feature['properties'] ?? []
         ];
 
+        error_log("[RoutingService] brouter OK profile=$profile distance={$distance}m");
+
         return [
-            'geojson' => $geojson,
-            'distance_meters' => $distance
+            'geojson'         => $geojson,
+            'distance_meters' => $distance,
+            'service_type'    => $serviceType,
         ];
     }
 
     /**
      * Route via Google Maps Directions API.
      */
-    private function routeViaGoogleMaps(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport): array
+    private function routeViaGoogleMaps(float $fromLat, float $fromLng, float $toLat, float $toLng, string $transport, array $via = []): array
     {
         $apiKey = $this->settings->get('routing_google_api_key', '');
         if (empty($apiKey)) {
@@ -157,12 +169,19 @@ class RoutingService
 
         $mode = self::$googleModes[$transport] ?? 'driving';
 
-        $url = 'https://maps.googleapis.com/maps/api/directions/json?' . http_build_query([
+        $params = [
             'origin'      => "$fromLat,$fromLng",
             'destination' => "$toLat,$toLng",
             'mode'        => $mode,
-            'key'         => $apiKey
-        ]);
+            'key'         => $apiKey,
+        ];
+
+        if (!empty($via)) {
+            $waypoints = array_map(fn($wp) => ($wp['lat'] ?? 0) . ',' . ($wp['lon'] ?? $wp['lng'] ?? 0), $via);
+            $params['waypoints'] = implode('|', $waypoints);
+        }
+
+        $url = 'https://maps.googleapis.com/maps/api/directions/json?' . http_build_query($params);
 
         $response = $this->httpGet($url);
         $data = json_decode($response, true);
@@ -176,24 +195,33 @@ class RoutingService
         $overviewPolyline = $route['overview_polyline']['points'] ?? '';
         $coordinates = $this->decodeGooglePolyline($overviewPolyline);
 
-        // Get total distance from legs
+        // Get total distance and duration from legs
         $distance = 0;
+        $durationSeconds = 0;
         foreach ($route['legs'] as $leg) {
-            $distance += $leg['distance']['value'] ?? 0;
+            $distance        += $leg['distance']['value'] ?? 0;
+            $durationSeconds += $leg['duration']['value'] ?? 0;
         }
 
         $geojson = [
             'type' => 'Feature',
             'geometry' => [
-                'type' => 'LineString',
-                'coordinates' => $coordinates
+                'type'        => 'LineString',
+                'coordinates' => $coordinates,
             ],
-            'properties' => []
+            'properties' => [
+                'source' => 'google_maps',
+                'mode'   => $mode,
+            ],
         ];
 
+        error_log("[RoutingService] google_maps OK mode=$mode distance={$distance}m duration={$durationSeconds}s");
+
         return [
-            'geojson' => $geojson,
-            'distance_meters' => $distance
+            'geojson'          => $geojson,
+            'distance_meters'  => $distance,
+            'duration_seconds' => $durationSeconds,
+            'service_type'     => 'google_maps',
         ];
     }
 

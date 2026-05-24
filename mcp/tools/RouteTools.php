@@ -11,9 +11,10 @@ final class RouteTools
     public static function register(Dispatcher $d): void
     {
         $d->register('plan_route',
-            'Calculates a land route between two points using BRouter (brouter.de). ' .
+            'Calculates a land route between two points using the routing service configured in the site settings ' .
+            '(Google Maps Directions API or BRouter — falls back to BRouter if no service is configured). ' .
             'Saves the result to a server-side temp file and returns ONLY lightweight metadata ' .
-            '(distance, duration, temp_path). Use commit_route with that temp_path to persist the route to the DB. ' .
+            '(distance, duration, service_type, temp_path). Use commit_route with that temp_path to persist the route to the DB. ' .
             'Supported types: car, bike, walk, train, bus. ' .
             'NOT supported: plane, ship, aerial (non-land segments).',
         [
@@ -286,20 +287,12 @@ final class RouteTools
             $via[] = ['lat' => (float)$wp['lat'], 'lon' => (float)$wp['lon']];
         }
 
-        $result = BRouterClient::planRoute(
-            fromLat:       (float)$p['from_lat'],
-            fromLon:       (float)$p['from_lon'],
-            toLat:         (float)$p['to_lat'],
-            toLon:         (float)$p['to_lon'],
-            via:           $via,
-            transportType: $p['transport_type']
-        );
+        $fromLat   = (float)$p['from_lat'];
+        $fromLon   = (float)$p['from_lon'];
+        $toLat     = (float)$p['to_lat'];
+        $toLon     = (float)$p['to_lon'];
+        $transport = $p['transport_type'];
 
-        if (!$result['success']) {
-            throw new ToolException($result['error'], 'BROUTER_ERROR');
-        }
-
-        // Save GeoJSON to disk — does not pass through the LLM context
         $tempDir = ROOT_PATH . '/uploads/mcp_temp';
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0750, true);
@@ -308,30 +301,97 @@ final class RouteTools
         $tempAbsPath  = $tempDir . '/' . $tempFilename;
         $tempRelPath  = 'uploads/mcp_temp/' . $tempFilename;
 
-        if (file_put_contents($tempAbsPath, $result['geojson_data']) === false) {
+        // Use RoutingService (respects site settings: Google Maps or BRouter)
+        $routingService = new RoutingService(new Settings(getDB()));
+
+        if ($routingService->isEnabled()) {
+            try {
+                $result = $routingService->getRoute($fromLat, $fromLon, $toLat, $toLon, $transport, $via);
+            } catch (Exception $e) {
+                throw new ToolException($e->getMessage(), 'ROUTING_ERROR');
+            }
+
+            $coords       = $result['geojson']['geometry']['coordinates'] ?? [];
+            $geojsonData  = json_encode($result['geojson'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $distMeters   = $result['distance_meters'];
+            $serviceType  = $result['service_type'] ?? $routingService->getServiceType();
+            $durationMin  = isset($result['duration_seconds']) ? (int)round($result['duration_seconds'] / 60) : null;
+            $count        = count($coords);
+            $firstCoord   = $coords[0]          ?? [0, 0];
+            $lastCoord    = $coords[$count - 1] ?? [0, 0];
+            $lons = array_column($coords, 0);
+            $lats = array_column($coords, 1);
+
+            if (file_put_contents($tempAbsPath, $geojsonData) === false) {
+                throw new ToolException('Could not save the route temp file', 'SERVER_ERROR');
+            }
+
+            McpLogger::info('plan_route OK', [
+                'service'   => $serviceType,
+                'transport' => $transport,
+                'dist_km'   => round($distMeters / 1000, 2),
+                'duration'  => $durationMin,
+                'waypoints' => $count,
+                'temp'      => $tempRelPath,
+            ]);
+
+            return [
+                'temp_path'       => $tempRelPath,
+                'distance_km'     => round($distMeters / 1000, 2),
+                'distance_meters' => $distMeters,
+                'duration_min'    => $durationMin,
+                'waypoints_count' => $count,
+                'service_type'    => $serviceType,
+                'transport_type'  => $transport,
+                'start'           => ['lat' => $firstCoord[1], 'lon' => $firstCoord[0]],
+                'end'             => ['lat' => $lastCoord[1],  'lon' => $lastCoord[0]],
+                'bbox'            => $count > 0 ? [
+                    'minLat' => min($lats), 'maxLat' => max($lats),
+                    'minLon' => min($lons), 'maxLon' => max($lons),
+                ] : null,
+                'hint' => 'Use commit_route with trip_id and temp_path to persist the route to the DB.',
+            ];
+        }
+
+        // Fallback: BRouterClient when routing service is not configured in site settings
+        $brResult = BRouterClient::planRoute(
+            fromLat:       $fromLat,
+            fromLon:       $fromLon,
+            toLat:         $toLat,
+            toLon:         $toLon,
+            via:           $via,
+            transportType: $transport
+        );
+
+        if (!$brResult['success']) {
+            throw new ToolException($brResult['error'], 'BROUTER_ERROR');
+        }
+
+        if (file_put_contents($tempAbsPath, $brResult['geojson_data']) === false) {
             throw new ToolException('Could not save the route temp file', 'SERVER_ERROR');
         }
 
-        McpLogger::info('plan_route OK', [
-            'transport' => $p['transport_type'],
-            'profile'   => $result['profile'],
-            'dist_km'   => $result['distance_km'],
-            'duration'  => $result['duration_min'],
-            'waypoints' => $result['waypoints_count'],
+        McpLogger::info('plan_route OK (brouter fallback)', [
+            'transport' => $transport,
+            'profile'   => $brResult['profile'],
+            'dist_km'   => $brResult['distance_km'],
+            'duration'  => $brResult['duration_min'],
+            'waypoints' => $brResult['waypoints_count'],
             'temp'      => $tempRelPath,
         ]);
 
         return [
             'temp_path'       => $tempRelPath,
-            'distance_km'     => $result['distance_km'],
-            'distance_meters' => $result['distance_meters'],
-            'duration_min'    => $result['duration_min'],
-            'waypoints_count' => $result['waypoints_count'],
-            'profile'         => $result['profile'],
-            'transport_type'  => $p['transport_type'],
-            'start'           => $result['start'],
-            'end'             => $result['end'],
-            'bbox'            => $result['bbox'],
+            'distance_km'     => $brResult['distance_km'],
+            'distance_meters' => $brResult['distance_meters'],
+            'duration_min'    => $brResult['duration_min'],
+            'waypoints_count' => $brResult['waypoints_count'],
+            'service_type'    => 'brouter_online',
+            'profile'         => $brResult['profile'],
+            'transport_type'  => $transport,
+            'start'           => $brResult['start'],
+            'end'             => $brResult['end'],
+            'bbox'            => $brResult['bbox'],
             'hint'            => 'Use commit_route with trip_id and temp_path to persist the route to the DB.',
         ];
     }

@@ -104,6 +104,7 @@ try {
             'geojson'         => $result['geojson'],
             'distance_meters' => $result['distance_meters'],
             'transport_type'  => $transportType,
+            'service_type'    => $result['service_type'] ?? $routingService->getServiceType(),
             'color'           => $color,
             'name'            => $routeName
         ]

@@ -35,6 +35,7 @@ require_once ROOT_PATH . '/config/db.php';
 // Helpers
 require_once ROOT_PATH . '/src/helpers/FileHelper.php';
 require_once ROOT_PATH . '/src/helpers/BRouterClient.php';
+require_once ROOT_PATH . '/src/helpers/RoutingService.php';
 require_once ROOT_PATH . '/src/helpers/ExifExtractor.php';
 require_once ROOT_PATH . '/src/helpers/Geocoder.php';
 
