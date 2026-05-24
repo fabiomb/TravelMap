@@ -13,6 +13,7 @@ Aplicación web para crear y visualizar mapas interactivos de viajes con puntos 
 - Generación automática de rutas entre dos puntos (BRouter / Google Maps, opcional)
 - Gestión de usuarios y configuración global del sitio
 - Importadores: vuelos (FlightRadar CSV), estadías (Airbnb CSV), rutas (BRouter, GPX/OpenRailRouting), imágenes con geolocalización EXIF
+- Servidor MCP para crear viajes con servicios de LLM (AI)
 
 **Vista pública**
 - Mapa a pantalla completa con renderizado WebGL (MapLibre GL + deck.gl)
