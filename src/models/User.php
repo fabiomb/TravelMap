@@ -175,6 +175,35 @@ class User {
         return $errors;
     }
 
+    public function getMcpApiKey(int $userId): ?string
+    {
+        $stmt = $this->db->prepare('SELECT mcp_api_key FROM users WHERE id = :id');
+        $stmt->execute(['id' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['mcp_api_key'] ?? null;
+    }
+
+    public function setMcpApiKey(int $userId, ?string $key): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET mcp_api_key = :key WHERE id = :id');
+        $stmt->execute(['key' => $key, 'id' => $userId]);
+    }
+
+    public function findByMcpApiKey(string $key): ?array
+    {
+        if (!preg_match('/^tmk_[0-9a-f]{64}$/', $key)) {
+            return null;
+        }
+        $stmt = $this->db->prepare('SELECT id, username FROM users WHERE mcp_api_key = :key');
+        $stmt->execute(['key' => $key]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public static function generateApiKey(): string
+    {
+        return 'tmk_' . bin2hex(random_bytes(32));
+    }
+
     /**
      * Verifica las credenciales de login
      */

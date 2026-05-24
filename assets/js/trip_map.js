@@ -1807,6 +1807,7 @@ const resetImagePlaceholder = function() {
             const query = $searchInput.val().trim();
             if (!query) return;
 
+            console.log('[TravelMap Geocoding] service=nominatim query="' + query + '"');
             $.ajax({
                 url: BASE_URL + '/api/geocode.php',
                 data: { q: query },
@@ -1814,6 +1815,7 @@ const resetImagePlaceholder = function() {
             }).done(function (data) {
                 $results.empty().hide();
                 if (data && data.length > 0) {
+                    console.log('[TravelMap Geocoding] nominatim → ' + data.length + ' result(s) for "' + query + '"');
                     data.forEach(function (place) {
                         const item = $(`<a href="#" class="list-group-item list-group-item-action py-1 px-2">${place.display_name}</a>`);
                         item.on('click', function (e) {
@@ -1878,6 +1880,9 @@ const resetImagePlaceholder = function() {
             name: $('#autoRouteName').val()
         };
 
+        console.log('[TravelMap Routing] requesting route transport=' + postData.transport_type,
+            'from=' + postData.from_lat + ',' + postData.from_lng,
+            'to=' + postData.to_lat + ',' + postData.to_lng);
         $.ajax({
             url: BASE_URL + '/api/get_route_from_service.php',
             method: 'POST',
@@ -1967,7 +1972,11 @@ const resetImagePlaceholder = function() {
             map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
         }
 
-        console.log('Auto-route added:', data.transport_type, data.distance_meters, 'm');
+        const distKm = data.distance_meters ? (data.distance_meters / 1000).toFixed(1) + ' km' : 'N/A';
+        console.log('[TravelMap Routing] service=' + (data.service_type || 'unknown'),
+            '| transport=' + data.transport_type,
+            '| distance=' + distKm,
+            '| route_id=' + data.route_id);
     }
 
 })();

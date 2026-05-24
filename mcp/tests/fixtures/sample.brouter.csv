@@ -1,0 +1,9 @@
+Longitude	Latitude	Elevation	Distance	CostPerKm	ElevCost	TurnCost	NodeCost	InitialCost	WayTags	NodeTags	Time	Energy
+-411657	43468800	26	0	0	0	0	0	0	highway=residential	 	0	0
+-414200	43469500	28	285	100	0	0	0	0	highway=primary	 	41	1234
+-418900	43471200	32	760	100	0	0	0	0	highway=primary	 	110	3456
+-425100	43474800	45	1450	100	0	0	0	0	highway=secondary	 	209	6789
+-431500	43477200	51	2150	100	0	0	0	0	highway=secondary	 	310	9876
+-438900	43480100	38	2890	100	0	0	0	0	highway=primary	 	416	13456
+-446200	43482500	29	3650	100	0	0	0	0	highway=primary	 	526	17234
+-453600	43485100	22	4420	100	0	0	0	0	highway=residential	 	637	21345

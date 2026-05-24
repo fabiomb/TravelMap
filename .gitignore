@@ -23,10 +23,17 @@ docker-compose.yml
 docker-entrypoint.sh
 README_DOCKER.md
 Dockerfile
+docker/
+
+# ── Logs MCP ──────────────────────────────────────────────────────────────────
+logs/
 
 # ── Otros ─────────────────────────────────────────────────────────────────────
 CLAUDE.md
+docs/IDEAS.md
+.mcp.json
 assets/css/public_map_leaflet_backup.css
 assets/js/point_map_leaflet_backup.js
 assets/js/trip_map_leaflet_backup.js
 assets/js/public_map_leaflet_backup.js
+.claude/

@@ -76,54 +76,9 @@ class FileHelper {
             // Establecer permisos
             chmod($file_path, 0644);
             
-            // Aplicar redimensionamiento y compresión si está configurado
-            try {
-                // Cargar configuraciones desde la base de datos
-                require_once ROOT_PATH . '/config/db.php';
-                require_once ROOT_PATH . '/src/models/Settings.php';
-                
-                $conn = getDB();
-                $settingsModel = new Settings($conn);
-                
-                $max_width = (int)$settingsModel->get('image_max_width', 1920);
-                $max_height = (int)$settingsModel->get('image_max_height', 1080);
-                $quality = (int)$settingsModel->get('image_quality', 85);
-                
-                // Aplicar redimensionamiento y compresión
-                if (!self::resizeImage($file_path, $file_path, $max_width, $max_height, $quality)) {
-                    error_log('Advertencia: No se pudo redimensionar la imagen, pero se guardó el archivo original');
-                }
-            } catch (Exception $e) {
-                // Si hay error al cargar configuración o procesar, continuar con archivo original
-                error_log('Advertencia: Error al procesar imagen: ' . $e->getMessage());
-            }
-            
-            // Generar thumbnail
-            $thumbnail_path = null;
-            try {
-                $thumbs_folder = $destination_folder . '/thumbs';
-                $full_thumbs_folder = ROOT_PATH . '/' . $thumbs_folder;
-                
-                // Crear carpeta de thumbnails si no existe
-                if (!is_dir($full_thumbs_folder)) {
-                    mkdir($full_thumbs_folder, 0755, true);
-                }
-                
-                $thumb_file_path = $full_thumbs_folder . '/' . $unique_name;
-                $thumb_relative_path = $thumbs_folder . '/' . $unique_name;
-                
-                // Obtener configuración de thumbnail
-                $thumb_width = (int)$settingsModel->get('thumbnail_max_width', 400);
-                $thumb_height = (int)$settingsModel->get('thumbnail_max_height', 300);
-                $thumb_quality = (int)$settingsModel->get('thumbnail_quality', 80);
-                
-                if (self::createThumbnail($file_path, $thumb_file_path, $thumb_width, $thumb_height, $thumb_quality)) {
-                    $thumbnail_path = $thumb_relative_path;
-                }
-            } catch (Exception $e) {
-                error_log('Advertencia: Error al crear thumbnail: ' . $e->getMessage());
-            }
-            
+            // Aplicar redimensionamiento, compresión y thumbnail
+            [$thumbnail_path] = self::postProcessImage($file_path, $destination_folder, $unique_name);
+
             return [
                 'success' => true,
                 'path' => $relative_path,
@@ -593,8 +548,266 @@ class FileHelper {
     }
     
     /**
+     * Guarda una imagen a partir de un string base64.
+     *
+     * Valida MIME vía finfo, extensión, tamaño (pre y post-decode), hace un
+     * probe con GD para bloquear polyglots, y aplica el mismo post-proceso
+     * (resize + thumbnail) que uploadImage.
+     *
+     * @param string $base64        Base64 puro o data-URL (data:image/...;base64,...).
+     * @param string $originalName  Nombre de archivo original (sólo para extensión y logs).
+     * @param string $destFolder    Carpeta destino relativa a ROOT_PATH.
+     * @return array {success, path, thumbnail_path, filename, error?}
+     */
+    public static function saveImageFromBase64(
+        string $base64,
+        string $originalName,
+        string $destFolder = 'uploads/points'
+    ): array {
+        // 1. Strip data-URL prefix si existe
+        if (preg_match('/^data:image\/[^;]+;base64,/i', $base64)) {
+            $base64 = preg_replace('/^data:image\/[^;]+;base64,/i', '', $base64);
+        }
+
+        // 1b. Strip whitespace (handles line-wrapped base64 from tools/LLMs)
+        $base64 = preg_replace('/\s+/', '', $base64);
+
+        // 2. Cap pre-decode: ~14 MB → decoded ~10 MB
+        if (strlen($base64) > 14_000_000) {
+            return ['success' => false, 'error' => 'La imagen base64 supera el límite de tamaño (14 MB codificada)'];
+        }
+
+        // 3. Decodificar (estricto)
+        $bytes = base64_decode($base64, true);
+        if ($bytes === false) {
+            return ['success' => false, 'error' => 'INVALID_BASE64: la cadena no es base64 válida'];
+        }
+
+        // 4. Cap post-decode
+        $maxSize = defined('MAX_UPLOAD_SIZE') ? MAX_UPLOAD_SIZE : 8 * 1024 * 1024;
+        if (strlen($bytes) > $maxSize) {
+            $maxMb = round($maxSize / 1024 / 1024, 1);
+            return ['success' => false, 'error' => "La imagen decodificada supera {$maxMb} MB"];
+        }
+
+        // 5. Sanitizar nombre de archivo
+        $safeBasename = basename($originalName);
+        if ($safeBasename === '' || strpbrk($safeBasename, "\0\r\n") !== false) {
+            return ['success' => false, 'error' => 'Nombre de archivo inválido'];
+        }
+        $ext = strtolower(pathinfo($safeBasename, PATHINFO_EXTENSION));
+        $allowedExt = defined('ALLOWED_IMAGE_EXTENSIONS') ? ALLOWED_IMAGE_EXTENSIONS : ['jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowedExt, true)) {
+            return ['success' => false, 'error' => 'Extensión no permitida. Solo JPG, JPEG y PNG'];
+        }
+
+        // 6. Escribir a temp para finfo y GD probe
+        $tmpFile = tempnam(sys_get_temp_dir(), 'mcp_img_');
+        if ($tmpFile === false) {
+            return ['success' => false, 'error' => 'No se pudo crear archivo temporal'];
+        }
+
+        try {
+            if (file_put_contents($tmpFile, $bytes) === false) {
+                return ['success' => false, 'error' => 'Error al escribir archivo temporal'];
+            }
+
+            // 7. MIME check vía finfo
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo === false) {
+                return ['success' => false, 'error' => 'No se pudo inicializar finfo (extensión fileinfo no disponible)'];
+            }
+            $mimeReal = finfo_file($finfo, $tmpFile);
+            finfo_close($finfo);
+            $allowedMime = defined('ALLOWED_IMAGE_TYPES') ? ALLOWED_IMAGE_TYPES : ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!in_array($mimeReal, $allowedMime, true)) {
+                return ['success' => false, 'error' => 'UNSUPPORTED_MIME: tipo de imagen no permitido'];
+            }
+
+            // 8. GD probe: rechaza polyglots y archivos corruptos
+            $gdRes = @imagecreatefromstring($bytes);
+            if ($gdRes === false) {
+                return ['success' => false, 'error' => 'El archivo no es una imagen válida (fallo de decodificación GD)'];
+            }
+            imagedestroy($gdRes);
+
+            // 9. Generar nombre único
+            $uniqueName = self::generateUniqueFileName($ext);
+
+            // 10. Destino con realpath check (prevenir path traversal)
+            $fullDest = ROOT_PATH . '/' . $destFolder;
+            if (!is_dir($fullDest)) {
+                mkdir($fullDest, 0755, true);
+            }
+            $baseReal = realpath($fullDest);
+            if ($baseReal === false) {
+                return ['success' => false, 'error' => 'No se pudo resolver la carpeta de destino'];
+            }
+            $targetPath = $baseReal . '/' . $uniqueName;
+            if (dirname($targetPath) !== $baseReal) {
+                return ['success' => false, 'error' => 'Path traversal detectado en el destino'];
+            }
+            $relativePath = $destFolder . '/' . $uniqueName;
+
+            // 11. Escribir archivo final
+            if (file_put_contents($targetPath, $bytes) === false) {
+                return ['success' => false, 'error' => 'Error al guardar la imagen en el destino'];
+            }
+            chmod($targetPath, 0644);
+
+            // 12. Post-proceso (resize + thumbnail)
+            [$thumbnailPath] = self::postProcessImage($targetPath, $destFolder, $uniqueName);
+
+            return [
+                'success'        => true,
+                'path'           => $relativePath,
+                'thumbnail_path' => $thumbnailPath,
+                'filename'       => $uniqueName,
+            ];
+
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    /**
+     * Guarda una imagen ya existente en disco en la carpeta final de la app.
+     * Se usa para flujos en dos fases: upload temporal + commit por token.
+     *
+     * @param string $sourcePath    Ruta absoluta al archivo temporal.
+     * @param string $originalName  Nombre original para validar extensión.
+     * @param string $destFolder    Carpeta destino relativa a ROOT_PATH.
+     * @return array {success, path, thumbnail_path, filename, error?}
+     */
+    public static function saveImageFromPath(
+        string $sourcePath,
+        string $originalName,
+        string $destFolder = 'uploads/points'
+    ): array {
+        if (!is_file($sourcePath) || !is_readable($sourcePath)) {
+            return ['success' => false, 'error' => 'Archivo temporal no encontrado o ilegible'];
+        }
+
+        $maxSize = defined('MAX_UPLOAD_SIZE') ? MAX_UPLOAD_SIZE : 8 * 1024 * 1024;
+        $size = filesize($sourcePath);
+        if ($size === false || $size > $maxSize) {
+            $maxMb = round($maxSize / 1024 / 1024, 1);
+            return ['success' => false, 'error' => "La imagen supera {$maxMb} MB"];
+        }
+
+        $safeBasename = basename($originalName);
+        if ($safeBasename === '' || strpbrk($safeBasename, "\0\r\n") !== false) {
+            return ['success' => false, 'error' => 'Nombre de archivo inválido'];
+        }
+        $ext = strtolower(pathinfo($safeBasename, PATHINFO_EXTENSION));
+        $allowedExt = defined('ALLOWED_IMAGE_EXTENSIONS') ? ALLOWED_IMAGE_EXTENSIONS : ['jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowedExt, true)) {
+            return ['success' => false, 'error' => 'Extensión no permitida. Solo JPG, JPEG y PNG'];
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return ['success' => false, 'error' => 'No se pudo inicializar finfo (extensión fileinfo no disponible)'];
+        }
+        $mimeReal = finfo_file($finfo, $sourcePath);
+        finfo_close($finfo);
+        $allowedMime = defined('ALLOWED_IMAGE_TYPES') ? ALLOWED_IMAGE_TYPES : ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!in_array($mimeReal, $allowedMime, true)) {
+            return ['success' => false, 'error' => 'UNSUPPORTED_MIME: tipo de imagen no permitido'];
+        }
+
+        $bytes = file_get_contents($sourcePath);
+        if ($bytes === false) {
+            return ['success' => false, 'error' => 'No se pudo leer la imagen temporal'];
+        }
+        $gdRes = @imagecreatefromstring($bytes);
+        if ($gdRes === false) {
+            return ['success' => false, 'error' => 'El archivo no es una imagen válida (fallo de decodificación GD)'];
+        }
+        imagedestroy($gdRes);
+
+        $uniqueName = self::generateUniqueFileName($ext);
+        $fullDest = ROOT_PATH . '/' . $destFolder;
+        if (!is_dir($fullDest)) {
+            mkdir($fullDest, 0755, true);
+        }
+        $baseReal = realpath($fullDest);
+        if ($baseReal === false) {
+            return ['success' => false, 'error' => 'No se pudo resolver la carpeta de destino'];
+        }
+        $targetPath = $baseReal . '/' . $uniqueName;
+        if (!copy($sourcePath, $targetPath)) {
+            return ['success' => false, 'error' => 'Error al guardar la imagen en el destino'];
+        }
+        chmod($targetPath, 0644);
+
+        [$thumbnailPath] = self::postProcessImage($targetPath, $destFolder, $uniqueName);
+
+        return [
+            'success'        => true,
+            'path'           => $destFolder . '/' . $uniqueName,
+            'thumbnail_path' => $thumbnailPath,
+            'filename'       => $uniqueName,
+        ];
+    }
+
+    /**
+     * Aplica redimensionamiento y crea thumbnail.
+     * Compartido por uploadImage y saveImageFromBase64.
+     *
+     * @return array [thumbnail_relative_path|null]
+     */
+    private static function postProcessImage(string $filePath, string $destFolder, string $uniqueName): array
+    {
+        // Cargar settings
+        try {
+            require_once ROOT_PATH . '/config/db.php';
+            require_once ROOT_PATH . '/src/models/Settings.php';
+            $settingsModel = new Settings(getDB());
+            $maxWidth    = (int)$settingsModel->get('image_max_width',    1920);
+            $maxHeight   = (int)$settingsModel->get('image_max_height',   1080);
+            $quality     = (int)$settingsModel->get('image_quality',      85);
+            $thumbWidth  = (int)$settingsModel->get('thumbnail_max_width', 400);
+            $thumbHeight = (int)$settingsModel->get('thumbnail_max_height', 300);
+            $thumbQuality = (int)$settingsModel->get('thumbnail_quality',  80);
+        } catch (Exception $e) {
+            error_log('FileHelper::postProcessImage: no se pudo cargar settings: ' . $e->getMessage());
+            $maxWidth = 1920; $maxHeight = 1080; $quality = 85;
+            $thumbWidth = 400; $thumbHeight = 300; $thumbQuality = 80;
+        }
+
+        // Resize
+        try {
+            if (!self::resizeImage($filePath, $filePath, $maxWidth, $maxHeight, $quality)) {
+                error_log('FileHelper::postProcessImage: resize falló para ' . $filePath);
+            }
+        } catch (Exception $e) {
+            error_log('FileHelper::postProcessImage: error en resize: ' . $e->getMessage());
+        }
+
+        // Thumbnail
+        $thumbnailPath = null;
+        try {
+            $thumbsFolder    = $destFolder . '/thumbs';
+            $fullThumbsFolder = ROOT_PATH . '/' . $thumbsFolder;
+            if (!is_dir($fullThumbsFolder)) {
+                mkdir($fullThumbsFolder, 0755, true);
+            }
+            $thumbFilePath    = $fullThumbsFolder . '/' . $uniqueName;
+            $thumbRelPath     = $thumbsFolder . '/' . $uniqueName;
+            if (self::createThumbnail($filePath, $thumbFilePath, $thumbWidth, $thumbHeight, $thumbQuality)) {
+                $thumbnailPath = $thumbRelPath;
+            }
+        } catch (Exception $e) {
+            error_log('FileHelper::postProcessImage: error en thumbnail: ' . $e->getMessage());
+        }
+
+        return [$thumbnailPath];
+    }
+
+    /**
      * Corrige la orientación de una imagen basándose en los datos EXIF
-     * 
+     *
      * @param resource $image Recurso de imagen GD
      * @param int $orientation Valor de orientación EXIF
      * @return resource Recurso de imagen corregido

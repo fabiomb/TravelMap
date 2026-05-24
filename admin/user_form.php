@@ -124,7 +124,7 @@ $form_data = [
 
 <div class="row">
     <div class="col-lg-6">
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-person me-2" viewBox="0 0 16 16">
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 5-4 5 3 5 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664"/>
@@ -250,7 +250,7 @@ $form_data = [
                 <h6><?= __('forms.required_fields') ?></h6>
                 <ul>
                     <li><strong><?= __('users.username') ?>:</strong> <?= __('forms.unique_identifier') ?></li>
-                    <li><strong><?= __('users.password') ?>:</strong> 
+                    <li><strong><?= __('users.password') ?>:</strong>
                         <?= $is_edit ? __('forms.only_if_change') : __('forms.required_for_new') ?>
                     </li>
                 </ul>
@@ -283,5 +283,180 @@ $form_data = [
         </div>
     </div>
 </div>
+
+<?php if ($is_edit):
+    $mcpEndpoint = htmlspecialchars(BASE_URL . '/mcp/http.php');
+?>
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-key me-2" viewBox="0 0 16 16">
+                        <path d="M0 8a4 4 0 0 1 7.465-2H14L15 7l1 1-1 1-1 1-1-1-1 1-1-1-1 1-1-1-1 1-1-1v-1H7.465A4 4 0 0 1 0 8m4-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6"/>
+                    </svg>
+                    Acceso MCP
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    API Key permanente para el MCP remoto. No expira; regenerarla invalida la anterior inmediatamente.
+                </p>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">API Key</label>
+                    <div class="input-group input-group-sm">
+                        <input type="password" id="mcp-apikey-value" class="form-control font-monospace"
+                               readonly placeholder="No generada aún">
+                        <button class="btn btn-outline-secondary" type="button" id="mcp-apikey-toggle" title="Mostrar/ocultar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" id="mcp-apikey-copy" title="Copiar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="mcp-apikey-gen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-repeat me-1" viewBox="0 0 16 16">
+                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+                            <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/>
+                        </svg>
+                        <?php if ($userModel->getMcpApiKey($user_id)): ?>Regenerar API Key<?php else: ?>Generar API Key<?php endif; ?>
+                    </button>
+                    <span class="text-muted small ms-2">La clave anterior queda invalidada al instante</span>
+                </div>
+
+                <div class="p-2 bg-light rounded small">
+                    <strong class="d-block mb-1">Configuración del cliente MCP:</strong>
+                    <select id="mcp-client-select" class="form-select form-select-sm mb-2" style="font-size:11px">
+                        <option value="claude">Claude (Desktop / Code)</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="antigravity">Antigravity</option>
+                        <option value="jb">JetBrains</option>
+                        <option value="generic">Genérico</option>
+                    </select>
+
+                    <div class="mcp-client-block" data-client="claude">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            Desktop macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br>
+                            Desktop Win: <code>%APPDATA%\Claude\claude_desktop_config.json</code><br>
+                            Code proyecto: <code>.mcp.json</code> · global: <code>~/.claude/mcp.json</code>
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "url": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+
+                    <div class="mcp-client-block d-none" data-client="cursor">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            Global: <code>~/.cursor/mcp.json</code> · Proyecto: <code>.cursor/mcp.json</code>
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "url": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+
+                    <div class="mcp-client-block d-none" data-client="windsurf">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            <code>~/.codeium/windsurf/mcp_config.json</code>
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "serverUrl": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+
+                    <div class="mcp-client-block d-none" data-client="antigravity">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            Ver <code>antigravity.google/docs/mcp</code>
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "serverUrl": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+
+                    <div class="mcp-client-block d-none" data-client="jb">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            Settings → Tools → AI Assistant → Model Context Protocol
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "url": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+
+                    <div class="mcp-client-block d-none" data-client="generic">
+                        <div class="text-muted mb-1" style="font-size:10px">
+                            Cualquier cliente compatible con MCP 2024-11-05 (HTTP transport)
+                        </div>
+                        <pre class="mb-0" style="font-size:11px">{
+  "mcpServers": {
+    "travelmap": {
+      "url": "<?= $mcpEndpoint ?>",
+      "headers": {
+        "Authorization": "Bearer <span class="mcp-apikey-hint">…</span>"
+      }
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if ($is_edit): ?>
+<script>
+window.McpApiKeyCfg = {
+    apiUrl:    <?= json_encode(BASE_URL . '/api/mcp_apikey.php') ?>,
+    csrfToken: <?= json_encode(csrf_token()) ?>,
+};
+</script>
+<script src="<?= ASSETS_URL ?>/js/admin_mcp_apikey.js?v=<?= $version ?>"></script>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

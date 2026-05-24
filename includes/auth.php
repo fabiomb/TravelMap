@@ -35,13 +35,13 @@ function login($username, $password) {
         if ($user) {
             // Regenerar ID de sesión para prevenir session fixation
             session_regenerate_id(true);
-            
+
             // Guardar información del usuario en sesión
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['logged_in'] = true;
             $_SESSION['last_activity'] = time();
-            
+
             return true;
         }
         
@@ -123,10 +123,36 @@ function get_current_username() {
 
 /**
  * Obtiene el ID del usuario actual
- * 
+ *
  * @return int|null ID del usuario o null si no está logueado
  */
 function get_current_user_id() {
     start_session();
     return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Devuelve el token CSRF de la sesión actual, creándolo si no existe.
+ */
+function csrf_token(): string {
+    start_session();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Verifica que el token CSRF recibido coincida con el de la sesión.
+ * Falla con 403 si no coincide.
+ */
+function csrf_verify(string $token): void {
+    start_session();
+    $expected = $_SESSION['csrf_token'] ?? '';
+    if (!$expected || !hash_equals($expected, $token)) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'CSRF token inválido']);
+        exit;
+    }
 }
