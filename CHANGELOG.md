@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.0.292] – 2026-05-24
+### MCP Server
+- Nuevo servidor MCP integrado en `mcp/` que expone viajes, rutas y POIs como tools invocables por cualquier cliente compatible con el protocolo MCP 2024-11-05 (Claude Desktop, Claude Code, Cursor, Windsurf, JetBrains AI, etc.)
+- **Transporte stdio** (`mcp/server.php`): ejecución como proceso local, comunicación NDJSON por stdin/stdout, sin autenticación requerida
+- **Transporte HTTP** (`mcp/http.php`): endpoint POST JSON-RPC para clientes remotos con autenticación Bearer API Key o sesión web admin; límite de cuerpo 15 MB; CORS configurable vía `MCP_ALLOWED_ORIGINS`
+- **15 tools** agrupadas en 4 módulos:
+  - **TripTools**: `list_trips`, `search_trips`, `get_trip`, `create_trip`, `update_trip`
+  - **RouteTools**: `plan_route` (calcula via BRouter y guarda temporal), `commit_route` (persiste temporal en BD), `create_route` (desde coordenadas estructuradas), `update_route`
+  - **PoiTools**: `search_pois`, `create_poi` (con soporte `photo_token` para auto-rellenar coords/fecha desde EXIF), `update_poi`, `inspect_uploaded_photo`, `cleanup_uploaded_photo`
+  - **LocationTools**: `search_location` (geocodificación via Nominatim)
+- **Upload de fotos** vía `mcp/upload.php`: multipart/form-data, devuelve `photo_token` temporal; binarios nunca viajan por JSON-RPC
+- **API Key por usuario**: columna `mcp_api_key` en tabla `users` (formato `tmk_` + 64 hex chars); gestión desde Admin → Usuarios → card "Acceso MCP" con generación, regeneración y copiado al portapapeles
+- **UI admin** (`assets/js/admin_mcp_apikey.js`): card con selector de cliente (Claude, Cursor, Windsurf, JetBrains, Genérico) que genera JSON de configuración listo para copiar
+- **Endpoint API** `api/mcp_apikey.php` para generación/consulta de API Keys desde la UI admin
+- **Migración 024** (`install/migrations/024_mcp_api_key.php`): agrega columna `mcp_api_key` con índice único a la tabla `users`
+- **Logging** en `logs/mcp.log` con clase `mcp/Logger.php`; payloads grandes se loguean por tamaño, nunca con contenido completo
+- **Tests** en `mcp/tests/`: verifican handshake, presencia de todas las tools, CRUD básico y casos de seguridad (token inválido, viaje inexistente, JSON malformado)
+- Arquitectura interna: `Dispatcher.php` (registro/enrutado de tools), `JsonRpc.php` (framing NDJSON), `Schema.php` (validación JSON Schema), `UploadedFiles.php` (gestión de uploads temporales), `bootstrap.php` (carga de config, DB y modelos)
+
 ## [1.0.267] – 2026-05-08
 ### Automated Routing Module
 - New optional routing service to generate routes between two points automatically
