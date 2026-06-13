@@ -179,14 +179,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
 
-            <div class="text-center mt-4">
-                <small class="text-muted">
-                    ¿Primera vez? Ejecuta 
-                    <a href="<?= BASE_URL ?>/install/seed_admin.php" class="text-decoration-none">
-                        seed_admin.php
-                    </a>
-                </small>
-            </div>
         </div>
     </div>
 
