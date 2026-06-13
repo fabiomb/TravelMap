@@ -40,6 +40,14 @@ try {
     $plannedTrips = $tripModel->getAll('start_date DESC', 'planned');
     $allTrips = array_merge($publishedTrips, $plannedTrips);
 
+    // Los viajes privados solo son visibles para el administrador logueado
+    $isAdmin = !empty($accessInfo['is_admin']);
+    if (!$isAdmin) {
+        $allTrips = array_filter($allTrips, function ($trip) {
+            return empty($trip['is_private']);
+        });
+    }
+
     // Filtrar viajes según contraseña compartida
     $trips = [];
     if ($allowedTrips === '*') {

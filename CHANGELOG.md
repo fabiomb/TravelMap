@@ -1,5 +1,11 @@
 # Changelog
 
+
+## [1.0.294] - 2026-06-13
+- Elimino enlace a seed_admin del login, eso debería figurar sólo en las instrucciones y borrarse apenas se crea un usuario, hay que mejorar el flow de instalación
+- Agregada la opción de viaje privado
+
+
 ## [1.0.292] – 2026-05-24
 ### MCP Server
 - Nuevo servidor MCP integrado en `mcp/` que expone viajes, rutas y POIs como tools invocables por cualquier cliente compatible con el protocolo MCP 2024-11-05 (Claude Desktop, Claude Code, Cursor, Windsurf, JetBrains AI, etc.)

@@ -254,6 +254,8 @@
     "published": "Published",
     "planned": "Planned",
     "draft": "Draft",
+    "is_private": "Private trip",
+    "is_private_help": "If checked, the trip will only be visible to you (logged-in admin), regardless of its status.",
     "status_help": "Published trips are shown on the map, draft trips are hidden",
     "show_routes_in_timeline": "Routes in timeline",
     "timeline_routes_default": "Default (global setting)",

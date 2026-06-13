@@ -254,6 +254,8 @@
     "published": "Publicado",
     "planned": "Planificado",
     "draft": "Borrador",
+    "is_private": "Viaje privado",
+    "is_private_help": "Si se marca, el viaje solo será visible para ti (administrador logueado), independientemente de su estado.",
     "status_help": "Los viajes publicados se muestran en el mapa, los borradores están ocultos",
     "show_routes_in_timeline": "Rutas en el timeline",
     "timeline_routes_default": "Por defecto (configuración global)",

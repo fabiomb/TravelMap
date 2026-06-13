@@ -23,7 +23,7 @@ class Trip {
         try {
             $sql = "SELECT
                         id, title, description, start_date, end_date,
-                        color_hex, status, show_routes_in_timeline, created_at, updated_at
+                        color_hex, status, is_private, show_routes_in_timeline, created_at, updated_at
                     FROM trips";
 
             if ($status !== null) {
@@ -112,8 +112,8 @@ class Trip {
             $end_date = isset($data['end_date']) && ($data['end_date'] !== '' && $data['end_date'] !== '0000-00-00') ? $data['end_date'] : null;
 
             $stmt = $this->db->prepare('
-                INSERT INTO trips (title, description, start_date, end_date, color_hex, status, show_routes_in_timeline)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trips (title, description, start_date, end_date, color_hex, status, is_private, show_routes_in_timeline)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ');
 
             $result = $stmt->execute([
@@ -123,6 +123,7 @@ class Trip {
                 $end_date,
                 $data['color_hex'] ?? '#3388ff',
                 $data['status'] ?? 'draft',
+                !empty($data['is_private']) ? 1 : 0,
                 array_key_exists('show_routes_in_timeline', $data) ? $data['show_routes_in_timeline'] : null
             ]);
 
@@ -151,7 +152,7 @@ class Trip {
             }
 
             // Build dynamic update query based on provided fields
-            $allowedFields = ['title', 'description', 'start_date', 'end_date', 'color_hex', 'status', 'show_routes_in_timeline'];
+            $allowedFields = ['title', 'description', 'start_date', 'end_date', 'color_hex', 'status', 'is_private', 'show_routes_in_timeline'];
             $setClauses = [];
             $values = [];
 

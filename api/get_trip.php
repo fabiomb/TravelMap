@@ -42,8 +42,11 @@ try {
         throw new Exception('Viaje no encontrado');
     }
 
-    // Verificar si está publicado (opcional, dependiendo de si queremos que sea visible o no)
-    // if ($trip['status'] !== 'published') { ... } 
+    // Los viajes privados solo son visibles para el administrador logueado
+    if (!empty($trip['is_private']) && empty($accessInfo['is_admin'])) {
+        http_response_code(403);
+        throw new Exception('Acceso denegado');
+    }
     
     // Obtener rutas del viaje
     $routes = $routeModel->getByTripId($tripId);

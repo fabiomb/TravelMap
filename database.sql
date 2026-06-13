@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS trips (
     end_date DATE,
     color_hex VARCHAR(7) DEFAULT '#3388ff',
     status ENUM('draft', 'published', 'planned') DEFAULT 'draft',
+    is_private TINYINT(1) NOT NULL DEFAULT 0,
     show_routes_in_timeline TINYINT(1) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

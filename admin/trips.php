@@ -236,6 +236,14 @@ if ($tripTagsEnabled) {
                                         <?php else: ?>
                                             <span class="badge badge-secondary"><?= __('trips.draft') ?></span>
                                         <?php endif; ?>
+                                        <?php if (!empty($trip['is_private'])): ?>
+                                            <span class="badge badge-dark" title="<?= __('trips.is_private_help') ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" class="bi bi-lock" viewBox="0 0 16 16" style="vertical-align: -1px;">
+                                                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"/>
+                                                </svg>
+                                                <?= __('trips.is_private') ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span class="text-muted"><?= $tripModel->countPoints($trip['id']) ?></span>

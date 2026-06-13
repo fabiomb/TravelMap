@@ -63,6 +63,12 @@ if (!$trip) {
     die("Trip not found");
 }
 
+// Los viajes privados solo son visibles para el administrador logueado
+if (!empty($trip['is_private']) && empty($accessInfo['is_admin'])) {
+    header("HTTP/1.0 403 Forbidden");
+    die("You do not have access to this trip");
+}
+
 // Obtener datos
 $routes = $routeModel->getByTripId($tripId);
 $tags = $tripTagModel->getByTripId($tripId);

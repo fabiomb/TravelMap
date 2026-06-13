@@ -56,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'end_date' => $_POST['end_date'] ?? null,
         'color_hex' => $_POST['color_hex'] ?? '#3388ff',
         'status' => $_POST['status'] ?? 'draft',
+        'is_private' => isset($_POST['is_private']) ? 1 : 0,
         'show_routes_in_timeline' => $timelineValue,
     ];
 
@@ -145,7 +146,8 @@ $form_data = $trip ?? [
     'start_date' => $_POST['start_date'] ?? '',
     'end_date' => $_POST['end_date'] ?? '',
     'color_hex' => $_POST['color_hex'] ?? '#3388ff',
-    'status' => $_POST['status'] ?? 'draft'
+    'status' => $_POST['status'] ?? 'draft',
+    'is_private' => $_POST['is_private'] ?? 0
 ];
 ?>
 
@@ -317,6 +319,27 @@ $form_data = $trip ?? [
                                 <div class="invalid-feedback"><?= htmlspecialchars($errors['status']) ?></div>
                             <?php endif; ?>
                             <small class="form-text text-muted"><?= __('forms.public_and_planned_shown') ?></small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Privacidad -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="is_private"
+                                       name="is_private"
+                                       value="1"
+                                       <?= !empty($form_data['is_private']) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="is_private">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-lock me-1" viewBox="0 0 16 16">
+                                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"/>
+                                    </svg>
+                                    <?= __('trips.is_private') ?>
+                                </label>
+                            </div>
+                            <small class="form-text text-muted"><?= __('trips.is_private_help') ?></small>
                         </div>
                     </div>
 
