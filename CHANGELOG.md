@@ -1,6 +1,12 @@
 # Changelog
 
 
+## [1.0.295] - 2026-07-26
+- El panel de fotografías de `trip.php` ahora se puede minimizar y redimensionar (antes tenía un alto fijo); la preferencia se guarda en `localStorage`
+- Cuando un viaje no tiene fotografías se muestra un estado vacío con icono y texto en lugar de un recuadro en blanco, pensado sobre todo para viajes planificados
+- `admin/trip_edit_map.php` ordena las rutas por fecha de inicio (las que no tienen fecha van al final) y, en segundo término, por su orden de creación
+
+
 ## [1.0.294] - 2026-06-13
 - Elimino enlace a seed_admin del login, eso debería figurar sólo en las instrucciones y borrarse apenas se crea un usuario, hay que mejorar el flow de instalación
 - Agregada la opción de viaje privado

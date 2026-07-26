@@ -6,7 +6,11 @@
       "mcp__TravelMap__create_poi",
       "mcp__TravelMap__create_route",
       "mcp__TravelMap__plan_route",
-      "mcp__TravelMap__commit_route"
+      "mcp__TravelMap__commit_route",
+      "Bash(rg -n \"existingRoutes|routesList|renderRoutes|routesCount\" assets/js/*.js admin/trip_edit_map.php)",
+      "Bash(/c/xampp/php/php.exe -l version.php)",
+      "Bash(git -C /c/xampp/htdocs/TravelMap status --short)",
+      "mcp__plugin_engram_engram__mem_save"
     ]
   }
 }

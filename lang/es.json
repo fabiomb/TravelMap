@@ -299,7 +299,12 @@
     "tag_too_long": "La etiqueta es demasiado larga (máximo 50 caracteres)",
     "tag_invalid_chars": "La etiqueta contiene caracteres inválidos (solo letras, números, espacios y guiones)",
     "too_many_tags": "Demasiadas etiquetas (máximo 10)",
-    "no_photos": "No hay fotos disponibles para este viaje.",
+    "photos": "Fotografías",
+    "no_photos_title": "Todavía no hay fotografías",
+    "no_photos": "Aún no hay fotografías de los destinos de este viaje.",
+    "collapse_photos": "Minimizar fotografías",
+    "expand_photos": "Mostrar fotografías",
+    "resize_photos": "Arrastrar para redimensionar el panel de fotografías",
     "quick_actions": "Acciones Rápidas",
     "manage_points": "Gestionar Puntos",
     "import_exif": "Importar desde Fotos (EXIF)"

@@ -299,7 +299,12 @@
     "tag_too_long": "Tag is too long (maximum 50 characters)",
     "tag_invalid_chars": "Tag contains invalid characters (only letters, numbers, spaces and hyphens allowed)",
     "too_many_tags": "Too many tags (maximum 10)",
-    "no_photos": "No photos available for this trip.",
+    "photos": "Photos",
+    "no_photos_title": "No photos yet",
+    "no_photos": "There are no photos of this trip's destinations yet.",
+    "collapse_photos": "Collapse photos",
+    "expand_photos": "Expand photos",
+    "resize_photos": "Drag to resize the photos panel",
     "quick_actions": "Quick Actions",
     "manage_points": "Manage Points",
     "import_exif": "Import from Photos (EXIF)"

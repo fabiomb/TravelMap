@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initInteractions();
     initTimeline();
     initCarouselDrag();
+    initMediaPanel();
 
     // Auto-update units if needed
     if (window.UnitManager) {
@@ -816,6 +817,114 @@ window.scrollCarousel = function (direction) {
         behavior: 'smooth'
     });
 };
+
+// ==================== MEDIA PANEL (collapse + resize) ====================
+
+const MEDIA_HEIGHT_STORAGE_KEY    = 'travelmap_trip_media_height';
+const MEDIA_COLLAPSED_STORAGE_KEY = 'travelmap_trip_media_collapsed';
+const MEDIA_MIN_HEIGHT     = 96;  // header + resizer + a sliver of content
+const MEDIA_MIN_MAP_HEIGHT = 160; // never let the map be squeezed below this
+
+function initMediaPanel() {
+    const media   = document.getElementById('tripMedia');
+    const toggle  = document.getElementById('mediaToggle');
+    const resizer = document.getElementById('mediaResizer');
+    const visuals = document.querySelector('.trip-visuals');
+    const mapEl   = document.getElementById('tripMap');
+
+    if (!media || !toggle || !visuals || !mapEl) return;
+
+    const desktop = window.matchMedia('(min-width: 992px)');
+
+    let collapsed = localStorage.getItem(MEDIA_COLLAPSED_STORAGE_KEY) === '1';
+    let height    = parseFloat(localStorage.getItem(MEDIA_HEIGHT_STORAGE_KEY)) || null;
+
+    function clampHeight(px) {
+        const max = Math.max(MEDIA_MIN_HEIGHT, visuals.getBoundingClientRect().height - MEDIA_MIN_MAP_HEIGHT);
+        return Math.min(Math.max(px, MEDIA_MIN_HEIGHT), max);
+    }
+
+    function applyHeight(px) {
+        media.style.flex   = `0 0 ${px}px`;
+        media.style.height = `${px}px`;
+        mapEl.style.flex   = '1 1 auto';
+        mapEl.style.height = 'auto';
+    }
+
+    function clearHeight() {
+        media.style.flex   = '';
+        media.style.height = '';
+        mapEl.style.flex   = '';
+        mapEl.style.height = '';
+    }
+
+    function render() {
+        media.classList.toggle('is-collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+
+        const label = collapsed ? toggle.dataset.labelExpand : toggle.dataset.labelCollapse;
+        if (label) toggle.setAttribute('title', label);
+
+        if (!collapsed && desktop.matches && height) {
+            applyHeight(clampHeight(height));
+        } else {
+            // Collapsed or mobile: let the stylesheet drive the layout
+            clearHeight();
+        }
+
+        notifyMapResize();
+    }
+
+    toggle.addEventListener('click', () => {
+        collapsed = !collapsed;
+        localStorage.setItem(MEDIA_COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0');
+        render();
+    });
+
+    if (resizer) {
+        let isResizing  = false;
+        let startY      = 0;
+        let startHeight = 0;
+
+        resizer.addEventListener('mousedown', (e) => {
+            if (!desktop.matches || collapsed) return;
+            isResizing  = true;
+            startY      = e.clientY;
+            startHeight = media.getBoundingClientRect().height;
+            resizer.classList.add('is-resizing');
+            document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            // Dragging up grows the panel, so the delta is inverted
+            height = clampHeight(startHeight - (e.clientY - startY));
+            applyHeight(height);
+            notifyMapResize();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isResizing) return;
+            isResizing = false;
+            resizer.classList.remove('is-resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            localStorage.setItem(MEDIA_HEIGHT_STORAGE_KEY, height);
+            notifyMapResize();
+        });
+    }
+
+    // Re-apply sizing when crossing the desktop breakpoint
+    if (typeof desktop.addEventListener === 'function') {
+        desktop.addEventListener('change', render);
+    } else if (typeof desktop.addListener === 'function') {
+        desktop.addListener(render);
+    }
+
+    render();
+}
 
 // ==================== PANEL RESIZER ====================
 

@@ -100,7 +100,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['routes_data'])) {
 }
 
 // Obtener rutas existentes
-$routes = $routeModel->getByTripId($trip_id);
+$routes = array_values($routeModel->getByTripId($trip_id));
+
+// Ordenar por fecha de inicio (las que no tienen fecha van al final) y,
+// en segundo término, por el orden de creación almacenado.
+usort($routes, function ($a, $b) {
+    $dateA = !empty($a['start_datetime']) ? strtotime($a['start_datetime']) : null;
+    $dateB = !empty($b['start_datetime']) ? strtotime($b['start_datetime']) : null;
+
+    if ($dateA !== $dateB) {
+        if ($dateA === null) return 1;
+        if ($dateB === null) return -1;
+        return $dateA <=> $dateB;
+    }
+
+    $createdA = strtotime($a['created_at'] ?? '') ?: 0;
+    $createdB = strtotime($b['created_at'] ?? '') ?: 0;
+
+    return [$createdA, (int) $a['id']] <=> [$createdB, (int) $b['id']];
+});
 
 // Obtener puntos del viaje
 $points = $pointModel->getAll($trip_id);

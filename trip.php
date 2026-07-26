@@ -360,41 +360,67 @@ $statsIcons = [
         <div class="trip-visuals">
             <div id="tripMap" class="trip-map"></div>
             
-            <div class="trip-media">
-                <?php 
-                $pointsWithImages = array_filter($processedPoints, function($p) { return !empty($p['image_url']); });
-                // Sort by visit_date (oldest first on left, newest last on right)
-                usort($pointsWithImages, function($a, $b) {
-                    $dateA = strtotime($a['visit_date'] ?? '1970-01-01 00:00:00');
-                    $dateB = strtotime($b['visit_date'] ?? '1970-01-01 00:00:00');
-                    return $dateA - $dateB;
-                });
+            <?php
+            $pointsWithImages = array_filter($processedPoints, function($p) { return !empty($p['image_url']); });
+            // Sort by visit_date (oldest first on left, newest last on right)
+            usort($pointsWithImages, function($a, $b) {
+                $dateA = strtotime($a['visit_date'] ?? '1970-01-01 00:00:00');
+                $dateB = strtotime($b['visit_date'] ?? '1970-01-01 00:00:00');
+                return $dateA - $dateB;
+            });
+            ?>
+            <div class="trip-media<?= empty($pointsWithImages) ? ' is-empty' : '' ?>" id="tripMedia">
+                <div class="media-resizer" id="mediaResizer" title="<?= __('trips.resize_photos') ?>"></div>
 
-                if (!empty($pointsWithImages)): 
-                ?>
-                <button class="carousel-nav prev" onclick="scrollCarousel(-1)">&#10094;</button>
-                <div class="media-carousel">
-                    <!-- Simple horizontal scroll carousel -->
-                    <?php foreach ($pointsWithImages as $p): ?>
-                        <div class="media-item"
-                             data-point-id="<?= (int)$p['id'] ?>"
-                             data-img="<?= htmlspecialchars($p['image_url']) ?>"
-                             data-title="<?= htmlspecialchars($p['title']) ?>"
-                             data-desc="<?= htmlspecialchars($p['description'] ?? '') ?>"
-                             onclick="viewImageFromData(this)">
-                            <div class="media-photo">
-                                <img src="<?= htmlspecialchars($p['thumbnail_url'] ?? $p['image_url']) ?>" alt="<?= htmlspecialchars($p['title']) ?>" loading="lazy">
+                <div class="media-header">
+                    <button type="button"
+                            class="media-toggle"
+                            id="mediaToggle"
+                            aria-expanded="true"
+                            aria-controls="mediaBody"
+                            data-label-collapse="<?= __('trips.collapse_photos') ?>"
+                            data-label-expand="<?= __('trips.expand_photos') ?>"
+                            title="<?= __('trips.collapse_photos') ?>">
+                        <svg class="media-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+                        </svg>
+                        <span class="media-header-title"><?= __('trips.photos') ?></span>
+                        <span class="media-header-count"><?= count($pointsWithImages) ?></span>
+                    </button>
+                </div>
+
+                <div class="media-body" id="mediaBody">
+                    <?php if (!empty($pointsWithImages)): ?>
+                    <button class="carousel-nav prev" onclick="scrollCarousel(-1)">&#10094;</button>
+                    <div class="media-carousel">
+                        <!-- Simple horizontal scroll carousel -->
+                        <?php foreach ($pointsWithImages as $p): ?>
+                            <div class="media-item"
+                                 data-point-id="<?= (int)$p['id'] ?>"
+                                 data-img="<?= htmlspecialchars($p['image_url']) ?>"
+                                 data-title="<?= htmlspecialchars($p['title']) ?>"
+                                 data-desc="<?= htmlspecialchars($p['description'] ?? '') ?>"
+                                 onclick="viewImageFromData(this)">
+                                <div class="media-photo">
+                                    <img src="<?= htmlspecialchars($p['thumbnail_url'] ?? $p['image_url']) ?>" alt="<?= htmlspecialchars($p['title']) ?>" loading="lazy">
+                                </div>
+                                <span class="media-caption"><?= htmlspecialchars($p['title']) ?></span>
                             </div>
-                            <span class="media-caption"><?= htmlspecialchars($p['title']) ?></span>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <button class="carousel-nav next" onclick="scrollCarousel(1)">&#10095;</button>
+                    <?php else: ?>
+                    <div class="no-media">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+                            <circle cx="8.5" cy="10" r="1.5"/>
+                            <path d="m21 15-4.5-4.5L7 20"/>
+                        </svg>
+                        <p class="no-media-title"><?= __('trips.no_photos_title') ?></p>
+                        <p class="no-media-hint"><?= __('trips.no_photos') ?></p>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <button class="carousel-nav next" onclick="scrollCarousel(1)">&#10095;</button>
-                <?php else: ?>
-                <div class="no-media">
-                    <p><?= __('trips.no_photos') ?></p>
-                </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
