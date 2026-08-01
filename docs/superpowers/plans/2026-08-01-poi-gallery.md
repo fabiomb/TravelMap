@@ -24,7 +24,9 @@ if (PHP_SAPI !== 'cli') {
 }
 ```
 - **Textos siempre por i18n.** Ningún string visible hardcodeado; claves nuevas en `lang/en.json` **y** `lang/es.json`, en la misma tarea que las usa.
-- **Comentarios de código en español**, siguiendo el código existente. Identificadores, nombres de tabla y de columna en inglés, también siguiendo lo existente.
+- **Comentarios de código en español. Identificadores en inglés. Sin excepciones.** Esto incluye variables locales, parámetros, funciones auxiliares, nombres de tabla y de columna. La evidencia es contundente: el código preexistente de `src/` tiene 267 identificadores en inglés y ninguno en español.
+
+  **Los bloques de código de este plan son anteriores a esta regla y contienen identificadores en español** (`$fila`, `$portada`, `responder_error()`, `exigir_poi()`, `imagenes`, `grilla`, y demás). Son guías estructurales, no texto a copiar literalmente: **traducí todo identificador al inglés al implementarlo**. Lo que sí se copia verbatim son las firmas públicas, los nombres de tabla y columna, las claves de i18n, las claves de respuesta JSON y los valores literales — todo eso ya está en inglés y otras tareas depende de ello.
 - **Commits convencionales**, sin atribución de IA.
 - **Rama:** `feat/poi-gallery`.
 - **Ruta del proyecto:** `C:\xampp\htdocs\TravelMap`. XAMPP, PHP en `C:\xampp\php\php.exe`.
