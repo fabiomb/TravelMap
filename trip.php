@@ -411,6 +411,10 @@ $statsIcons = [
                                  onclick="viewImageFromData(this)">
                                 <div class="media-photo">
                                     <img src="<?= htmlspecialchars($p['thumbnail_url'] ?? $p['image_url']) ?>" alt="<?= htmlspecialchars($p['title']) ?>" loading="lazy">
+                                    <?php $imgCount = count($p['images'] ?? []); ?>
+                                    <?php if ($imgCount > 1): ?>
+                                        <span class="media-count-badge"><?= $imgCount ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <span class="media-caption"><?= htmlspecialchars($p['title']) ?></span>
                             </div>
@@ -449,6 +453,7 @@ $statsIcons = [
                 <div id="lightboxDesc" class="lightbox-description"></div>
             </div>
         </div>
+        <span class="lightbox-counter" id="lightboxCounter" style="display: none;"></span>
         <span class="lightbox-hint"><?= __('map.click_anywhere_to_close') ?></span>
     </div>
 

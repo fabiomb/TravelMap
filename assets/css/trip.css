@@ -948,3 +948,19 @@ body.trip-page {
         opacity: 1;
     }
 }
+
+/* ── Indicadores de galería ──────────────────────────────────────────────── */
+.media-photo {
+    position: relative;
+}
+
+.media-count-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, .65);
+    color: #fff;
+    font-size: .7rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
