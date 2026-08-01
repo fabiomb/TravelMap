@@ -66,6 +66,18 @@ produciría SQL inválido en vez de un error claro si alguna vez llegara vacío.
 
 ## Cosmético
 
+**`viewImageFromData()` en `assets/js/trip_single.js` deja una variable muerta.**
+`const url = element.dataset.img;` ya no se usa: la búsqueda pasó a hacerse por
+`pointId` + `localIndex`.
+
+**Las flechas del lightbox de `trip.php` no se ocultan con una sola imagen.**
+En `index.php` sí se ocultan. No molesta: `changeImage` da la vuelta sobre la
+misma imagen.
+
+**`index.php` no usa el patrón `?? 'fallback'`** en las dos claves nuevas de i18n
+del lightbox, a diferencia del resto del archivo. Ambas claves existen en los dos
+idiomas, así que no hay riesgo funcional.
+
 **`idx_poi_sort` no es `UNIQUE`.** El orden dentro de un POI se garantiza sólo a
 nivel aplicación, en `PoiImage::reorder()`. Un `sort_order` duplicado no rompe
 nada: el desempate por `id` deja el orden estable.

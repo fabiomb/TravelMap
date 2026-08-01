@@ -28,6 +28,35 @@ Devuelve todos los viajes publicados con sus rutas, puntos de interés y tags.
 }
 ```
 
+#### Estructura de un punto de interés
+
+Cada elemento de `points` incluye su galería de imágenes:
+
+```json
+{
+  "id": 12,
+  "title": "...",
+  "description": "...",
+  "type": "visit",
+  "image_url": "https://.../uploads/points/foto1.jpg",
+  "thumbnail_url": "https://.../uploads/points/thumbs/foto1.jpg",
+  "images": [
+    {
+      "id": 34,
+      "url": "https://.../uploads/points/foto1.jpg",
+      "thumbnail_url": "https://.../uploads/points/thumbs/foto1.jpg",
+      "caption": "Texto opcional de la foto"
+    }
+  ],
+  "latitude": -34.603722,
+  "longitude": -58.381592,
+  "visit_date": "2026-03-14 10:30:00",
+  "links": []
+}
+```
+
+`images` siempre está presente y viene ordenado como lo dejó el administrador; es un arreglo vacío cuando el punto no tiene fotos. `image_url` y `thumbnail_url` apuntan a la **portada**, es decir la primera imagen de `images`, y se mantienen por compatibilidad.
+
 ---
 
 ### GET /api/get_trip.php?id={id}
@@ -36,6 +65,8 @@ Devuelve los datos de un único viaje.
 
 **Parámetros**:
 - `id` (requerido): ID del viaje
+
+Cada punto incluye su arreglo `images` con el mismo formato descrito arriba.
 
 ---
 
