@@ -14,6 +14,7 @@
 
 - **Sin dependencias nuevas.** Todas las librerías del proyecto son locales en `assets/vendor/`. El drag & drop usa la HTML5 Drag and Drop API nativa.
 - **Sin suite de tests.** No hay `composer.json` ni PHPUnit. La verificación es por script PHP de CLI y comprobación en navegador. Cada tarea trae sus comandos exactos.
+- **Ningún script de verificación toca datos reales.** Esta restricción no es negociable: un script de verificación de la Task 2 borró la galería real de un POI de producción —fila, archivo en disco y thumbnail— porque operaba sobre "el primer POI de la base". Todo script que escriba debe **crear su propio viaje y sus propios POIs**, operar únicamente sobre ellos, y borrarlos en un `finally`. Nunca puede modificar ni borrar una fila que no haya creado él mismo, y las rutas de imagen que use tienen que ser ficticias (prefijo `_verify_`) para que ningún `unlink()` alcance un archivo real. Leer para contar filas globales sí está permitido.
 - **Los scripts de verificación se commitean** en `install/verify/poi_gallery/`, para que la evidencia quede en el repositorio y sean reejecutables. Como `install/` es accesible por HTTP en XAMPP y estos scripts escriben en la base, **cada uno arranca con un guard de CLI**:
 
 ```php
@@ -544,7 +545,9 @@ class PoiImage {
 
 - [ ] **Paso 2: Escribir el script de verificación**
 
-Crear `install/verify/poi_gallery/verify_task2.php`. Usa un POI real de la base, agrega tres imágenes ficticias, verifica orden y portada, y limpia todo al final.
+Crear `install/verify/poi_gallery/verify_task2.php`. **No toca ningún dato real**: crea su propio viaje y sus propios POIs, opera sólo sobre ellos, y los borra en el `finally`. El `ON DELETE CASCADE` del esquema hace el resto.
+
+Las rutas de imagen del fixture (`uploads/points/_verify_*.jpg`) son ficticias y no existen en disco, así que el `FileHelper::deleteFile()` que dispara `PoiImage::delete()` no puede tocar un archivo real.
 
 ```php
 <?php
@@ -552,8 +555,7 @@ Crear `install/verify/poi_gallery/verify_task2.php`. Usa un POI real de la base,
 // y este script escribe en la base.
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
-    exit("Este script sólo corre por línea de comandos.
-");
+    exit("Este script sólo corre por línea de comandos.\n");
 }
 
 require_once __DIR__ . '/../../../config/config.php';
@@ -563,51 +565,117 @@ require_once __DIR__ . '/../../../src/models/PoiImage.php';
 $db = getDB();
 $m  = new PoiImage();
 
-$poiId = (int) $db->query('SELECT id FROM points_of_interest ORDER BY id LIMIT 1')->fetchColumn();
-if (!$poiId) { exit("No hay POIs en la base; cargá uno antes de verificar.\n"); }
+$fallos = 0;
 
-$original = $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
-$previas  = $m->getByPoiId($poiId);
+function chequear(string $etiqueta, bool $ok, string $detalle = ''): void {
+    global $fallos;
+    if (!$ok) { $fallos++; }
+    echo $etiqueta . ': ' . ($ok ? 'SI' : 'NO' . ($detalle !== '' ? " ({$detalle})" : '')) . PHP_EOL;
+}
 
-$a = $m->add($poiId, 'uploads/points/_verify_a.jpg');
-$b = $m->add($poiId, 'uploads/points/_verify_b.jpg');
-$c = $m->add($poiId, 'uploads/points/_verify_c.jpg');
-$base = count($previas);
+function crearPoi(PDO $db, int $tripId, string $titulo): int {
+    $stmt = $db->prepare(
+        "INSERT INTO points_of_interest (trip_id, title, type, latitude, longitude)
+         VALUES (?, ?, 'visit', 0, 0)"
+    );
+    $stmt->execute([$tripId, $titulo]);
+    return (int) $db->lastInsertId();
+}
 
-$orden = array_column($m->getByPoiId($poiId), 'image_path');
-echo 'agrega al final: ' . ($orden[$base] === 'uploads/points/_verify_a.jpg' ? 'SI' : 'NO') . PHP_EOL;
+// ── Fixture propio ────────────────────────────────────────────────────────
+$db->prepare(
+    "INSERT INTO trips (title, description, status)
+     VALUES ('_verify_trip', 'fixture de verificación', 'draft')"
+)->execute();
+$tripId = (int) $db->lastInsertId();
 
-$cover = $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
-$esperado = $base === 0 ? 'uploads/points/_verify_a.jpg' : $original;
-echo 'portada tras add: ' . ($cover === $esperado ? 'SI' : "NO ({$cover})") . PHP_EOL;
+$poiId    = crearPoi($db, $tripId, '_verify_poi');
+$poiOtro  = crearPoi($db, $tripId, '_verify_poi_otro');
+$poiVacio = crearPoi($db, $tripId, '_verify_poi_vacio');
 
-// Reordenar poniendo C primero
-$ids = array_column($m->getByPoiId($poiId), 'id');
-$reordenado = array_merge([$c], array_values(array_diff($ids, [$c])));
-$m->reorder($poiId, $reordenado);
-$primera = $m->getByPoiId($poiId)[0];
-echo 'reorder mueve al frente: ' . ($primera['image_path'] === 'uploads/points/_verify_c.jpg' ? 'SI' : 'NO') . PHP_EOL;
+$portada = fn() => $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
 
-$cover = $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
-echo 'portada sigue al reorder: ' . ($cover === 'uploads/points/_verify_c.jpg' ? 'SI' : "NO ({$cover})") . PHP_EOL;
+try {
+    // ── add: agrega al final y fija la portada ────────────────────────────
+    $a = $m->add($poiId, 'uploads/points/_verify_a.jpg');
+    $b = $m->add($poiId, 'uploads/points/_verify_b.jpg');
+    $c = $m->add($poiId, 'uploads/points/_verify_c.jpg');
 
-// reorder ignora ids ajenos
-echo 'reorder ignora ids ajenos: ' . ($m->reorder($poiId, [999999]) ? 'SI' : 'NO') . PHP_EOL;
-echo 'cantidad intacta: ' . ($m->countByPoiId($poiId) === $base + 3 ? 'SI' : 'NO') . PHP_EOL;
+    $orden = array_column($m->getByPoiId($poiId), 'image_path');
+    chequear('add agrega al final', $orden === [
+        'uploads/points/_verify_a.jpg',
+        'uploads/points/_verify_b.jpg',
+        'uploads/points/_verify_c.jpg',
+    ], implode(',', $orden));
 
-$m->updateCaption($a, '  texto de prueba  ');
-echo 'caption recortado: ' . ($m->getById($a)['caption'] === 'texto de prueba' ? 'SI' : 'NO') . PHP_EOL;
-$m->updateCaption($a, '   ');
-echo 'caption vacío a NULL: ' . ($m->getById($a)['caption'] === null ? 'SI' : 'NO') . PHP_EOL;
+    chequear('portada tras add', $portada() === 'uploads/points/_verify_a.jpg', (string) $portada());
 
-$api = PoiImage::toApiArray($m->getByPoiId($poiId));
-echo 'toApiArray con claves correctas: '
-   . (isset($api[0]['id'], $api[0]['url']) && array_key_exists('thumbnail_url', $api[0]) && array_key_exists('caption', $api[0]) ? 'SI' : 'NO') . PHP_EOL;
+    // ── reorder ───────────────────────────────────────────────────────────
+    $m->reorder($poiId, [$c, $b, $a]);
+    chequear('reorder aplica el orden pedido',
+        array_column($m->getByPoiId($poiId), 'id') === [$c, $b, $a]);
+    chequear('portada sigue al reorder', $portada() === 'uploads/points/_verify_c.jpg', (string) $portada());
 
-// Limpieza
-foreach ([$a, $b, $c] as $id) { $m->delete($id); }
-$db->prepare('UPDATE points_of_interest SET image_path = ? WHERE id = ?')->execute([$original ?: null, $poiId]);
-echo 'estado restaurado: ' . ($m->countByPoiId($poiId) === $base ? 'SI' : 'NO') . PHP_EOL;
+    // Un id de OTRO POI debe descartarse sin alterar el orden propio
+    $ajena = $m->add($poiOtro, 'uploads/points/_verify_ajena.jpg');
+    $m->reorder($poiId, [$ajena, $c, $b, $a]);
+    chequear('reorder descarta ids ajenos',
+        array_column($m->getByPoiId($poiId), 'id') === [$c, $b, $a]);
+    chequear('la imagen ajena no cambió de POI',
+        (int) $m->getById($ajena)['poi_id'] === $poiOtro);
+
+    // ── captions ──────────────────────────────────────────────────────────
+    $m->updateCaption($a, '  texto de prueba  ');
+    chequear('caption recortado', $m->getById($a)['caption'] === 'texto de prueba');
+    $m->updateCaption($a, '   ');
+    chequear('caption vacío a NULL', $m->getById($a)['caption'] === null);
+
+    // ── conteos ───────────────────────────────────────────────────────────
+    chequear('countByPoiId', $m->countByPoiId($poiId) === 3);
+
+    $conteos = $m->countByPoiIds([$poiId, $poiOtro, $poiVacio]);
+    chequear('countByPoiIds cuenta cada POI',
+        ($conteos[$poiId] ?? 0) === 3 && ($conteos[$poiOtro] ?? 0) === 1);
+    chequear('countByPoiIds omite POIs sin imágenes', !array_key_exists($poiVacio, $conteos));
+
+    // ── getByTripId ───────────────────────────────────────────────────────
+    $porViaje = $m->getByTripId($tripId);
+    chequear('getByTripId agrupa por poi_id',
+        isset($porViaje[$poiId], $porViaje[$poiOtro]) && count($porViaje) === 2);
+    chequear('getByTripId respeta el orden de galería',
+        array_column($porViaje[$poiId], 'id') === [$c, $b, $a]);
+    chequear('getByTripId omite POIs sin imágenes', !isset($porViaje[$poiVacio]));
+
+    // ── toApiArray ────────────────────────────────────────────────────────
+    $api = PoiImage::toApiArray($m->getByPoiId($poiId));
+    chequear('toApiArray con claves correctas',
+        isset($api[0]['id'], $api[0]['url'])
+        && array_key_exists('thumbnail_url', $api[0])
+        && array_key_exists('caption', $api[0]));
+
+    // ── delete: la portada rota a la siguiente ────────────────────────────
+    // image_path se lee DESPUÉS del delete y ANTES de cualquier limpieza:
+    // si syncCover() dejara de correr en delete(), estos dos checks fallan.
+    $m->delete($c);
+    chequear('borrar la portada promueve la siguiente',
+        $portada() === 'uploads/points/_verify_b.jpg', (string) $portada());
+
+    $m->delete($b);
+    $m->delete($a);
+    chequear('galería vacía deja image_path en NULL', $portada() === null, var_export($portada(), true));
+
+} finally {
+    // Borrar el viaje fixture alcanza: el CASCADE se lleva sus POIs y, con
+    // ellos, sus filas de poi_images.
+    $db->prepare('DELETE FROM trips WHERE id = ?')->execute([$tripId]);
+
+    $residuales = (int) $db->query(
+        "SELECT COUNT(*) FROM poi_images WHERE image_path LIKE '%_verify_%'"
+    )->fetchColumn();
+    chequear('sin filas de prueba residuales', $residuales === 0, (string) $residuales);
+
+    echo ($fallos === 0 ? 'TODAS LAS VERIFICACIONES PASARON' : "FALLARON {$fallos} VERIFICACIONES") . PHP_EOL;
+}
 ```
 
 - [ ] **Paso 3: Ejecutar la verificación y confirmar que falla**
@@ -775,10 +843,15 @@ $db = getDB();
 $point = new Point();
 $galeria = new PoiImage();
 
-$tripId = (int) $db->query('SELECT id FROM trips ORDER BY id LIMIT 1')->fetchColumn();
-if (!$tripId) { exit("No hay viajes en la base.\n"); }
+// Viaje fixture propio: el script no toca datos reales en ningún momento.
+$db->prepare(
+    "INSERT INTO trips (title, description, status)
+     VALUES ('_verify_trip_point', 'fixture de verificación', 'draft')"
+)->execute();
+$tripId = (int) $db->lastInsertId();
 
-// Archivos reales para comprobar el borrado en disco
+// Archivos propios, con prefijo _verify_, para comprobar el borrado en disco.
+// Nunca pueden colisionar con una imagen real: los crea este mismo script.
 $dir = ROOT_PATH . '/uploads/points';
 @mkdir($dir, 0777, true);
 file_put_contents($dir . '/_verify_cover.jpg', 'x');
@@ -819,8 +892,15 @@ echo 'cascade borra filas: ' . ($quedan === 0 ? 'SI' : 'NO') . PHP_EOL;
 echo 'borra archivo portada: ' . (!file_exists($dir . '/_verify_cover.jpg') ? 'SI' : 'NO') . PHP_EOL;
 echo 'borra archivo extra: ' . (!file_exists($dir . '/_verify_extra.jpg') ? 'SI' : 'NO') . PHP_EOL;
 
+// Limpieza del fixture: el CASCADE se lleva POIs y filas de galería.
+$db->prepare('DELETE FROM trips WHERE id = ?')->execute([$tripId]);
 @unlink($dir . '/_verify_cover.jpg');
 @unlink($dir . '/_verify_extra.jpg');
+
+$residuales = (int) $db->query(
+    "SELECT COUNT(*) FROM points_of_interest WHERE title LIKE '\_verify\_%'"
+)->fetchColumn();
+echo 'sin POIs de prueba residuales: ' . ($residuales === 0 ? 'SI' : "NO ({$residuales})") . PHP_EOL;
 ```
 
 - [ ] **Paso 7: Ejecutar la verificación**
