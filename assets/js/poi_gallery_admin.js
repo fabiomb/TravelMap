@@ -350,7 +350,19 @@
             // preventDefault siempre: sin esto un archivo arrastrado desde el
             // escritorio sobre un item haría que el navegador lo abra.
             e.preventDefault();
-            if (!draggedItem || draggedItem === item) return;
+
+            // Volver sobre el ítem que se está arrastrando significa "lo dejo
+            // donde estaba": se descarta la intención calculada al pasar por
+            // otros ítems, así soltar acá no commitea un reorden que el
+            // usuario no pidió. Hay que limpiarla explícitamente porque el DOM
+            // no se mueve durante el arrastre: currentOrder() sigue siendo el
+            // orden original, así que sameOrder() en el drop no vería que un
+            // pendingOrder viejo ya no representa lo que el usuario quiere.
+            if (!draggedItem || draggedItem === item) {
+                clearDropHint();
+                pendingOrder = null;
+                return;
+            }
 
             const box = item.getBoundingClientRect();
             const insertAfter = (e.clientX - box.left) > (box.width / 2);
