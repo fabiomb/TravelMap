@@ -14,12 +14,19 @@
 
 - **Sin dependencias nuevas.** Todas las librerías del proyecto son locales en `assets/vendor/`. El drag & drop usa la HTML5 Drag and Drop API nativa.
 - **Sin suite de tests.** No hay `composer.json` ni PHPUnit. La verificación es por script PHP de CLI y comprobación en navegador. Cada tarea trae sus comandos exactos.
+- **Los scripts de verificación se commitean** en `install/verify/poi_gallery/`, para que la evidencia quede en el repositorio y sean reejecutables. Como `install/` es accesible por HTTP en XAMPP y estos scripts escriben en la base, **cada uno arranca con un guard de CLI**:
+
+```php
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Este script sólo corre por línea de comandos.\n");
+}
+```
 - **Textos siempre por i18n.** Ningún string visible hardcodeado; claves nuevas en `lang/en.json` **y** `lang/es.json`, en la misma tarea que las usa.
 - **Comentarios de código en español**, siguiendo el código existente. Identificadores, nombres de tabla y de columna en inglés, también siguiendo lo existente.
 - **Commits convencionales**, sin atribución de IA.
 - **Rama:** `feat/poi-gallery`.
 - **Ruta del proyecto:** `C:\xampp\htdocs\TravelMap`. XAMPP, PHP en `C:\xampp\php\php.exe`.
-- **Scratchpad para scripts de verificación** (no se commitean): `C:\Users\fabio\AppData\Local\Temp\claude\C--xampp-htdocs-TravelMap\cbdf1c54-ef86-45d7-bbe2-a2c2024d8877\scratchpad`. En el plan se abrevia como `$SCRATCH`.
 
 ## Mapa de archivos
 
@@ -31,7 +38,9 @@
 | `src/models/PoiImage.php` | CRUD, orden y sincronización de la portada. Único escritor de la columna espejo. |
 | `api/poi_images.php` | Endpoint de administración con despacho por `action`. |
 | `assets/js/poi_gallery_admin.js` | Subida, borrado, reordenamiento y captions en el formulario de admin. |
-| `assets/js/poi_lightbox.js` | Lightbox con galería para `index.php`, compartido por los dos renderers. |
+| `assets/js/poi_lightbox.js` | Lightbox con galería para `index.php`, compartido por los dos renderers. Dueño único del cierre por backdrop. |
+| `assets/css/poi_gallery.css` | Estilos de carrusel y lightbox compartidos por `index.php` (ambos renderers) y `trip.php`. |
+| `install/verify/poi_gallery/verify_task*.php` | Scripts de verificación por CLI, commiteados como evidencia reejecutable. |
 
 **Se modifican:**
 
@@ -45,9 +54,11 @@
 | `api/get_all_data.php`, `api/get_trip.php`, `trip.php` | Arreglo `images` por punto. |
 | `assets/js/map-renderer.js` | Carrusel en el popup y delegación de eventos. |
 | `index.php` | Botones y contador en el markup del lightbox. |
-| `assets/js/public_map.js`, `assets/js/public_map_leaflet.js` | Cierre del lightbox sólo por backdrop. |
+| `assets/js/public_map.js`, `assets/js/public_map_leaflet.js` | Se les quita `initLightbox`: el cierre pasa a `poi_lightbox.js`. |
 | `assets/js/trip_single.js` | Galería aplanada desde `TRIP_DATA`. |
-| `assets/css/admin.css`, `assets/css/public_map.css`, `assets/css/trip.css` | Estilos de grilla, carrusel y lightbox. |
+| `assets/css/admin.css` | Grilla de la galería en el admin. |
+| `assets/css/trip.css` | Badge de cantidad en el carrusel lateral. |
+| `index.php`, `trip.php` | Cargan `poi_gallery.css`. |
 | `lang/en.json`, `lang/es.json` | Claves nuevas. |
 | `version.php`, `CHANGELOG.md`, `ESTRUCTURA.md` | Cierre de la feature. |
 
@@ -58,7 +69,7 @@
 **Archivos:**
 - Crear: `install/migrations/026_poi_images_table.php`
 - Modificar: `database.sql` (agregar tras el bloque de `links`, alrededor de la línea 211)
-- Verificar: `$SCRATCH/verify_task1.php`
+- Verificar: `install/verify/poi_gallery/verify_task1.php`
 
 **Interfaces:**
 - Consume: nada.
@@ -148,12 +159,20 @@ CREATE TABLE IF NOT EXISTS poi_images (
 
 - [ ] **Paso 3: Escribir el script de verificación**
 
-Crear `$SCRATCH/verify_task1.php`:
+Crear `install/verify/poi_gallery/verify_task1.php`:
 
 ```php
 <?php
-require_once 'C:/xampp/htdocs/TravelMap/config/config.php';
-require_once 'C:/xampp/htdocs/TravelMap/config/db.php';
+// Sólo por línea de comandos: install/ es accesible por HTTP en XAMPP
+// y este script escribe en la base.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Este script sólo corre por línea de comandos.
+");
+}
+
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/db.php';
 
 $db = getDB();
 
@@ -178,7 +197,7 @@ echo 'sin orden duplicado por POI: ' . ($duplicados === 0 ? 'SI' : 'NO') . PHP_E
 - [ ] **Paso 4: Ejecutar la verificación antes de migrar**
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task1.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task1.php"
 ```
 
 Esperado: `tabla poi_images existe: NO`. Confirma que la migración todavía no corrió.
@@ -190,7 +209,7 @@ Abrir `http://localhost/TravelMap/install/` en el navegador y ejecutar las migra
 - [ ] **Paso 6: Ejecutar la verificación después de migrar**
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task1.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task1.php"
 ```
 
 Esperado: las cuatro líneas en `SI` / iguales.
@@ -198,7 +217,7 @@ Esperado: las cuatro líneas en `SI` / iguales.
 - [ ] **Paso 7: Commit**
 
 ```bash
-git add install/migrations/026_poi_images_table.php database.sql
+git add install/migrations/026_poi_images_table.php database.sql install/verify/poi_gallery/verify_task1.php
 git commit -m "feat(db): tabla poi_images con backfill desde image_path"
 ```
 
@@ -208,7 +227,7 @@ git commit -m "feat(db): tabla poi_images con backfill desde image_path"
 
 **Archivos:**
 - Crear: `src/models/PoiImage.php`
-- Verificar: `$SCRATCH/verify_task2.php`
+- Verificar: `install/verify/poi_gallery/verify_task2.php`
 
 **Interfaces:**
 - Consume: tabla `poi_images` (Task 1); `FileHelper::deleteFile()` y `FileHelper::getThumbnailPath()` de `src/helpers/FileHelper.php`.
@@ -225,6 +244,7 @@ $m->updateCaption(int $imageId, ?string $caption): bool
 $m->reorder(int $poiId, array $imageIds): bool
 $m->syncCover(int $poiId): void
 $m->countByPoiId(int $poiId): int
+$m->countByPoiIds(array $poiIds): array    // [poi_id => cantidad], una sola consulta
 PoiImage::toApiArray(array $rows): array   // [{id, url, thumbnail_url, caption}]
 ```
 
@@ -447,6 +467,36 @@ class PoiImage {
     }
 
     /**
+     * Cantidad de imágenes para varios POIs en una sola consulta.
+     * Evita el N+1 en los listados del admin.
+     *
+     * @return array [poi_id => cantidad]. Los POIs sin imágenes no aparecen.
+     */
+    public function countByPoiIds(array $poiIds): array {
+        $poiIds = array_values(array_unique(array_map('intval', $poiIds)));
+        if (empty($poiIds)) {
+            return [];
+        }
+
+        try {
+            $marcadores = implode(',', array_fill(0, count($poiIds), '?'));
+            $stmt = $this->db->prepare(
+                "SELECT poi_id, COUNT(*) AS total FROM poi_images WHERE poi_id IN ({$marcadores}) GROUP BY poi_id"
+            );
+            $stmt->execute($poiIds);
+
+            $conteos = [];
+            foreach ($stmt->fetchAll() as $fila) {
+                $conteos[(int) $fila['poi_id']] = (int) $fila['total'];
+            }
+            return $conteos;
+        } catch (PDOException $e) {
+            error_log('Error al contar imágenes por lote: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Formato de salida para las APIs públicas.
      */
     public static function toApiArray(array $rows): array {
@@ -467,13 +517,21 @@ class PoiImage {
 
 - [ ] **Paso 2: Escribir el script de verificación**
 
-Crear `$SCRATCH/verify_task2.php`. Usa un POI real de la base, agrega tres imágenes ficticias, verifica orden y portada, y limpia todo al final.
+Crear `install/verify/poi_gallery/verify_task2.php`. Usa un POI real de la base, agrega tres imágenes ficticias, verifica orden y portada, y limpia todo al final.
 
 ```php
 <?php
-require_once 'C:/xampp/htdocs/TravelMap/config/config.php';
-require_once 'C:/xampp/htdocs/TravelMap/config/db.php';
-require_once 'C:/xampp/htdocs/TravelMap/src/models/PoiImage.php';
+// Sólo por línea de comandos: install/ es accesible por HTTP en XAMPP
+// y este script escribe en la base.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Este script sólo corre por línea de comandos.
+");
+}
+
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../../src/models/PoiImage.php';
 
 $db = getDB();
 $m  = new PoiImage();
@@ -528,7 +586,7 @@ echo 'estado restaurado: ' . ($m->countByPoiId($poiId) === $base ? 'SI' : 'NO') 
 - [ ] **Paso 3: Ejecutar la verificación y confirmar que falla**
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task2.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task2.php"
 ```
 
 Esperado antes de escribir el modelo: error fatal de PHP, `Failed opening required .../PoiImage.php`. Ejecutalo **antes** del Paso 1 si querés ver el rojo primero.
@@ -536,7 +594,7 @@ Esperado antes de escribir el modelo: error fatal de PHP, `Failed opening requir
 - [ ] **Paso 4: Ejecutar la verificación con el modelo ya escrito**
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task2.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task2.php"
 ```
 
 Esperado: todas las líneas en `SI`.
@@ -544,7 +602,7 @@ Esperado: todas las líneas en `SI`.
 - [ ] **Paso 5: Commit**
 
 ```bash
-git add src/models/PoiImage.php
+git add src/models/PoiImage.php install/verify/poi_gallery/verify_task2.php
 git commit -m "feat(models): modelo PoiImage con orden y sincronización de portada"
 ```
 
@@ -556,7 +614,7 @@ Esto es lo que mantiene funcionando a MCP, al importador EXIF y a `save_poi` sin
 
 **Archivos:**
 - Modificar: `src/models/Point.php` (`create()` líneas 77-102, `update()` líneas 111-136, `delete()` líneas 144-169)
-- Verificar: `$SCRATCH/verify_task3.php`
+- Verificar: `install/verify/poi_gallery/verify_task3.php`
 
 **Interfaces:**
 - Consume: `PoiImage::add()`, `PoiImage::countByPoiId()`, `PoiImage::getByPoiId()` (Task 2).
@@ -669,14 +727,22 @@ En `delete()`, el `ON DELETE CASCADE` elimina las filas pero deja los archivos e
 
 - [ ] **Paso 6: Escribir el script de verificación**
 
-Crear `$SCRATCH/verify_task3.php`:
+Crear `install/verify/poi_gallery/verify_task3.php`:
 
 ```php
 <?php
-require_once 'C:/xampp/htdocs/TravelMap/config/config.php';
-require_once 'C:/xampp/htdocs/TravelMap/config/db.php';
-require_once 'C:/xampp/htdocs/TravelMap/src/models/Point.php';
-require_once 'C:/xampp/htdocs/TravelMap/src/models/PoiImage.php';
+// Sólo por línea de comandos: install/ es accesible por HTTP en XAMPP
+// y este script escribe en la base.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Este script sólo corre por línea de comandos.
+");
+}
+
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../../src/models/Point.php';
+require_once __DIR__ . '/../../../src/models/PoiImage.php';
 
 $db = getDB();
 $point = new Point();
@@ -733,7 +799,7 @@ echo 'borra archivo extra: ' . (!file_exists($dir . '/_verify_extra.jpg') ? 'SI'
 - [ ] **Paso 7: Ejecutar la verificación**
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task3.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task3.php"
 ```
 
 Esperado: las seis líneas en `SI`. Si `borra archivo extra` da `NO`, el paso 5 quedó mal: se están recolectando las rutas después del `DELETE`.
@@ -741,7 +807,7 @@ Esperado: las seis líneas en `SI`. Si `borra archivo extra` da `NO`, el paso 5 
 - [ ] **Paso 8: Commit**
 
 ```bash
-git add src/models/Point.php
+git add src/models/Point.php install/verify/poi_gallery/verify_task3.php
 git commit -m "feat(models): Point sincroniza la galería y limpia archivos al borrar"
 ```
 
@@ -751,7 +817,7 @@ git commit -m "feat(models): Point sincroniza la galería y limpia archivos al b
 
 **Archivos:**
 - Crear: `api/poi_images.php`
-- Verificar: `$SCRATCH/verify_task4.sh` (o los `curl` sueltos del paso 3)
+- Verificar: `install/verify/poi_gallery/verify_task4.sh` (o los `curl` sueltos del paso 3)
 
 **Interfaces:**
 - Consume: `PoiImage` (Task 2), `FileHelper::uploadImage()`, `is_logged_in()` de `includes/auth.php`.
@@ -1348,16 +1414,17 @@ Agregar el require al inicio, junto a los demás modelos:
 require_once __DIR__ . '/../src/models/PoiImage.php';
 ```
 
-Antes del `foreach` de la tabla (línea 161), instanciar el modelo:
+Antes del `foreach` de la tabla (línea 161), resolver los conteos de **todos** los puntos en una sola consulta. Nada de `countByPoiId()` dentro del bucle: con un listado de cientos de puntos serían cientos de queries.
 
 ```php
-$galleryModel = new PoiImage();
+$galleryModel  = new PoiImage();
+$galleryCounts = $galleryModel->countByPoiIds(array_column($points, 'id'));
 ```
 
 Y dentro del `<td>` de la miniatura, después del `<img>` (línea 167):
 
 ```php
-                                        <?php $galleryCount = $galleryModel->countByPoiId((int) $point['id']); ?>
+                                        <?php $galleryCount = $galleryCounts[(int) $point['id']] ?? 0; ?>
                                         <?php if ($galleryCount > 1): ?>
                                             <span class="badge bg-secondary"><?= $galleryCount ?> <?= __('points.gallery_photo_count') ?></span>
                                         <?php endif; ?>
@@ -1396,7 +1463,7 @@ git commit -m "feat(admin): galería de imágenes por POI con orden y captions"
 
 **Archivos:**
 - Modificar: `admin/backup.php` (stats líneas 29-34 y 43-75; export tras línea 172; restore tras línea 523)
-- Verificar: navegador y `$SCRATCH/verify_task6.php`
+- Verificar: navegador y `install/verify/poi_gallery/verify_task6.php`
 
 **Interfaces:**
 - Consume: tabla `poi_images` (Task 1), `$idMap['points']` que el archivo ya construye en la línea 517.
@@ -1473,10 +1540,18 @@ En el array `$imported` (línea 354), agregar `'gallery_images' => 0` para que e
 
 - [ ] **Paso 5: Escribir el script de verificación**
 
-Crear `$SCRATCH/verify_task6.php`, que valida un backup ya generado:
+Crear `install/verify/poi_gallery/verify_task6.php`, que valida un backup ya generado:
 
 ```php
 <?php
+// Sólo por línea de comandos: install/ es accesible por HTTP en XAMPP
+// y este script escribe en la base.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Este script sólo corre por línea de comandos.
+");
+}
+
 // Uso: php verify_task6.php <ruta al backup .json>
 $ruta = $argv[1] ?? '';
 if (!is_file($ruta)) { exit("Pasá la ruta del backup JSON.\n"); }
@@ -1507,7 +1582,7 @@ echo 'declarado en includes: ' . (in_array('poi_images', $backup['includes'], tr
 2. Correr:
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task6.php" "C:/Users/fabio/Downloads/backup_<timestamp>.json"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task6.php" "C:/Users/fabio/Downloads/backup_<timestamp>.json"
 ```
 
 Esperado: `SI` en las tres líneas y una cantidad igual a la de `poi_images` en la base.
@@ -1518,7 +1593,7 @@ Esperado: `SI` en las tres líneas y una cantidad igual a la de `poi_images` en 
 - [ ] **Paso 7: Commit**
 
 ```bash
-git add admin/backup.php
+git add admin/backup.php install/verify/poi_gallery/verify_task6.php
 git commit -m "feat(backup): export y restore de la galería de imágenes"
 ```
 
@@ -1607,8 +1682,11 @@ git commit -m "feat(api): exponer la galería de imágenes por punto"
 Lo comparten `index.php` y `trip.php`, con sus dos renderers.
 
 **Archivos:**
-- Modificar: `assets/js/map-renderer.js` (`createPoiPopup` líneas 245-322, API pública líneas 324-335), `assets/css/public_map.css` (agregar al final), `lang/en.json`, `lang/es.json`
+- Crear: `assets/css/poi_gallery.css`
+- Modificar: `assets/js/map-renderer.js` (`createPoiPopup` líneas 245-322, API pública líneas 324-335), `index.php` (`<head>`, después del bloque condicional de CSS que termina en la línea 56), `trip.php` (`<head>`, junto a la línea 217), `lang/en.json`, `lang/es.json`
 - Verificar: navegador
+
+**Por qué un archivo de CSS nuevo:** `public_map.css` sólo se carga en la rama MapLibre de `index.php` (línea 55); la rama Leaflet carga `public_map_leaflet.css` (línea 50). Meter ahí los estilos de galería dejaría el carrusel sin estilo con el renderer Leaflet. Un archivo propio cargado fuera del condicional sirve a los dos renderers y a `trip.php`, sin duplicar reglas.
 
 **Interfaces:**
 - Consume: `point.images` (Task 7).
@@ -1745,9 +1823,19 @@ Antes del bloque `// ── Public API ──` (línea 324), dentro del mismo II
     });
 ```
 
-- [ ] **Paso 4: Agregar los estilos a `assets/css/public_map.css`**
+- [ ] **Paso 4: Crear `assets/css/poi_gallery.css`**
+
+Este archivo concentra **todo** el CSS de galería y lightbox que comparten `index.php` y `trip.php`. La Task 9 le agrega los estilos del lightbox; acá va sólo el carrusel del popup.
 
 ```css
+/**
+ * Galería de imágenes de POI.
+ *
+ * Compartido por index.php (ambos renderers) y trip.php.
+ * Se carga fuera del condicional de renderer: public_map.css sólo existe
+ * en la rama MapLibre.
+ */
+
 /* ── Carrusel del popup de POI ───────────────────────────────────────────── */
 .popup-gallery {
     position: relative;
@@ -1797,6 +1885,19 @@ Antes del bloque `// ── Public API ──` (línea 324), dentro del mismo II
 }
 ```
 
+Cargarlo en `index.php`, **después** del `<?php endif; ?>` del bloque condicional de CSS (línea 56), para que llegue a los dos renderers:
+
+```php
+    <!-- Galería de imágenes de POI (compartida por ambos renderers) -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
+```
+
+Y en `trip.php`, junto a los otros `<link>` (línea 217):
+
+```php
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
+```
+
 - [ ] **Paso 5: Verificar en el navegador**
 
 En `http://localhost/TravelMap/` abrir un POI con varias fotos:
@@ -1811,7 +1912,7 @@ En `http://localhost/TravelMap/` abrir un POI con varias fotos:
 - [ ] **Paso 6: Commit**
 
 ```bash
-git add assets/js/map-renderer.js assets/css/public_map.css lang/en.json lang/es.json
+git add assets/js/map-renderer.js assets/css/poi_gallery.css index.php trip.php lang/en.json lang/es.json
 git commit -m "feat(map): carrusel de galería en el popup de POI"
 ```
 
@@ -1821,7 +1922,7 @@ git commit -m "feat(map): carrusel de galería en el popup de POI"
 
 **Archivos:**
 - Crear: `assets/js/poi_lightbox.js`
-- Modificar: `index.php` (markup del lightbox líneas 363-374; scripts línea 360), `assets/js/public_map.js` (`initLightbox` líneas 1620-1625), `assets/js/public_map_leaflet.js` (`initLightbox` líneas 1893-1901), `assets/css/public_map.css`
+- Modificar: `index.php` (markup del lightbox líneas 363-374; scripts línea 360), `assets/js/public_map.js` (borrar `initLightbox` líneas 1620-1625 y su llamada en la línea 1615), `assets/js/public_map_leaflet.js` (borrar `initLightbox` líneas 1893-1901 y su llamada en la línea 1873), `assets/css/poi_gallery.css` (creado en la Task 8)
 - Verificar: navegador
 
 **Interfaces:**
@@ -1832,25 +1933,21 @@ git commit -m "feat(map): carrusel de galería en el popup de POI"
 
 Hay un detalle que rompe la feature si se pasa por alto: hoy los dos renderers cierran el lightbox con un listener sobre **todo** el contenedor (`lightbox.addEventListener('click', closeLightbox)`). Con botones adentro, cualquier click en una flecha lo cerraría. Hay que restringir el cierre al backdrop.
 
-- [ ] **Paso 1: Restringir el cierre al backdrop en `public_map.js`**
+Ese listener está duplicado hoy en los dos renderers. En vez de corregir la misma lógica en dos lugares, se borra de ambos y pasa a ser responsabilidad exclusiva de `poi_lightbox.js`, que se carga después de cualquiera de los dos.
 
-Reemplazar el cuerpo de `initLightbox()` (líneas 1620-1625) por:
+- [ ] **Paso 1: Borrar `initLightbox` de `public_map.js`**
 
-```javascript
-    function initLightbox() {
-        const lightbox = document.getElementById('imageLightbox');
-        if (lightbox) {
-            // Sólo el backdrop cierra: los botones de galería viven adentro
-            lightbox.addEventListener('click', function (e) {
-                if (e.target === lightbox) closeLightbox();
-            });
-        }
-    }
+Eliminar la función completa (líneas 1620-1625) y la llamada `initLightbox();` de la línea 1615. El comentario de sección `// ==================== LIGHTBOX ====================` se conserva: `openLightbox` y `closeLightbox` siguen ahí.
+
+- [ ] **Paso 2: Borrar `initLightbox` de `public_map_leaflet.js`**
+
+Eliminar la función completa (líneas 1893-1901, con su docblock) y la llamada `initLightbox();` de la línea 1873. No debe quedar ninguna referencia a `initLightbox` en el archivo:
+
+```bash
+rg -n "initLightbox" assets/js/
 ```
 
-- [ ] **Paso 2: Aplicar el mismo cambio en `public_map_leaflet.js`**
-
-Reemplazar el cuerpo de `initLightbox()` (líneas 1893-1901) por el mismo código del paso anterior.
+Esperado: sin resultados.
 
 - [ ] **Paso 3: Agregar los controles al markup de `index.php`**
 
@@ -1957,14 +2054,25 @@ Reemplazar el bloque del lightbox (líneas 363-374) por:
         if (typeof abrirSuelta === 'function') abrirSuelta(url, alt);
     };
 
+    // Cierre por backdrop. Antes vivía duplicado en los dos renderers y cerraba
+    // ante CUALQUIER click: con las flechas adentro, eso rompía la navegación.
+    var lightbox = elemento('imageLightbox');
+    if (lightbox) {
+        lightbox.addEventListener('click', function (e) {
+            if (e.target === lightbox) window.closeLightbox();
+        });
+    }
+
     document.addEventListener('keydown', function (e) {
-        var lightbox = elemento('imageLightbox');
-        if (!lightbox || lightbox.style.display !== 'flex') return;
+        var caja = elemento('imageLightbox');
+        if (!caja || caja.style.display !== 'flex') return;
         if (e.key === 'ArrowLeft')  window.changeImage(-1);
         if (e.key === 'ArrowRight') window.changeImage(1);
     });
 })();
 ```
+
+El `Escape` lo siguen manejando los renderers, que ya tienen su propio listener.
 
 - [ ] **Paso 5: Cargar el script en `index.php`**
 
@@ -1977,7 +2085,7 @@ Después del bloque condicional de renderers (línea 361), para que `window.open
 
 - [ ] **Paso 6: Agregar los estilos**
 
-En `assets/css/public_map.css`:
+Al final de `assets/css/poi_gallery.css`, el archivo creado en la Task 8. Estas reglas las usan tanto `index.php` como `trip.php`, así que van una sola vez acá y **no** se repiten en `trip.css`:
 
 ```css
 /* ── Navegación del lightbox ─────────────────────────────────────────────── */
@@ -2038,7 +2146,7 @@ En `http://localhost/TravelMap/`:
 - [ ] **Paso 8: Commit**
 
 ```bash
-git add assets/js/poi_lightbox.js index.php assets/js/public_map.js assets/js/public_map_leaflet.js assets/css/public_map.css
+git add assets/js/poi_lightbox.js index.php assets/js/public_map.js assets/js/public_map_leaflet.js assets/css/poi_gallery.css
 git commit -m "feat(map): lightbox con navegación de galería en el mapa general"
 ```
 
@@ -2197,19 +2305,9 @@ El carrusel sigue mostrando **una** tarjeta por POI, con `thumbnail_url` (la por
     padding: 1px 6px;
     border-radius: 10px;
 }
-
-.lightbox-counter {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    background: rgba(0, 0, 0, .5);
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: .85rem;
-}
 ```
+
+`.lightbox-counter` **no va acá**: ya está definido en `assets/css/poi_gallery.css` (Task 9) y `trip.php` carga ese archivo desde la Task 8. Repetir la regla es duplicación pura.
 
 - [ ] **Paso 8: Verificar en el navegador**
 
@@ -2247,7 +2345,7 @@ Agregar al inicio de `CHANGELOG.md`, con el formato de las entradas existentes: 
 
 - [ ] **Paso 3: Actualizar `ESTRUCTURA.md`**
 
-Agregar `PoiImage.php` a la tabla de modelos, `poi_images.php` a la tabla de APIs, y `poi_gallery_admin.js` / `poi_lightbox.js` al árbol de `assets/js/`.
+Agregar `PoiImage.php` a la tabla de modelos, `poi_images.php` a la tabla de APIs, `poi_gallery_admin.js` / `poi_lightbox.js` al árbol de `assets/js/`, `poi_gallery.css` al de `assets/css/`, y `install/verify/poi_gallery/` con una línea explicando que son scripts de verificación por CLI.
 
 - [ ] **Paso 4: Documentar el campo nuevo en `docs/API.md`**
 
@@ -2258,7 +2356,7 @@ Agregar `images` a la respuesta de puntos de `get_all_data.php` y `get_trip.php`
 Recorrer los diez puntos de la sección Verificación del spec. Los ítems 1 a 8 ya quedaron cubiertos por las tareas anteriores; falta confirmar de punta a punta:
 
 ```bash
-C:/xampp/php/php.exe "$SCRATCH/verify_task1.php"
+C:/xampp/php/php.exe "install/verify/poi_gallery/verify_task1.php"
 ```
 
 Y en el navegador, el alta de un POI vía MCP y vía importador EXIF, comprobando que la foto aparece en la galería del formulario.
@@ -2274,7 +2372,7 @@ git commit -m "chore: versión 1.0.300 con galería de imágenes por POI"
 
 ## Notas para quien ejecute
 
-- **Verificá `$SCRATCH`** antes de empezar: los scripts de verificación no se commitean.
+- **Los scripts de verificación se commitean** en `install/verify/poi_gallery/`, cada uno con el guard de CLI de las restricciones globales. Se ejecutan siempre con `C:/xampp/php/php.exe <ruta>` desde la raíz del proyecto.
 - **La sincronización de la portada es invariante.** Si en cualquier momento `points_of_interest.image_path` deja de coincidir con la primera fila de `poi_images`, hay un escritor que no pasa por `PoiImage`. El one-liner del Paso 10 de la Task 5 lo detecta.
 - **`index.php` tiene dos renderers.** Todo lo que se toque para MapLibre hay que verificarlo también en Leaflet. `map_style` se cambia desde `admin/settings.php`.
 - **El orden de carga de scripts importa** en la Task 9: `poi_lightbox.js` envuelve a `window.openLightbox`, así que debe cargarse *después* del renderer.
