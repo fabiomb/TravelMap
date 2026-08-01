@@ -190,7 +190,10 @@
     "group_by": "Group by",
     "group_by_year": "Year",
     "group_by_tag": "Tag",
-    "no_tag": "No tag"
+    "no_tag": "No tag",
+    "gallery_prev": "Previous image",
+    "gallery_next": "Next image",
+    "gallery_counter": "{current} of {total}"
   },
   "forms": {
     "required_fields": "Required Fields",

@@ -190,7 +190,10 @@
     "group_by": "Agrupar por",
     "group_by_year": "Año",
     "group_by_tag": "Etiqueta",
-    "no_tag": "Sin etiqueta"
+    "no_tag": "Sin etiqueta",
+    "gallery_prev": "Imagen anterior",
+    "gallery_next": "Imagen siguiente",
+    "gallery_counter": "{current} de {total}"
   },
   "forms": {
     "required_fields": "Campos obligatorios",

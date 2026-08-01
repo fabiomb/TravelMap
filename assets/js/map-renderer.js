@@ -261,13 +261,41 @@ window.MapRenderer = (function () {
 
         var html = '<div class="point-popup">';
 
-        if (showImage && point.image_url) {
-            var displayImage = point.thumbnail_url || point.image_url;
-            html += '<img src="' + escapeHtml(displayImage) + '"'
-                + ' alt="' + escapeHtml(point.title) + '"'
-                + ' class="popup-image"'
-                + ' onclick="openLightbox(\'' + escapeJsString(point.image_url) + '\',\'' + escapeJsString(point.title) + '\')"'
-                + ' title="' + t('map.click_to_view_full', '') + '">';
+        if (showImage) {
+            var images = (point.images && point.images.length) ? point.images : null;
+
+            // Backward compatibility: points served by an endpoint without `images`
+            if (!images && point.image_url) {
+                images = [{ url: point.image_url, thumbnail_url: point.thumbnail_url, caption: null }];
+            }
+
+            if (images) {
+                var poiId = point.id;
+                window.__poiGalleries = window.__poiGalleries || {};
+                window.__poiGalleries[poiId] = images;
+
+                var firstImage = images[0];
+                html += '<div class="popup-gallery" data-poi-id="' + escapeHtml(String(poiId)) + '" data-index="0">';
+                html += '<img src="' + escapeHtml(firstImage.thumbnail_url || firstImage.url) + '"'
+                     + ' alt="' + escapeHtml(point.title) + '"'
+                     + ' class="popup-image"'
+                     + ' title="' + t('map.click_to_view_full', '') + '">';
+
+                if (images.length > 1) {
+                    html += '<button type="button" class="popup-gallery-nav prev" data-dir="-1"'
+                         + ' aria-label="' + t('map.gallery_prev', 'Previous image') + '">&#10094;</button>';
+                    html += '<button type="button" class="popup-gallery-nav next" data-dir="1"'
+                         + ' aria-label="' + t('map.gallery_next', 'Next image') + '">&#10095;</button>';
+                    html += '<div class="popup-gallery-dots">';
+                    images.forEach(function (img, i) {
+                        html += '<span class="popup-gallery-dot' + (i === 0 ? ' is-active' : '') + '"'
+                             + ' data-index="' + i + '"></span>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            }
         }
 
         html += '<div class="popup-content">';
@@ -320,6 +348,56 @@ window.MapRenderer = (function () {
         html += '</div></div>';
         return html;
     }
+
+    // ── Carousel navigation ──────────────────────────────────────────────────
+    //
+    // Popups are injected as an HTML string, so per-element listeners can't be
+    // attached at build time. Navigation is delegated on document instead.
+
+    function showInCarousel(container, index) {
+        var poiId = container.dataset.poiId;
+        var images = (window.__poiGalleries || {})[poiId];
+        if (!images || !images.length) return;
+
+        // Wrap around
+        index = ((index % images.length) + images.length) % images.length;
+
+        var image = images[index];
+        container.dataset.index = String(index);
+        container.querySelector('.popup-image').src = image.thumbnail_url || image.url;
+
+        container.querySelectorAll('.popup-gallery-dot').forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === index);
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        var arrow = e.target.closest ? e.target.closest('.popup-gallery-nav') : null;
+        if (arrow) {
+            e.preventDefault();
+            e.stopPropagation();
+            var navContainer = arrow.closest('.popup-gallery');
+            showInCarousel(navContainer, parseInt(navContainer.dataset.index, 10) + parseInt(arrow.dataset.dir, 10));
+            return;
+        }
+
+        var dot = e.target.closest ? e.target.closest('.popup-gallery-dot') : null;
+        if (dot) {
+            e.preventDefault();
+            e.stopPropagation();
+            var dotContainer = dot.closest('.popup-gallery');
+            showInCarousel(dotContainer, parseInt(dot.dataset.index, 10));
+            return;
+        }
+
+        var image = e.target.closest ? e.target.closest('.popup-gallery .popup-image') : null;
+        if (image && typeof window.openPoiGallery === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+            var imageContainer = image.closest('.popup-gallery');
+            window.openPoiGallery(imageContainer.dataset.poiId, parseInt(imageContainer.dataset.index, 10));
+        }
+    });
 
     // ── Public API ────────────────────────────────────────────────────────────
 

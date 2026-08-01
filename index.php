@@ -54,8 +54,11 @@ if (session_status() === PHP_SESSION_NONE) {
     <!-- Custom MapLibre CSS -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map.css?v=<?php echo $version; ?>">
     <?php endif; ?>
-    
-    <?php 
+
+    <!-- Galería de imágenes de POI (compartida por ambos renderers) -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
+
+    <?php
     // Insertar código de analytics u otros scripts personalizados
     if (!empty(SITE_ANALYTICS_CODE)): 
         echo SITE_ANALYTICS_CODE . "\n";

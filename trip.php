@@ -221,6 +221,8 @@ $statsIcons = [
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map.css?v=<?php echo $version; ?>">
     <!-- Trip Page Styles -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/trip.css?v=<?php echo $version; ?>">
+    <!-- Galería de imágenes de POI (compartida por ambos renderers) -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
 
     <style>
         :root {
