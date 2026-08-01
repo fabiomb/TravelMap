@@ -50,11 +50,11 @@ class PoiImage {
             ');
             $stmt->execute([$tripId]);
 
-            $agrupadas = [];
-            foreach ($stmt->fetchAll() as $fila) {
-                $agrupadas[(int) $fila['poi_id']][] = $fila;
+            $grouped = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $grouped[(int) $row['poi_id']][] = $row;
             }
-            return $agrupadas;
+            return $grouped;
         } catch (PDOException $e) {
             error_log('Error al obtener imágenes del viaje: ' . $e->getMessage());
             return [];
@@ -65,8 +65,8 @@ class PoiImage {
         try {
             $stmt = $this->db->prepare('SELECT * FROM poi_images WHERE id = ?');
             $stmt->execute([$imageId]);
-            $fila = $stmt->fetch();
-            return $fila ?: null;
+            $row = $stmt->fetch();
+            return $row ?: null;
         } catch (PDOException $e) {
             error_log('Error al obtener imagen: ' . $e->getMessage());
             return null;
@@ -82,18 +82,18 @@ class PoiImage {
                 'SELECT COALESCE(MAX(sort_order) + 1, 0) FROM poi_images WHERE poi_id = ?'
             );
             $stmt->execute([$poiId]);
-            $orden = (int) $stmt->fetchColumn();
+            $order = (int) $stmt->fetchColumn();
 
             $stmt = $this->db->prepare(
                 'INSERT INTO poi_images (poi_id, image_path, sort_order) VALUES (?, ?, ?)'
             );
-            if (!$stmt->execute([$poiId, $imagePath, $orden])) {
+            if (!$stmt->execute([$poiId, $imagePath, $order])) {
                 return false;
             }
 
-            $nuevoId = (int) $this->db->lastInsertId();
+            $newId = (int) $this->db->lastInsertId();
             $this->syncCover($poiId);
-            return $nuevoId;
+            return $newId;
         } catch (PDOException $e) {
             error_log('Error al agregar imagen: ' . $e->getMessage());
             return false;
@@ -105,19 +105,19 @@ class PoiImage {
      */
     public function delete(int $imageId): bool {
         try {
-            $imagen = $this->getById($imageId);
-            if (!$imagen) {
+            $image = $this->getById($imageId);
+            if (!$image) {
                 return false;
             }
 
             $stmt = $this->db->prepare('DELETE FROM poi_images WHERE id = ?');
-            $resultado = $stmt->execute([$imageId]);
+            $result = $stmt->execute([$imageId]);
 
-            if ($resultado) {
-                FileHelper::deleteFile($imagen['image_path']);
-                $this->syncCover((int) $imagen['poi_id']);
+            if ($result) {
+                FileHelper::deleteFile($image['image_path']);
+                $this->syncCover((int) $image['poi_id']);
             }
-            return $resultado;
+            return $result;
         } catch (PDOException $e) {
             error_log('Error al eliminar imagen: ' . $e->getMessage());
             return false;
@@ -141,29 +141,29 @@ class PoiImage {
      */
     public function reorder(int $poiId, array $imageIds): bool {
         try {
-            $propias = [];
-            foreach ($this->getByPoiId($poiId) as $fila) {
-                $propias[(int) $fila['id']] = true;
+            $ownIds = [];
+            foreach ($this->getByPoiId($poiId) as $row) {
+                $ownIds[(int) $row['id']] = true;
             }
 
             $this->db->beginTransaction();
             $stmt = $this->db->prepare('UPDATE poi_images SET sort_order = ? WHERE id = ? AND poi_id = ?');
 
-            $orden = 0;
+            $order = 0;
             foreach ($imageIds as $id) {
                 $id = (int) $id;
-                if (!isset($propias[$id])) {
+                if (!isset($ownIds[$id])) {
                     continue;
                 }
-                $stmt->execute([$orden, $id, $poiId]);
-                unset($propias[$id]);
-                $orden++;
+                $stmt->execute([$order, $id, $poiId]);
+                unset($ownIds[$id]);
+                $order++;
             }
 
             // Las que no vinieron en la lista quedan al final, en su orden previo
-            foreach (array_keys($propias) as $id) {
-                $stmt->execute([$orden, $id, $poiId]);
-                $orden++;
+            foreach (array_keys($ownIds) as $id) {
+                $stmt->execute([$order, $id, $poiId]);
+                $order++;
             }
 
             $this->db->commit();
@@ -191,10 +191,10 @@ class PoiImage {
                 LIMIT 1
             ');
             $stmt->execute([$poiId]);
-            $portada = $stmt->fetchColumn();
+            $cover = $stmt->fetchColumn();
 
             $stmt = $this->db->prepare('UPDATE points_of_interest SET image_path = ? WHERE id = ?');
-            $stmt->execute([$portada !== false ? $portada : null, $poiId]);
+            $stmt->execute([$cover !== false ? $cover : null, $poiId]);
         } catch (PDOException $e) {
             error_log('Error al sincronizar portada: ' . $e->getMessage());
         }
@@ -224,17 +224,17 @@ class PoiImage {
         }
 
         try {
-            $marcadores = implode(',', array_fill(0, count($poiIds), '?'));
+            $placeholders = implode(',', array_fill(0, count($poiIds), '?'));
             $stmt = $this->db->prepare(
-                "SELECT poi_id, COUNT(*) AS total FROM poi_images WHERE poi_id IN ({$marcadores}) GROUP BY poi_id"
+                "SELECT poi_id, COUNT(*) AS total FROM poi_images WHERE poi_id IN ({$placeholders}) GROUP BY poi_id"
             );
             $stmt->execute($poiIds);
 
-            $conteos = [];
-            foreach ($stmt->fetchAll() as $fila) {
-                $conteos[(int) $fila['poi_id']] = (int) $fila['total'];
+            $counts = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $counts[(int) $row['poi_id']] = (int) $row['total'];
             }
-            return $conteos;
+            return $counts;
         } catch (PDOException $e) {
             error_log('Error al contar imágenes por lote: ' . $e->getMessage());
             return [];
@@ -245,16 +245,16 @@ class PoiImage {
      * Formato de salida para las APIs públicas.
      */
     public static function toApiArray(array $rows): array {
-        $salida = [];
-        foreach ($rows as $fila) {
-            $thumb = FileHelper::getThumbnailPath($fila['image_path']);
-            $salida[] = [
-                'id'            => (int) $fila['id'],
-                'url'           => BASE_URL . '/' . $fila['image_path'],
+        $output = [];
+        foreach ($rows as $row) {
+            $thumb = FileHelper::getThumbnailPath($row['image_path']);
+            $output[] = [
+                'id'            => (int) $row['id'],
+                'url'           => BASE_URL . '/' . $row['image_path'],
                 'thumbnail_url' => $thumb ? BASE_URL . '/' . $thumb : null,
-                'caption'       => $fila['caption'] ?? null,
+                'caption'       => $row['caption'] ?? null,
             ];
         }
-        return $salida;
+        return $output;
     }
 }

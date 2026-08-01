@@ -13,20 +13,20 @@ require_once __DIR__ . '/../../../src/models/PoiImage.php';
 $db = getDB();
 $m  = new PoiImage();
 
-$fallos = 0;
+$failures = 0;
 
-function chequear(string $etiqueta, bool $ok, string $detalle = ''): void {
-    global $fallos;
-    if (!$ok) { $fallos++; }
-    echo $etiqueta . ': ' . ($ok ? 'SI' : 'NO' . ($detalle !== '' ? " ({$detalle})" : '')) . PHP_EOL;
+function check(string $label, bool $ok, string $detail = ''): void {
+    global $failures;
+    if (!$ok) { $failures++; }
+    echo $label . ': ' . ($ok ? 'SI' : 'NO' . ($detail !== '' ? " ({$detail})" : '')) . PHP_EOL;
 }
 
-function crearPoi(PDO $db, int $tripId, string $titulo): int {
+function createPoi(PDO $db, int $tripId, string $title): int {
     $stmt = $db->prepare(
         "INSERT INTO points_of_interest (trip_id, title, type, latitude, longitude)
          VALUES (?, ?, 'visit', 0, 0)"
     );
-    $stmt->execute([$tripId, $titulo]);
+    $stmt->execute([$tripId, $title]);
     return (int) $db->lastInsertId();
 }
 
@@ -37,11 +37,11 @@ $db->prepare(
 )->execute();
 $tripId = (int) $db->lastInsertId();
 
-$poiId    = crearPoi($db, $tripId, '_verify_poi');
-$poiOtro  = crearPoi($db, $tripId, '_verify_poi_otro');
-$poiVacio = crearPoi($db, $tripId, '_verify_poi_vacio');
+$poiId      = createPoi($db, $tripId, '_verify_poi');
+$otherPoiId = createPoi($db, $tripId, '_verify_poi_otro');
+$emptyPoiId = createPoi($db, $tripId, '_verify_poi_vacio');
 
-$portada = fn() => $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
+$cover = fn() => $db->query("SELECT image_path FROM points_of_interest WHERE id = {$poiId}")->fetchColumn();
 
 try {
     // ── add: agrega al final y fija la portada ────────────────────────────
@@ -49,54 +49,54 @@ try {
     $b = $m->add($poiId, 'uploads/points/_verify_b.jpg');
     $c = $m->add($poiId, 'uploads/points/_verify_c.jpg');
 
-    $orden = array_column($m->getByPoiId($poiId), 'image_path');
-    chequear('add agrega al final', $orden === [
+    $order = array_column($m->getByPoiId($poiId), 'image_path');
+    check('add agrega al final', $order === [
         'uploads/points/_verify_a.jpg',
         'uploads/points/_verify_b.jpg',
         'uploads/points/_verify_c.jpg',
-    ], implode(',', $orden));
+    ], implode(',', $order));
 
-    chequear('portada tras add', $portada() === 'uploads/points/_verify_a.jpg', (string) $portada());
+    check('portada tras add', $cover() === 'uploads/points/_verify_a.jpg', (string) $cover());
 
     // ── reorder ───────────────────────────────────────────────────────────
     $m->reorder($poiId, [$c, $b, $a]);
-    chequear('reorder aplica el orden pedido',
+    check('reorder aplica el orden pedido',
         array_column($m->getByPoiId($poiId), 'id') === [$c, $b, $a]);
-    chequear('portada sigue al reorder', $portada() === 'uploads/points/_verify_c.jpg', (string) $portada());
+    check('portada sigue al reorder', $cover() === 'uploads/points/_verify_c.jpg', (string) $cover());
 
     // Un id de OTRO POI debe descartarse sin alterar el orden propio
-    $ajena = $m->add($poiOtro, 'uploads/points/_verify_ajena.jpg');
-    $m->reorder($poiId, [$ajena, $c, $b, $a]);
-    chequear('reorder descarta ids ajenos',
+    $foreignImageId = $m->add($otherPoiId, 'uploads/points/_verify_ajena.jpg');
+    $m->reorder($poiId, [$foreignImageId, $c, $b, $a]);
+    check('reorder descarta ids ajenos',
         array_column($m->getByPoiId($poiId), 'id') === [$c, $b, $a]);
-    chequear('la imagen ajena no cambió de POI',
-        (int) $m->getById($ajena)['poi_id'] === $poiOtro);
+    check('la imagen ajena no cambió de POI',
+        (int) $m->getById($foreignImageId)['poi_id'] === $otherPoiId);
 
     // ── captions ──────────────────────────────────────────────────────────
     $m->updateCaption($a, '  texto de prueba  ');
-    chequear('caption recortado', $m->getById($a)['caption'] === 'texto de prueba');
+    check('caption recortado', $m->getById($a)['caption'] === 'texto de prueba');
     $m->updateCaption($a, '   ');
-    chequear('caption vacío a NULL', $m->getById($a)['caption'] === null);
+    check('caption vacío a NULL', $m->getById($a)['caption'] === null);
 
     // ── conteos ───────────────────────────────────────────────────────────
-    chequear('countByPoiId', $m->countByPoiId($poiId) === 3);
+    check('countByPoiId', $m->countByPoiId($poiId) === 3);
 
-    $conteos = $m->countByPoiIds([$poiId, $poiOtro, $poiVacio]);
-    chequear('countByPoiIds cuenta cada POI',
-        ($conteos[$poiId] ?? 0) === 3 && ($conteos[$poiOtro] ?? 0) === 1);
-    chequear('countByPoiIds omite POIs sin imágenes', !array_key_exists($poiVacio, $conteos));
+    $counts = $m->countByPoiIds([$poiId, $otherPoiId, $emptyPoiId]);
+    check('countByPoiIds cuenta cada POI',
+        ($counts[$poiId] ?? 0) === 3 && ($counts[$otherPoiId] ?? 0) === 1);
+    check('countByPoiIds omite POIs sin imágenes', !array_key_exists($emptyPoiId, $counts));
 
     // ── getByTripId ───────────────────────────────────────────────────────
-    $porViaje = $m->getByTripId($tripId);
-    chequear('getByTripId agrupa por poi_id',
-        isset($porViaje[$poiId], $porViaje[$poiOtro]) && count($porViaje) === 2);
-    chequear('getByTripId respeta el orden de galería',
-        array_column($porViaje[$poiId], 'id') === [$c, $b, $a]);
-    chequear('getByTripId omite POIs sin imágenes', !isset($porViaje[$poiVacio]));
+    $byTrip = $m->getByTripId($tripId);
+    check('getByTripId agrupa por poi_id',
+        isset($byTrip[$poiId], $byTrip[$otherPoiId]) && count($byTrip) === 2);
+    check('getByTripId respeta el orden de galería',
+        array_column($byTrip[$poiId], 'id') === [$c, $b, $a]);
+    check('getByTripId omite POIs sin imágenes', !isset($byTrip[$emptyPoiId]));
 
     // ── toApiArray ────────────────────────────────────────────────────────
     $api = PoiImage::toApiArray($m->getByPoiId($poiId));
-    chequear('toApiArray con claves correctas',
+    check('toApiArray con claves correctas',
         isset($api[0]['id'], $api[0]['url'])
         && array_key_exists('thumbnail_url', $api[0])
         && array_key_exists('caption', $api[0]));
@@ -105,22 +105,22 @@ try {
     // image_path se lee DESPUÉS del delete y ANTES de cualquier limpieza:
     // si syncCover() dejara de correr en delete(), estos dos checks fallan.
     $m->delete($c);
-    chequear('borrar la portada promueve la siguiente',
-        $portada() === 'uploads/points/_verify_b.jpg', (string) $portada());
+    check('borrar la portada promueve la siguiente',
+        $cover() === 'uploads/points/_verify_b.jpg', (string) $cover());
 
     $m->delete($b);
     $m->delete($a);
-    chequear('galería vacía deja image_path en NULL', $portada() === null, var_export($portada(), true));
+    check('galería vacía deja image_path en NULL', $cover() === null, var_export($cover(), true));
 
 } finally {
     // Borrar el viaje fixture alcanza: el CASCADE se lleva sus POIs y, con
     // ellos, sus filas de poi_images.
     $db->prepare('DELETE FROM trips WHERE id = ?')->execute([$tripId]);
 
-    $residuales = (int) $db->query(
+    $leftover = (int) $db->query(
         "SELECT COUNT(*) FROM poi_images WHERE image_path LIKE '%_verify_%'"
     )->fetchColumn();
-    chequear('sin filas de prueba residuales', $residuales === 0, (string) $residuales);
+    check('sin filas de prueba residuales', $leftover === 0, (string) $leftover);
 
-    echo ($fallos === 0 ? 'TODAS LAS VERIFICACIONES PASARON' : "FALLARON {$fallos} VERIFICACIONES") . PHP_EOL;
+    echo ($failures === 0 ? 'TODAS LAS VERIFICACIONES PASARON' : "FALLARON {$failures} VERIFICACIONES") . PHP_EOL;
 }

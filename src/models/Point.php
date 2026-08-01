@@ -101,9 +101,9 @@ class Point {
                 return false;
             }
 
-            $nuevoId = (int) $this->db->lastInsertId();
-            $this->ensureGalleryRow($nuevoId, $data['image_path'] ?? null);
-            return $nuevoId;
+            $newId = (int) $this->db->lastInsertId();
+            $this->ensureGalleryRow($newId, $data['image_path'] ?? null);
+            return $newId;
         } catch (PDOException $e) {
             error_log('Error al crear punto: ' . $e->getMessage());
             return false;
@@ -161,12 +161,12 @@ class Point {
             return;
         }
 
-        $galeria = new PoiImage();
-        if ($galeria->countByPoiId($pointId) > 0) {
+        $gallery = new PoiImage();
+        if ($gallery->countByPoiId($pointId) > 0) {
             return;
         }
 
-        $galeria->add($pointId, $imagePath);
+        $gallery->add($pointId, $imagePath);
     }
 
     /**
@@ -180,11 +180,11 @@ class Point {
             // Recolectar rutas ANTES del DELETE: el CASCADE borra las filas
             // de poi_images pero no los archivos en disco.
             $point = $this->getById($id);
-            $galeria = new PoiImage();
-            $rutas = array_column($galeria->getByPoiId((int) $id), 'image_path');
+            $gallery = new PoiImage();
+            $paths = array_column($gallery->getByPoiId((int) $id), 'image_path');
 
             if ($point && !empty($point['image_path'])) {
-                $rutas[] = $point['image_path'];
+                $paths[] = $point['image_path'];
             }
 
             // Eliminar links asociados (sin FK cascade en tabla polimórfica)
@@ -195,8 +195,8 @@ class Point {
             $result = $stmt->execute([$id]);
 
             if ($result) {
-                foreach (array_unique(array_filter($rutas)) as $ruta) {
-                    FileHelper::deleteFile($ruta);
+                foreach (array_unique(array_filter($paths)) as $path) {
+                    FileHelper::deleteFile($path);
                 }
             }
 

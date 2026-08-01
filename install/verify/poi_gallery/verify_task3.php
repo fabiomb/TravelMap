@@ -13,7 +13,7 @@ require_once __DIR__ . '/../../../src/models/PoiImage.php';
 
 $db = getDB();
 $point = new Point();
-$galeria = new PoiImage();
+$gallery = new PoiImage();
 
 // Archivos propios, con prefijo _verify_, para comprobar el borrado en disco.
 // Nunca pueden colisionar con una imagen real: los crea este mismo script.
@@ -44,7 +44,7 @@ try {
         'latitude' => '0.0', 'longitude' => '0.0', 'visit_date' => null,
         'image_path' => 'uploads/points/_verify_cover.jpg',
     ]);
-    echo 'create genera fila espejo: ' . ($galeria->countByPoiId($id) === 1 ? 'SI' : 'NO') . PHP_EOL;
+    echo 'create genera fila espejo: ' . ($gallery->countByPoiId($id) === 1 ? 'SI' : 'NO') . PHP_EOL;
 
     // 2. Un update posterior no duplica la fila
     $point->update($id, [
@@ -53,22 +53,22 @@ try {
         'latitude' => '0.0', 'longitude' => '0.0', 'visit_date' => null,
         'image_path' => 'uploads/points/_verify_cover.jpg',
     ]);
-    echo 'update no duplica: ' . ($galeria->countByPoiId($id) === 1 ? 'SI' : 'NO') . PHP_EOL;
+    echo 'update no duplica: ' . ($gallery->countByPoiId($id) === 1 ? 'SI' : 'NO') . PHP_EOL;
 
     // 3. Con galería existente, update no la pisa
-    $galeria->add($id, 'uploads/points/_verify_extra.jpg');
+    $gallery->add($id, 'uploads/points/_verify_extra.jpg');
     $point->update($id, [
         'trip_id' => $tripId, 'title' => '_verify_poi', 'description' => 'editado',
         'type' => 'visit', 'icon' => 'default',
         'latitude' => '0.0', 'longitude' => '0.0', 'visit_date' => null,
         'image_path' => 'uploads/points/_verify_cover.jpg',
     ]);
-    echo 'update respeta la galería: ' . ($galeria->countByPoiId($id) === 2 ? 'SI' : 'NO') . PHP_EOL;
+    echo 'update respeta la galería: ' . ($gallery->countByPoiId($id) === 2 ? 'SI' : 'NO') . PHP_EOL;
 
     // 4. Borrar el POI borra filas y archivos
     $point->delete($id);
-    $quedan = (int) $db->query("SELECT COUNT(*) FROM poi_images WHERE poi_id = {$id}")->fetchColumn();
-    echo 'cascade borra filas: ' . ($quedan === 0 ? 'SI' : 'NO') . PHP_EOL;
+    $remaining = (int) $db->query("SELECT COUNT(*) FROM poi_images WHERE poi_id = {$id}")->fetchColumn();
+    echo 'cascade borra filas: ' . ($remaining === 0 ? 'SI' : 'NO') . PHP_EOL;
     echo 'borra archivo portada: ' . (!file_exists($coverFile) ? 'SI' : 'NO') . PHP_EOL;
     echo 'borra archivo extra: ' . (!file_exists($extraFile) ? 'SI' : 'NO') . PHP_EOL;
 } finally {
@@ -81,7 +81,7 @@ try {
     @unlink($extraFile);
 }
 
-$residuales = (int) $db->query(
+$leftover = (int) $db->query(
     "SELECT COUNT(*) FROM points_of_interest WHERE title LIKE '\_verify\_%'"
 )->fetchColumn();
-echo 'sin POIs de prueba residuales: ' . ($residuales === 0 ? 'SI' : "NO ({$residuales})") . PHP_EOL;
+echo 'sin POIs de prueba residuales: ' . ($leftover === 0 ? 'SI' : "NO ({$leftover})") . PHP_EOL;
