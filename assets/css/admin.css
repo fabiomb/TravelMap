@@ -1889,6 +1889,27 @@ html.sidebar-collapsed .sidebar-user-link {
     opacity: .4;
 }
 
+/* Reorder en vuelo: la grilla no acepta otro arrastre hasta que el servidor
+   confirme (los items quedan draggable="false" desde el JS). */
+.poi-gallery-grid.is-busy {
+    opacity: .6;
+    cursor: progress;
+}
+
+.poi-gallery-grid.is-busy .poi-gallery-item {
+    cursor: progress;
+}
+
+/* Marca dónde caería la foto arrastrada. El DOM no se reordena hasta que el
+   servidor responde, así que esta guía es todo el feedback del arrastre. */
+.poi-gallery-item.drop-before {
+    box-shadow: inset 3px 0 0 0 #0d6efd;
+}
+
+.poi-gallery-item.drop-after {
+    box-shadow: inset -3px 0 0 0 #0d6efd;
+}
+
 .poi-gallery-item img {
     width: 100%;
     height: 100px;

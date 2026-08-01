@@ -22,39 +22,21 @@
 
     let draggedItem = null;
 
-    // Token de generación para reorders: cada llamado a confirmOrder() toma
-    // el número siguiente. A diferencia de las subidas (que se serializan con
-    // isUploading), un reorder en vuelo NO bloquea el siguiente drag — el
-    // usuario puede seguir reordenando de inmediato. Dos contadores, dos
-    // criterios distintos (no es el mismo chequeo repetido dos veces):
-    //
-    // - REVERT (falla): sólo el intento MÁS NUEVO puede revertir el DOM
-    //   (myGeneration === orderGeneration, chequeado en confirmOrder). Si uno
-    //   más nuevo ya arrancó, ese manda: revertir acá interrumpiría en el
-    //   aire un drag que el usuario todavía puede estar completando.
-    // - CONFIRMACIÓN (éxito): CUALQUIER éxito cuenta, pero sólo avanza
-    //   lastConfirmedOrder si es más nuevo que la última confirmación ya
-    //   aplicada (myGeneration > lastConfirmedGeneration), nunca al revés.
-    //   Esto importa en una cadena de 3+ drags solapados donde el del medio
-    //   confirma con éxito pero el primero y el último fallan: si la
-    //   confirmación exigiera "ser el más nuevo AHORA" (mismo criterio que el
-    //   revert), el éxito confirmado del medio se descartaría apenas arranca
-    //   el tercer drag, y el revert final del tercero caería hasta el estado
-    //   original, tirando por la borda un cambio que el servidor sí tiene
-    //   guardado. Ver la traza de 3 drags en el reporte de la Task 5, Round 3.
-    let orderGeneration       = 0;
-    let lastConfirmedGeneration = 0;
+    // Orden que quedaría si el usuario soltara acá. Se calcula sobre el DOM
+    // (que NO se toca durante el arrastre) y sólo se aplica de verdad cuando
+    // el servidor responde success. Se limpia en dragend.
+    let pendingOrder = null;
 
-    // Último orden que el SERVIDOR confirmó — no "lo que mostraba el DOM
-    // cuando arrancó este drag". Un snapshot local del DOM puede contener el
-    // movimiento optimista de un drag anterior que nunca se confirmó, así
-    // que revertir a un snapshot local puede terminar mostrando un orden que
-    // el servidor nunca tuvo (ver Round 3 en el reporte de la Task 5). Se
-    // inicializa con el orden que renderizó PHP al cargar la página, que sí
-    // viene de la base (poi_images.sort_order), y sólo avanza cuando el
-    // servidor responde success a un reorder más nuevo que el último
-    // confirmado (ver confirmOrder).
-    let lastConfirmedOrder = null;
+    // Confirmación PESIMISTA del reorder: mientras hay un request de orden en
+    // vuelo la grilla no acepta otro arrastre (los items dejan de ser
+    // draggable, igual que las subidas se serializan con isUploading) y el DOM
+    // conserva el orden previo al arrastre. Así no puede haber dos reorders
+    // solapados, no hace falta revertir nada si falla, y el DOM nunca puede
+    // mostrar un orden que el servidor no haya aceptado. Los rounds 1 a 3 de
+    // esta tarea intentaron reconciliar el camino optimista (revert, token de
+    // generación, último orden confirmado) y cada arreglo destapó otro
+    // entrelazado: el problema no era un guard faltante sino el diseño.
+    let isReordering = false;
 
     // Cola única de subida: si el usuario suelta una segunda tanda mientras la
     // primera sigue en curso, se acumula acá en vez de arrancar una segunda
@@ -101,73 +83,104 @@
                     .map(function (el) { return el.dataset.imageId; });
     }
 
+    function sameOrder(a, b) {
+        return a.length === b.length && a.every(function (id, index) { return id === b[index]; });
+    }
+
     /**
-     * Reordena los nodos del DOM según la lista de ids recibida.
-     * Se usa para revertir un reorder que el servidor no confirmó.
+     * Marca la grilla como ocupada mientras viaja un reorder: los items dejan
+     * de ser arrastrables (bloquea el gesto en el origen) y la clase is-busy
+     * da el feedback visual de "esperando al servidor".
+     */
+    function setGridBusy(busy) {
+        grid.classList.toggle('is-busy', busy);
+        grid.querySelectorAll('.poi-gallery-item').forEach(function (item) {
+            item.draggable = !busy;
+        });
+    }
+
+    function clearDropHint() {
+        grid.querySelectorAll('.poi-gallery-item').forEach(function (item) {
+            item.classList.remove('drop-before', 'drop-after');
+        });
+    }
+
+    /**
+     * Reordena los nodos del DOM según la lista de ids CONFIRMADA por el
+     * servidor. Las imágenes que no estén en la lista (subidas mientras el
+     * request viajaba) van al final, en su orden relativo previo: es
+     * exactamente la regla de PoiImage::reorder(), que a los ids que no
+     * vinieron en la lista les asigna sort_order al final. Así el DOM y la
+     * base quedan iguales aunque una subida se cruce con un reorder.
      */
     function applyOrder(order) {
+        const confirmed = {};
+        order.forEach(function (id) { confirmed[id] = true; });
+
         order.forEach(function (id) {
             const item = grid.querySelector('.poi-gallery-item[data-image-id="' + id + '"]');
             if (item) { grid.appendChild(item); }
         });
+
+        Array.from(grid.querySelectorAll('.poi-gallery-item')).forEach(function (item) {
+            if (!confirmed[item.dataset.imageId]) { grid.appendChild(item); }
+        });
+
         refreshState();
     }
 
     /**
-     * Envía el orden actual del DOM. Devuelve también ese mismo orden
-     * (`submittedOrder`), tomado en este instante — no el orden que el DOM
-     * tenga cuando la respuesta llegue, que puede haber cambiado por otro
-     * drag mientras este request estaba en vuelo.
+     * Calcula el orden resultante de mover draggedId junto a targetId, sin
+     * tocar el DOM. El DOM se mantiene en el orden previo al arrastre hasta
+     * que el servidor confirme.
      */
-    function saveOrder() {
-        const submittedOrder = currentOrder();
+    function orderWithMove(draggedId, targetId, insertAfter) {
+        const order = currentOrder().filter(function (id) { return id !== draggedId; });
+        const targetIndex = order.indexOf(targetId);
+        if (targetIndex === -1) { return currentOrder(); }
+
+        order.splice(insertAfter ? targetIndex + 1 : targetIndex, 0, draggedId);
+        return order;
+    }
+
+    function saveOrder(order) {
         const formData = new FormData();
         formData.append('action', 'reorder');
         formData.append('poi_id', poiId);
-        submittedOrder.forEach(function (id) { formData.append('image_ids[]', id); });
-        return requestApi(formData).then(function (result) {
-            return { result: result, submittedOrder: submittedOrder };
-        });
+        order.forEach(function (id) { formData.append('image_ids[]', id); });
+        return requestApi(formData);
     }
 
     /**
-     * Confirma contra el servidor el reorder ya aplicado visualmente al soltar.
+     * Manda el orden al servidor y sólo lo aplica al DOM si responde success.
      *
-     * - Si el servidor confirma éxito Y este intento es más nuevo que la
-     *   última confirmación ya aplicada, `submittedOrder` pasa a ser el nuevo
-     *   `lastConfirmedOrder` — un orden que el servidor realmente tiene, sin
-     *   retroceder nunca a una confirmación más vieja que llegue tarde.
-     * - Si el servidor no lo confirma (falla o red caída) Y este intento
-     *   sigue siendo el más nuevo en curso, revierte el DOM a
-     *   `lastConfirmedOrder` — nunca a un snapshot local del DOM: ese
-     *   snapshot podría incluir el movimiento optimista de un drag anterior
-     *   que nunca se confirmó, y revertir a él mostraría un orden que el
-     *   servidor nunca tuvo. Si ya arrancó un intento más nuevo, no se
-     *   revierte: ese intento más nuevo es quien decide, con su propio éxito
-     *   o fallo, qué pasa al final.
+     * Mientras el request está en vuelo la grilla queda bloqueada, así que no
+     * puede haber un segundo reorder en paralelo. Si falla (respuesta de error
+     * o red caída) el DOM nunca se movió: no hay nada que revertir, sólo se
+     * avisa. El desbloqueo va en el último .then() de la cadena, que corre
+     * tanto si hubo éxito como si el .catch() ya manejó el rechazo — si no,
+     * la grilla quedaría trabada hasta recargar la página.
      */
-    function confirmOrder() {
-        const myGeneration = ++orderGeneration;
+    function commitOrder(order) {
+        if (isReordering) return;
 
-        return saveOrder()
-            .then(function (outcome) {
-                if (outcome.result.data.success) {
-                    if (myGeneration > lastConfirmedGeneration) {
-                        lastConfirmedOrder = outcome.submittedOrder;
-                        lastConfirmedGeneration = myGeneration;
-                    }
+        isReordering = true;
+        setGridBusy(true);
+
+        saveOrder(order)
+            .then(function (result) {
+                if (result.data.success) {
+                    applyOrder(order);
                     return;
                 }
-                if (myGeneration === orderGeneration) {
-                    applyOrder(lastConfirmedOrder);
-                    alert(__('points.gallery_reorder_error') + ': ' + (outcome.result.data.error || ''));
-                }
+                alert(__('points.gallery_reorder_error') + ': ' + (result.data.error || ''));
             })
             .catch(function () {
-                if (myGeneration === orderGeneration) {
-                    applyOrder(lastConfirmedOrder);
-                    alert(__('points.gallery_reorder_error'));
-                }
+                alert(__('points.gallery_reorder_error'));
+            })
+            .then(function () {
+                isReordering = false;
+                setGridBusy(false);
             });
     }
 
@@ -176,7 +189,9 @@
     function buildItem(image) {
         const item = document.createElement('div');
         item.className = 'poi-gallery-item';
-        item.draggable = true;
+        // Si justo hay un reorder en vuelo, la foto nueva nace no arrastrable;
+        // setGridBusy(false) la habilita cuando el reorder termina.
+        item.draggable = !isReordering;
         item.dataset.imageId = image.id;
 
         const img = document.createElement('img');
@@ -326,30 +341,43 @@
 
         item.addEventListener('dragstart', function (e) {
             draggedItem = item;
+            pendingOrder = null;
             item.classList.add('is-dragging');
             e.dataTransfer.effectAllowed = 'move';
         });
 
-        item.addEventListener('dragend', function () {
-            item.classList.remove('is-dragging');
-            draggedItem = null;
-            refreshState();
-            confirmOrder();
-        });
-
         item.addEventListener('dragover', function (e) {
+            // preventDefault siempre: sin esto un archivo arrastrado desde el
+            // escritorio sobre un item haría que el navegador lo abra.
             e.preventDefault();
             if (!draggedItem || draggedItem === item) return;
 
             const box = item.getBoundingClientRect();
             const insertAfter = (e.clientX - box.left) > (box.width / 2);
-            grid.insertBefore(draggedItem, insertAfter ? item.nextSibling : item);
+
+            clearDropHint();
+            item.classList.add(insertAfter ? 'drop-after' : 'drop-before');
+            pendingOrder = orderWithMove(draggedItem.dataset.imageId, item.dataset.imageId, insertAfter);
+        });
+
+        // Se confirma en drop, no en dragend: si el usuario suelta fuera de la
+        // grilla el drop no dispara y el arrastre se cancela sin mandar nada.
+        item.addEventListener('drop', function (e) {
+            e.preventDefault();
+            if (!draggedItem || !pendingOrder) return;
+            if (sameOrder(pendingOrder, currentOrder())) return;
+
+            commitOrder(pendingOrder);
+        });
+
+        item.addEventListener('dragend', function () {
+            item.classList.remove('is-dragging');
+            clearDropHint();
+            draggedItem = null;
+            pendingOrder = null;
         });
     }
 
     grid.querySelectorAll('.poi-gallery-item').forEach(wireItem);
     refreshState();
-    // El orden renderizado por PHP viene de poi_images.sort_order: es la
-    // línea de base real contra la que revertir hasta el primer reorder.
-    lastConfirmedOrder = currentOrder();
 })();
