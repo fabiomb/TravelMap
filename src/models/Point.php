@@ -5,6 +5,9 @@
  * Gestiona las operaciones CRUD para puntos de interés
  */
 
+require_once __DIR__ . '/PoiImage.php';
+require_once __DIR__ . '/../helpers/FileHelper.php';
+
 class Point {
     private $db;
 
@@ -94,7 +97,13 @@ class Point {
                 $data['visit_date'] ?? null
             ]);
 
-            return $result ? $this->db->lastInsertId() : false;
+            if (!$result) {
+                return false;
+            }
+
+            $nuevoId = (int) $this->db->lastInsertId();
+            $this->ensureGalleryRow($nuevoId, $data['image_path'] ?? null);
+            return $nuevoId;
         } catch (PDOException $e) {
             error_log('Error al crear punto: ' . $e->getMessage());
             return false;
@@ -117,7 +126,7 @@ class Point {
                 WHERE id = ?
             ');
             
-            return $stmt->execute([
+            $result = $stmt->execute([
                 $data['trip_id'],
                 $data['title'],
                 $data['description'] ?? null,
@@ -129,10 +138,35 @@ class Point {
                 $data['visit_date'] ?? null,
                 $id
             ]);
+
+            if ($result) {
+                $this->ensureGalleryRow((int) $id, $data['image_path'] ?? null);
+            }
+            return $result;
         } catch (PDOException $e) {
             error_log('Error al actualizar punto: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Garantiza que un POI con imagen tenga su fila en poi_images.
+     *
+     * Los escritores externos (MCP, importador EXIF, save_poi) sólo conocen
+     * image_path. Este método los cubre sin obligarlos a conocer la galería.
+     * Si el POI ya tiene imágenes, no toca nada: la galería manda.
+     */
+    private function ensureGalleryRow(int $pointId, $imagePath): void {
+        if (empty($imagePath)) {
+            return;
+        }
+
+        $galeria = new PoiImage();
+        if ($galeria->countByPoiId($pointId) > 0) {
+            return;
+        }
+
+        $galeria->add($pointId, $imagePath);
     }
 
     /**
@@ -143,8 +177,15 @@ class Point {
      */
     public function delete($id) {
         try {
-            // Obtener la imagen antes de eliminar para borrar el archivo
+            // Recolectar rutas ANTES del DELETE: el CASCADE borra las filas
+            // de poi_images pero no los archivos en disco.
             $point = $this->getById($id);
+            $galeria = new PoiImage();
+            $rutas = array_column($galeria->getByPoiId((int) $id), 'image_path');
+
+            if ($point && !empty($point['image_path'])) {
+                $rutas[] = $point['image_path'];
+            }
 
             // Eliminar links asociados (sin FK cascade en tabla polimórfica)
             $this->db->prepare('DELETE FROM links WHERE entity_type = ? AND entity_id = ?')
@@ -152,15 +193,13 @@ class Point {
 
             $stmt = $this->db->prepare('DELETE FROM points_of_interest WHERE id = ?');
             $result = $stmt->execute([$id]);
-            
-            // Si se eliminó correctamente y tenía imagen, borrar el archivo
-            if ($result && $point && !empty($point['image_path'])) {
-                $file_path = ROOT_PATH . '/' . $point['image_path'];
-                if (file_exists($file_path)) {
-                    @unlink($file_path);
+
+            if ($result) {
+                foreach (array_unique(array_filter($rutas)) as $ruta) {
+                    FileHelper::deleteFile($ruta);
                 }
             }
-            
+
             return $result;
         } catch (PDOException $e) {
             error_log('Error al eliminar punto: ' . $e->getMessage());
