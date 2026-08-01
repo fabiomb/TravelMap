@@ -8,6 +8,7 @@ require_once __DIR__ . '/src/models/Route.php';
 require_once __DIR__ . '/src/models/Point.php';
 require_once __DIR__ . '/src/models/TripTag.php';
 require_once __DIR__ . '/src/models/Link.php';
+require_once __DIR__ . '/src/models/PoiImage.php';
 require_once __DIR__ . '/src/helpers/FileHelper.php';
 require_once __DIR__ . '/src/helpers/DateTimeHelper.php';
 require_once __DIR__ . '/src/models/Settings.php';
@@ -55,6 +56,7 @@ $routeModel   = new Route();
 $pointModel   = new Point();
 $tripTagModel = new TripTag();
 $linkModel = new Link();
+$poiImageModel = new PoiImage();
 
 $trip = $tripModel->getById($tripId);
 
@@ -118,6 +120,9 @@ foreach ($routes as $route) {
     }
 }
 
+// Resolver imágenes de galería del viaje en una sola consulta
+$tripImages = $poiImageModel->getByTripId($tripId);
+
 // Procesar puntos para JS y timeline
 $processedPoints = [];
 foreach ($points as $point) {
@@ -140,6 +145,7 @@ foreach ($points as $point) {
         'thumbnail_url' => $thumbnail_url,
         'visit_date' => $point['visit_date'],
         'links' => $links,
+        'images' => PoiImage::toApiArray($tripImages[(int) $point['id']] ?? []),
     ];
     $processedPoints[] = $processedPoint;
     
