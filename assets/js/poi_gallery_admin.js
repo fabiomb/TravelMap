@@ -23,6 +23,17 @@
     let draggedItem     = null;
     let orderBeforeDrag = null;
 
+    // Token de generación para reorders: cada llamado a confirmOrder() toma
+    // el número siguiente. A diferencia de las subidas (que se serializan con
+    // isUploading), un reorder en vuelo NO bloquea el siguiente drag — el
+    // usuario puede seguir reordenando de inmediato. Por eso, si dos reorders
+    // quedan en vuelo a la vez y el más viejo falla después de que el más
+    // nuevo ya tuvo éxito, revertir con el snapshot del viejo pisaría en
+    // silencio un estado que el servidor ya confirmó. La regla: un intento
+    // sólo puede revertir el DOM si sigue siendo el más nuevo cuando su
+    // respuesta llega (ver revertIfCurrent en confirmOrder).
+    let orderGeneration = 0;
+
     // Cola única de subida: si el usuario suelta una segunda tanda mientras la
     // primera sigue en curso, se acumula acá en vez de arrancar una segunda
     // recursión independiente que pisaría la misma barra de progreso.
@@ -30,6 +41,13 @@
     let queueTotal  = 0;
     let queueDone   = 0;
     let isUploading = false;
+
+    // Porcentaje mostrado en la barra: sólo puede crecer. Si entra una tanda
+    // nueva mientras otra está a mitad de camino, queueTotal crece y el
+    // cálculo crudo (queueDone / queueTotal) puede bajar; clampeamos para que
+    // la barra nunca retroceda visualmente (cosmético, no afecta el resultado
+    // final: igual llega a 100% y se esconde).
+    let displayedPercent = 0;
 
     /**
      * Devuelve {status, data}: el status HTTP se necesita para distinguir,
@@ -84,20 +102,28 @@
     /**
      * Confirma contra el servidor el reorder ya aplicado visualmente al soltar.
      * Si el servidor no lo confirma (falla o red caída), revierte el DOM al
-     * orden previo al drag y avisa: el estado visual nunca puede adelantarse
-     * en silencio a lo que el servidor considera portada.
+     * orden previo a ESTE drag — pero sólo si ningún reorder más nuevo arrancó
+     * mientras este request estaba en vuelo (ver comentario de orderGeneration
+     * arriba). Si ya hay uno más nuevo, ese es quien manda: revertir acá
+     * pisaría en silencio un estado que el servidor ya confirmó.
      */
     function confirmOrder(previousOrder) {
+        const myGeneration = ++orderGeneration;
+
+        function revertIfStillCurrent(message) {
+            if (myGeneration !== orderGeneration) return;
+            applyOrder(previousOrder);
+            alert(message);
+        }
+
         return saveOrder()
             .then(function (result) {
                 if (!result.data.success) {
-                    applyOrder(previousOrder);
-                    alert(__('points.gallery_reorder_error') + ': ' + (result.data.error || ''));
+                    revertIfStillCurrent(__('points.gallery_reorder_error') + ': ' + (result.data.error || ''));
                 }
             })
             .catch(function () {
-                applyOrder(previousOrder);
-                alert(__('points.gallery_reorder_error'));
+                revertIfStillCurrent(__('points.gallery_reorder_error'));
             });
     }
 
@@ -179,6 +205,7 @@
             isUploading = false;
             queueTotal = 0;
             queueDone = 0;
+            displayedPercent = 0;
             progressWrapper.classList.add('d-none');
             progressBar.style.width = '0%';
             return;
@@ -186,7 +213,9 @@
 
         return uploadOne(uploadQueue.shift()).then(function () {
             queueDone++;
-            progressBar.style.width = Math.round((queueDone / queueTotal) * 100) + '%';
+            const rawPercent = Math.round((queueDone / queueTotal) * 100);
+            displayedPercent = Math.max(displayedPercent, rawPercent);
+            progressBar.style.width = displayedPercent + '%';
             return processQueue();
         });
     }
