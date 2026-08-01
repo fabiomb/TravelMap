@@ -20,19 +20,41 @@
 
     const ENDPOINT = BASE_URL + '/api/poi_images.php';
 
-    let draggedItem     = null;
-    let orderBeforeDrag = null;
+    let draggedItem = null;
 
     // Token de generación para reorders: cada llamado a confirmOrder() toma
     // el número siguiente. A diferencia de las subidas (que se serializan con
     // isUploading), un reorder en vuelo NO bloquea el siguiente drag — el
-    // usuario puede seguir reordenando de inmediato. Por eso, si dos reorders
-    // quedan en vuelo a la vez y el más viejo falla después de que el más
-    // nuevo ya tuvo éxito, revertir con el snapshot del viejo pisaría en
-    // silencio un estado que el servidor ya confirmó. La regla: un intento
-    // sólo puede revertir el DOM si sigue siendo el más nuevo cuando su
-    // respuesta llega (ver revertIfCurrent en confirmOrder).
-    let orderGeneration = 0;
+    // usuario puede seguir reordenando de inmediato. Dos contadores, dos
+    // criterios distintos (no es el mismo chequeo repetido dos veces):
+    //
+    // - REVERT (falla): sólo el intento MÁS NUEVO puede revertir el DOM
+    //   (myGeneration === orderGeneration, chequeado en confirmOrder). Si uno
+    //   más nuevo ya arrancó, ese manda: revertir acá interrumpiría en el
+    //   aire un drag que el usuario todavía puede estar completando.
+    // - CONFIRMACIÓN (éxito): CUALQUIER éxito cuenta, pero sólo avanza
+    //   lastConfirmedOrder si es más nuevo que la última confirmación ya
+    //   aplicada (myGeneration > lastConfirmedGeneration), nunca al revés.
+    //   Esto importa en una cadena de 3+ drags solapados donde el del medio
+    //   confirma con éxito pero el primero y el último fallan: si la
+    //   confirmación exigiera "ser el más nuevo AHORA" (mismo criterio que el
+    //   revert), el éxito confirmado del medio se descartaría apenas arranca
+    //   el tercer drag, y el revert final del tercero caería hasta el estado
+    //   original, tirando por la borda un cambio que el servidor sí tiene
+    //   guardado. Ver la traza de 3 drags en el reporte de la Task 5, Round 3.
+    let orderGeneration       = 0;
+    let lastConfirmedGeneration = 0;
+
+    // Último orden que el SERVIDOR confirmó — no "lo que mostraba el DOM
+    // cuando arrancó este drag". Un snapshot local del DOM puede contener el
+    // movimiento optimista de un drag anterior que nunca se confirmó, así
+    // que revertir a un snapshot local puede terminar mostrando un orden que
+    // el servidor nunca tuvo (ver Round 3 en el reporte de la Task 5). Se
+    // inicializa con el orden que renderizó PHP al cargar la página, que sí
+    // viene de la base (poi_images.sort_order), y sólo avanza cuando el
+    // servidor responde success a un reorder más nuevo que el último
+    // confirmado (ver confirmOrder).
+    let lastConfirmedOrder = null;
 
     // Cola única de subida: si el usuario suelta una segunda tanda mientras la
     // primera sigue en curso, se acumula acá en vez de arrancar una segunda
@@ -91,39 +113,61 @@
         refreshState();
     }
 
+    /**
+     * Envía el orden actual del DOM. Devuelve también ese mismo orden
+     * (`submittedOrder`), tomado en este instante — no el orden que el DOM
+     * tenga cuando la respuesta llegue, que puede haber cambiado por otro
+     * drag mientras este request estaba en vuelo.
+     */
     function saveOrder() {
+        const submittedOrder = currentOrder();
         const formData = new FormData();
         formData.append('action', 'reorder');
         formData.append('poi_id', poiId);
-        currentOrder().forEach(function (id) { formData.append('image_ids[]', id); });
-        return requestApi(formData);
+        submittedOrder.forEach(function (id) { formData.append('image_ids[]', id); });
+        return requestApi(formData).then(function (result) {
+            return { result: result, submittedOrder: submittedOrder };
+        });
     }
 
     /**
      * Confirma contra el servidor el reorder ya aplicado visualmente al soltar.
-     * Si el servidor no lo confirma (falla o red caída), revierte el DOM al
-     * orden previo a ESTE drag — pero sólo si ningún reorder más nuevo arrancó
-     * mientras este request estaba en vuelo (ver comentario de orderGeneration
-     * arriba). Si ya hay uno más nuevo, ese es quien manda: revertir acá
-     * pisaría en silencio un estado que el servidor ya confirmó.
+     *
+     * - Si el servidor confirma éxito Y este intento es más nuevo que la
+     *   última confirmación ya aplicada, `submittedOrder` pasa a ser el nuevo
+     *   `lastConfirmedOrder` — un orden que el servidor realmente tiene, sin
+     *   retroceder nunca a una confirmación más vieja que llegue tarde.
+     * - Si el servidor no lo confirma (falla o red caída) Y este intento
+     *   sigue siendo el más nuevo en curso, revierte el DOM a
+     *   `lastConfirmedOrder` — nunca a un snapshot local del DOM: ese
+     *   snapshot podría incluir el movimiento optimista de un drag anterior
+     *   que nunca se confirmó, y revertir a él mostraría un orden que el
+     *   servidor nunca tuvo. Si ya arrancó un intento más nuevo, no se
+     *   revierte: ese intento más nuevo es quien decide, con su propio éxito
+     *   o fallo, qué pasa al final.
      */
-    function confirmOrder(previousOrder) {
+    function confirmOrder() {
         const myGeneration = ++orderGeneration;
 
-        function revertIfStillCurrent(message) {
-            if (myGeneration !== orderGeneration) return;
-            applyOrder(previousOrder);
-            alert(message);
-        }
-
         return saveOrder()
-            .then(function (result) {
-                if (!result.data.success) {
-                    revertIfStillCurrent(__('points.gallery_reorder_error') + ': ' + (result.data.error || ''));
+            .then(function (outcome) {
+                if (outcome.result.data.success) {
+                    if (myGeneration > lastConfirmedGeneration) {
+                        lastConfirmedOrder = outcome.submittedOrder;
+                        lastConfirmedGeneration = myGeneration;
+                    }
+                    return;
+                }
+                if (myGeneration === orderGeneration) {
+                    applyOrder(lastConfirmedOrder);
+                    alert(__('points.gallery_reorder_error') + ': ' + (outcome.result.data.error || ''));
                 }
             })
             .catch(function () {
-                revertIfStillCurrent(__('points.gallery_reorder_error'));
+                if (myGeneration === orderGeneration) {
+                    applyOrder(lastConfirmedOrder);
+                    alert(__('points.gallery_reorder_error'));
+                }
             });
     }
 
@@ -282,7 +326,6 @@
 
         item.addEventListener('dragstart', function (e) {
             draggedItem = item;
-            orderBeforeDrag = currentOrder();
             item.classList.add('is-dragging');
             e.dataTransfer.effectAllowed = 'move';
         });
@@ -291,7 +334,7 @@
             item.classList.remove('is-dragging');
             draggedItem = null;
             refreshState();
-            confirmOrder(orderBeforeDrag);
+            confirmOrder();
         });
 
         item.addEventListener('dragover', function (e) {
@@ -306,4 +349,7 @@
 
     grid.querySelectorAll('.poi-gallery-item').forEach(wireItem);
     refreshState();
+    // El orden renderizado por PHP viene de poi_images.sort_order: es la
+    // línea de base real contra la que revertir hasta el primer reorder.
+    lastConfirmedOrder = currentOrder();
 })();
