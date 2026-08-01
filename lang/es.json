@@ -385,7 +385,17 @@
     "point_info": "Información del Punto",
     "external_links": "Links Externos",
     "add_link": "Agregar link",
-    "link_label_optional": "Etiqueta (opcional)"
+    "link_label_optional": "Etiqueta (opcional)",
+    "gallery": "Galería de imágenes",
+    "gallery_add": "Agregar fotos",
+    "gallery_drag_hint": "Arrastrá las fotos para cambiar el orden. La primera es la portada.",
+    "gallery_cover": "Portada",
+    "gallery_caption_placeholder": "Descripción de la foto (opcional)",
+    "gallery_delete_confirm": "¿Eliminar esta foto? No se puede deshacer.",
+    "gallery_empty": "Todavía no hay fotos en este punto.",
+    "gallery_save_first": "Guardá el punto para poder agregar fotos.",
+    "gallery_upload_error": "No se pudo subir la imagen",
+    "gallery_photo_count": "fotos"
   },
   "routes": {
     "title": "Rutas",

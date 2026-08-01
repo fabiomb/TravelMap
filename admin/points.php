@@ -14,6 +14,7 @@ require_auth();
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/models/Point.php';
 require_once __DIR__ . '/../src/models/Trip.php';
+require_once __DIR__ . '/../src/models/PoiImage.php';
 
 $pointModel = new Point();
 $tripModel = new Trip();
@@ -55,6 +56,10 @@ $trips = $tripModel->getAll('title ASC');
 
 // Obtener tipos de puntos
 $point_types = Point::getTypes();
+
+// Cantidad de fotos por POI, en una sola consulta para toda la tabla
+$galleryModel  = new PoiImage();
+$galleryCounts = $galleryModel->countByPoiIds(array_column($points, 'id'));
 ?>
 
 <!-- Page Header -->
@@ -162,8 +167,8 @@ $point_types = Point::getTypes();
                             <tr>
                                 <td>
                                     <?php if ($point['image_path']): ?>
-                                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>" 
-                                             alt="<?= htmlspecialchars($point['title']) ?>" 
+                                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>"
+                                             alt="<?= htmlspecialchars($point['title']) ?>"
                                              class="table-thumb">
                                     <?php else: ?>
                                         <div class="table-thumb-placeholder">
@@ -173,6 +178,10 @@ $point_types = Point::getTypes();
                                                 <polyline points="21 15 16 10 5 21"></polyline>
                                             </svg>
                                         </div>
+                                    <?php endif; ?>
+                                    <?php $galleryCount = $galleryCounts[(int) $point['id']] ?? 0; ?>
+                                    <?php if ($galleryCount > 1): ?>
+                                        <span class="badge bg-secondary"><?= $galleryCount ?> <?= __('points.gallery_photo_count') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>

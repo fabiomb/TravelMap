@@ -386,7 +386,17 @@
     "point_info": "Point Information",
     "external_links": "External Links",
     "add_link": "Add link",
-    "link_label_optional": "Label (optional)"
+    "link_label_optional": "Label (optional)",
+    "gallery": "Image gallery",
+    "gallery_add": "Add photos",
+    "gallery_drag_hint": "Drag photos to reorder. The first one is the cover.",
+    "gallery_cover": "Cover",
+    "gallery_caption_placeholder": "Photo caption (optional)",
+    "gallery_delete_confirm": "Delete this photo? This cannot be undone.",
+    "gallery_empty": "This point has no photos yet.",
+    "gallery_save_first": "Save the point to add photos.",
+    "gallery_upload_error": "Could not upload the image",
+    "gallery_photo_count": "photos"
   },
   "routes": {
     "title": "Routes",

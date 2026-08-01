@@ -16,10 +16,12 @@ require_once __DIR__ . '/../src/models/Point.php';
 require_once __DIR__ . '/../src/models/Trip.php';
 require_once __DIR__ . '/../src/models/Link.php';
 require_once __DIR__ . '/../src/helpers/FileHelper.php';
+require_once __DIR__ . '/../src/models/PoiImage.php';
 
 $pointModel = new Point();
 $tripModel  = new Trip();
 $poiLinkModel = new Link();
+$galleryModel = new PoiImage();
 $errors = [];
 $success = false;
 $point = null;
@@ -70,21 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar datos
     $errors = $pointModel->validate($data);
 
-    // Procesar imagen si se subió
-    if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $upload_result = FileHelper::uploadImage($_FILES['image']);
-        
-        if ($upload_result['success']) {
-            // Si es edición y tenía imagen anterior, eliminarla
-            if ($is_edit && !empty($point['image_path'])) {
-                FileHelper::deleteFile($point['image_path']);
-            }
-            $data['image_path'] = $upload_result['path'];
-        } else {
-            $errors['image'] = $upload_result['error'];
-        }
-    }
-
     if (empty($errors)) {
         // Preparar links enviados en el formulario
         $submitted_links = [];
@@ -106,6 +93,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($is_edit) {
             // Actualizar
             if ($pointModel->update($point_id, $data)) {
+                // La galería pudo cambiar por AJAX después de renderizar la página;
+                // resincronizar la portada para no pisarla con el valor stale de $data.
+                $galleryModel->syncCover($point_id);
                 $poiLinkModel->replaceForPoi($point_id, $submitted_links);
                 $success = true;
                 $point = $pointModel->getById($point_id); // Recargar datos
@@ -151,6 +141,7 @@ $form_data = $point ?? [
 $point_types  = Point::getTypes();
 $link_types   = Link::getTypes();
 $existing_links = ($is_edit && $point) ? $poiLinkModel->getByPoiId($point['id']) : [];
+$gallery_images = ($is_edit && $point) ? $galleryModel->getByPoiId((int) $point['id']) : [];
 ?>
 
 <div class="row mb-4">
@@ -389,60 +380,56 @@ $existing_links = ($is_edit && $point) ? $poiLinkModel->getByPoiId($point['id'])
                         </small>
                     </div>
 
-                    <!-- Imagen con Drag & Drop -->
+                    <!-- Galería de imágenes -->
                     <div class="mb-3">
-                        <label for="image" class="form-label"><?= __('points.image') ?></label>
-                        
-                        <!-- Área de Drag & Drop -->
-                        <div id="dropArea" class="border rounded p-4 text-center <?= isset($errors['image']) ? 'border-danger' : 'border-secondary' ?>" 
-                             style="background-color: #f8f9fa; cursor: pointer; transition: all 0.3s;">
-                            <div id="dropAreaContent">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-cloud-upload text-muted mb-2" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd" d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-2.941 1.1c-.757.652-1.153 1.438-1.153 2.055v.448l-.445.049C2.064 4.805 1 5.952 1 7.318 1 8.785 2.23 10 3.781 10H6a.5.5 0 0 1 0 1H3.781C1.708 11 0 9.366 0 7.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383"/>
-                                    <path fill-rule="evenodd" d="M7.646 4.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V14.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708z"/>
-                                </svg>
-                                <p class="mb-2 fw-bold"><?= __('points.drag_drop_image') ?></p>
-                                <p class="mb-2 text-muted"><?= __('points.or') ?></p>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="selectFileBtn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-folder2-open me-1" viewBox="0 0 16 16">
-                                        <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5zm-.367 1a.5.5 0 0 0-.496.562l.64 5.124A1.5 1.5 0 0 0 3.266 14h9.468a1.5 1.5 0 0 0 1.489-1.314l.64-5.124A.5.5 0 0 0 14.367 7z"/>
-                                    </svg>
-                                    <?= __('points.select_file') ?>
-                                </button>
-                                <p class="small text-muted mt-2 mb-0"><?= __('points.max_upload_note') ?> <?php echo round(MAX_UPLOAD_SIZE / 1024 / 1024, 2); ?>MB</p>
-                            </div>
-                            <div id="previewArea" style="display: none;">
-                                <img id="imagePreview" src="" alt="Vista previa" class="img-thumbnail mb-2" style="max-width: 100%; max-height: 300px;">
-                                <p id="fileName" class="mb-2 fw-bold"></p>
-                                <button type="button" class="btn btn-outline-danger btn-sm" id="removeImageBtn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash me-1" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                    </svg>
-                                    <?= __('common.remove') ?>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Input file oculto -->
-                        <input type="file" 
-                               class="d-none" 
-                               id="image" 
-                               name="image" 
-                               accept="image/jpeg,image/png,image/jpg,image/gif">
-                        
-                        <?php if (isset($errors['image'])): ?>
-                            <div class="text-danger small mt-1"><?= htmlspecialchars($errors['image']) ?></div>
-                        <?php endif; ?>
+                        <label class="form-label"><?= __('points.gallery') ?></label>
 
-                        <?php if ($is_edit && !empty($point['image_path'])): ?>
-                            <div class="mt-3">
-                                <label class="form-label"><?= __('points.current_image') ?>:</label><br>
-                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>" 
-                                     alt="Imagen actual" 
-                                     class="img-thumbnail" 
-                                     style="max-width: 200px;">
-                                <p class="small text-muted mt-1"><?= __('points.upload_new_replace') ?></p>
+                        <?php if (!$is_edit): ?>
+                            <div class="alert alert-info py-2 mb-0">
+                                <?= __('points.gallery_save_first') ?>
+                            </div>
+                        <?php else: ?>
+                            <div id="poi-gallery" data-poi-id="<?= (int) $point['id'] ?>">
+                                <div id="poiGalleryDrop" class="border border-secondary rounded p-4 text-center mb-3"
+                                     style="background-color: #f8f9fa; cursor: pointer;">
+                                    <p class="mb-2 fw-bold"><?= __('points.drag_drop_image') ?></p>
+                                    <p class="mb-2 text-muted"><?= __('points.or') ?></p>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="poiGallerySelect">
+                                        <?= __('points.gallery_add') ?>
+                                    </button>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        <?= __('points.max_upload_note') ?> <?= round(MAX_UPLOAD_SIZE / 1024 / 1024, 2) ?>MB
+                                    </p>
+                                    <div class="progress mt-3 d-none" id="poiGalleryProgress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <input type="file" class="d-none" id="poiGalleryInput"
+                                       accept="image/jpeg,image/png,image/jpg,image/gif" multiple>
+
+                                <p class="small text-muted"><?= __('points.gallery_drag_hint') ?></p>
+
+                                <div class="poi-gallery-grid" id="poiGalleryGrid">
+                                    <?php foreach ($gallery_images as $img): ?>
+                                        <?php $thumb = FileHelper::getThumbnailPath($img['image_path']); ?>
+                                        <div class="poi-gallery-item" draggable="true" data-image-id="<?= (int) $img['id'] ?>">
+                                            <img src="<?= BASE_URL ?>/<?= htmlspecialchars($thumb ?: $img['image_path']) ?>"
+                                                 alt="<?= htmlspecialchars($img['caption'] ?? '') ?>">
+                                            <span class="poi-gallery-cover-badge"><?= __('points.gallery_cover') ?></span>
+                                            <input type="text" class="poi-gallery-caption form-control form-control-sm"
+                                                   value="<?= htmlspecialchars($img['caption'] ?? '') ?>"
+                                                   placeholder="<?= __('points.gallery_caption_placeholder') ?>">
+                                            <button type="button" class="btn btn-sm btn-outline-danger poi-gallery-delete">
+                                                <?= __('common.remove') ?>
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <p class="text-muted<?= empty($gallery_images) ? '' : ' d-none' ?>" id="poiGalleryEmpty">
+                                    <?= __('points.gallery_empty') ?>
+                                </p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -583,10 +570,22 @@ const BASE_URL = '<?= BASE_URL ?>';
 // Pasar datos PHP a JavaScript
 const initialLat = <?= !empty($form_data['latitude']) ? $form_data['latitude'] : 'null' ?>;
 const initialLng = <?= !empty($form_data['longitude']) ? $form_data['longitude'] : 'null' ?>;
+
+// Traducciones para JS (usadas por la galería de imágenes)
+const PHP_TRANSLATIONS = <?= $lang->getTranslationsAsJson() ?>;
 </script>
 
 <!-- Script del mapa de puntos -->
 <script src="<?= ASSETS_URL ?>/js/point_map.js?v=<?php echo $version; ?>"></script>
+
+<!-- i18n JS -->
+<script src="<?= ASSETS_URL ?>/js/i18n.js?v=<?php echo $version; ?>"></script>
+<script>
+i18n.init();
+</script>
+
+<!-- Script de la galería de imágenes del POI -->
+<script src="<?= ASSETS_URL ?>/js/poi_gallery_admin.js?v=<?php echo $version; ?>"></script>
 
 <script>
 // POI Links — add/remove rows
@@ -612,125 +611,6 @@ const initialLng = <?= !empty($form_data['longitude']) ? $form_data['longitude']
         row.querySelector('input[type="url"]').focus();
     });
 })();
-</script>
-
-<!-- Script para Drag & Drop de imágenes -->
-<script>
-$(document).ready(function() {
-    const dropArea = $('#dropArea');
-    const fileInput = $('#image');
-    const selectFileBtn = $('#selectFileBtn');
-    const removeImageBtn = $('#removeImageBtn');
-    const dropAreaContent = $('#dropAreaContent');
-    const previewArea = $('#previewArea');
-    const imagePreview = $('#imagePreview');
-    const fileName = $('#fileName');
-
-    // Prevenir comportamiento por defecto del navegador
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.on(eventName, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-    });
-
-    // Efectos visuales al arrastrar
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.on(eventName, function() {
-            $(this).css({
-                'background-color': '#e3f2fd',
-                'border-color': '#2196F3',
-                'border-width': '2px'
-            });
-        });
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.on(eventName, function() {
-            $(this).css({
-                'background-color': '#f8f9fa',
-                'border-color': '#6c757d',
-                'border-width': '1px'
-            });
-        });
-    });
-
-    // Manejar drop
-    dropArea.on('drop', function(e) {
-        const files = e.originalEvent.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
-    });
-
-    // Click en el área para abrir selector
-    dropArea.on('click', function(e) {
-        if (!$(e.target).closest('#removeImageBtn').length && !$(e.target).closest('#imagePreview').length) {
-            fileInput.click();
-        }
-    });
-
-    // Click en botón seleccionar
-    selectFileBtn.on('click', function(e) {
-        e.stopPropagation();
-        fileInput.click();
-    });
-
-    // Cuando se selecciona archivo con input
-    fileInput.on('change', function() {
-        if (this.files && this.files.length > 0) {
-            handleFile(this.files[0]);
-        }
-    });
-
-    // Botón para quitar imagen
-    removeImageBtn.on('click', function(e) {
-        e.stopPropagation();
-        clearImage();
-    });
-
-    // Función para manejar el archivo
-    function handleFile(file) {
-        // Validar tipo de archivo
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (!validTypes.includes(file.type)) {
-            alert('<?= __('points.invalid_image_format') ?>');
-            return;
-        }
-
-        // Validar tamaño
-        const maxSize = <?php echo MAX_UPLOAD_SIZE; ?>; // Tomado de config.php
-        if (file.size > maxSize) {
-            const maxMB = (maxSize / 1024 / 1024).toFixed(2);
-            alert(`<?= __('points.file_too_large') ?> ${maxMB}MB`);
-            return;
-        }
-
-        // Crear DataTransfer para asignar el archivo al input
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput[0].files = dataTransfer.files;
-
-        // Mostrar preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagePreview.attr('src', e.target.result);
-            fileName.text(file.name);
-            dropAreaContent.hide();
-            previewArea.show();
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Función para limpiar imagen
-    function clearImage() {
-        fileInput.val('');
-        imagePreview.attr('src', '');
-        fileName.text('');
-        previewArea.hide();
-        dropAreaContent.show();
-    }
-});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
