@@ -30,7 +30,8 @@ $stats = [
     'settings' => 0,
     'links' => 0,
     'images_count' => 0,
-    'images_size' => 0
+    'images_size' => 0,
+    'gallery_images' => 0
 ];
 
 try {
@@ -64,6 +65,12 @@ try {
         }
     }
     
+    // Contar imágenes de galería
+    if ((bool) $db->query("SHOW TABLES LIKE 'poi_images'")->fetchColumn()) {
+        $stmt = $db->query('SELECT COUNT(*) as total FROM poi_images');
+        $stats['gallery_images'] = (int) $stmt->fetch()['total'];
+    }
+
     // Count images
     $uploadsDir = ROOT_PATH . '/uploads/points';
     if (is_dir($uploadsDir)) {
@@ -169,6 +176,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->query('SELECT * FROM trip_tags ORDER BY id');
                 $backup['data']['trip_tags'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $backup['includes'][] = 'tags';
+            }
+
+            // Export gallery images (sigue al flag de puntos)
+            if ($includePoints && (bool) $db->query("SHOW TABLES LIKE 'poi_images'")->fetchColumn()) {
+                $stmt = $db->query('SELECT * FROM poi_images ORDER BY poi_id, sort_order, id');
+                $backup['data']['poi_images'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $backup['includes'][] = 'poi_images';
             }
 
             // Export links
@@ -351,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $db->beginTransaction();
                 
-                $imported = ['trips' => 0, 'routes' => 0, 'points' => 0, 'tags' => 0, 'settings' => 0, 'links' => 0];
+                $imported = ['trips' => 0, 'routes' => 0, 'points' => 0, 'tags' => 0, 'settings' => 0, 'links' => 0, 'gallery_images' => 0];
                 $idMap = ['trips' => [], 'routes' => [], 'points' => []];
                 
                 // Replace mode - clear tables first
@@ -520,6 +534,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $imported['points_skipped'] = $skippedPoints;
                     $imported['points_updated'] = $updatedPoints;
+                }
+
+                // Import gallery images (con poi_id remapeado)
+                if (isset($backupData['data']['poi_images'])) {
+                    $imported['gallery_images'] = 0;
+
+                    foreach ($backupData['data']['poi_images'] as $img) {
+                        $newPoiId = $idMap['points'][(int) $img['poi_id']] ?? null;
+                        if (!$newPoiId) continue;
+
+                        // Evita duplicar al re-restaurar el mismo backup
+                        $stmt = $db->prepare('SELECT id FROM poi_images WHERE poi_id = ? AND image_path = ?');
+                        $stmt->execute([$newPoiId, $img['image_path']]);
+                        if ($stmt->fetch() && $restoreMode !== 'replace') continue;
+
+                        $stmt = $db->prepare(
+                            'INSERT INTO poi_images (poi_id, image_path, caption, sort_order) VALUES (?, ?, ?, ?)'
+                        );
+                        $stmt->execute([
+                            $newPoiId,
+                            $img['image_path'],
+                            $img['caption'] ?? null,
+                            (int) ($img['sort_order'] ?? 0)
+                        ]);
+                        $imported['gallery_images']++;
+                    }
                 }
 
                 // Import tags (with mapped trip_id)
