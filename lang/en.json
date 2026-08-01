@@ -396,6 +396,9 @@
     "gallery_empty": "This point has no photos yet.",
     "gallery_save_first": "Save the point to add photos.",
     "gallery_upload_error": "Could not upload the image",
+    "gallery_delete_error": "Could not delete the photo",
+    "gallery_caption_error": "Could not save the caption",
+    "gallery_reorder_error": "Could not reorder the photos",
     "gallery_photo_count": "photos"
   },
   "routes": {

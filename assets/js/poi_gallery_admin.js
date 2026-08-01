@@ -20,11 +20,30 @@
 
     const ENDPOINT = BASE_URL + '/api/poi_images.php';
 
-    let draggedItem = null;
+    let draggedItem     = null;
+    let orderBeforeDrag = null;
 
+    // Cola única de subida: si el usuario suelta una segunda tanda mientras la
+    // primera sigue en curso, se acumula acá en vez de arrancar una segunda
+    // recursión independiente que pisaría la misma barra de progreso.
+    let uploadQueue = [];
+    let queueTotal  = 0;
+    let queueDone   = 0;
+    let isUploading = false;
+
+    /**
+     * Devuelve {status, data}: el status HTTP se necesita para distinguir,
+     * por ejemplo, un 404 (la fila ya no existe) de un 500 real. Si la
+     * respuesta no es JSON válido (por ejemplo, una redirección a login),
+     * la promesa se rechaza y el llamador la maneja con su propio .catch().
+     */
     function requestApi(formData) {
         return fetch(ENDPOINT, { method: 'POST', body: formData, credentials: 'same-origin' })
-            .then(function (response) { return response.json(); });
+            .then(function (response) {
+                return response.json().then(function (data) {
+                    return { status: response.status, data: data };
+                });
+            });
     }
 
     // ── Estado visual ────────────────────────────────────────────────────────
@@ -42,12 +61,44 @@
                     .map(function (el) { return el.dataset.imageId; });
     }
 
+    /**
+     * Reordena los nodos del DOM según la lista de ids recibida.
+     * Se usa para revertir un reorder que el servidor no confirmó.
+     */
+    function applyOrder(order) {
+        order.forEach(function (id) {
+            const item = grid.querySelector('.poi-gallery-item[data-image-id="' + id + '"]');
+            if (item) { grid.appendChild(item); }
+        });
+        refreshState();
+    }
+
     function saveOrder() {
         const formData = new FormData();
         formData.append('action', 'reorder');
         formData.append('poi_id', poiId);
         currentOrder().forEach(function (id) { formData.append('image_ids[]', id); });
         return requestApi(formData);
+    }
+
+    /**
+     * Confirma contra el servidor el reorder ya aplicado visualmente al soltar.
+     * Si el servidor no lo confirma (falla o red caída), revierte el DOM al
+     * orden previo al drag y avisa: el estado visual nunca puede adelantarse
+     * en silencio a lo que el servidor considera portada.
+     */
+    function confirmOrder(previousOrder) {
+        return saveOrder()
+            .then(function (result) {
+                if (!result.data.success) {
+                    applyOrder(previousOrder);
+                    alert(__('points.gallery_reorder_error') + ': ' + (result.data.error || ''));
+                }
+            })
+            .catch(function () {
+                applyOrder(previousOrder);
+                alert(__('points.gallery_reorder_error'));
+            });
     }
 
     // ── Alta ─────────────────────────────────────────────────────────────────
@@ -91,12 +142,12 @@
         formData.append('image', file);
 
         return requestApi(formData)
-            .then(function (response) {
-                if (!response.success) {
-                    alert(__('points.gallery_upload_error') + ': ' + (response.error || ''));
+            .then(function (result) {
+                if (!result.data.success) {
+                    alert(__('points.gallery_upload_error') + ': ' + (result.data.error || ''));
                     return;
                 }
-                grid.appendChild(buildItem(response.image));
+                grid.appendChild(buildItem(result.data.image));
                 refreshState();
             })
             .catch(function () {
@@ -106,65 +157,103 @@
             });
     }
 
-    // Secuencial: un archivo por request
-    function uploadMany(files) {
-        const pending = Array.from(files);
-        if (pending.length === 0) return;
+    // Encola archivos nuevos en la tanda en curso (si la hay) en vez de
+    // arrancar una segunda recursión que compita por la misma barra.
+    function enqueueUploads(files) {
+        const incoming = Array.from(files);
+        if (incoming.length === 0) return;
 
+        uploadQueue = uploadQueue.concat(incoming);
+        queueTotal += incoming.length;
+
+        if (isUploading) return;
+
+        isUploading = true;
         progressWrapper.classList.remove('d-none');
-        const total = pending.length;
-        let done = 0;
+        processQueue();
+    }
 
-        function next() {
-            if (pending.length === 0) {
-                progressWrapper.classList.add('d-none');
-                progressBar.style.width = '0%';
-                return;
-            }
-            return uploadOne(pending.shift()).then(function () {
-                done++;
-                progressBar.style.width = Math.round((done / total) * 100) + '%';
-                return next();
-            });
+    // Secuencial: un archivo por request
+    function processQueue() {
+        if (uploadQueue.length === 0) {
+            isUploading = false;
+            queueTotal = 0;
+            queueDone = 0;
+            progressWrapper.classList.add('d-none');
+            progressBar.style.width = '0%';
+            return;
         }
 
-        next();
+        return uploadOne(uploadQueue.shift()).then(function () {
+            queueDone++;
+            progressBar.style.width = Math.round((queueDone / queueTotal) * 100) + '%';
+            return processQueue();
+        });
     }
 
     selectButton.addEventListener('click', function (e) { e.stopPropagation(); fileInput.click(); });
     dropZone.addEventListener('click', function () { fileInput.click(); });
-    fileInput.addEventListener('change', function () { uploadMany(this.files); fileInput.value = ''; });
+    fileInput.addEventListener('change', function () { enqueueUploads(this.files); fileInput.value = ''; });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (eventName) {
         dropZone.addEventListener(eventName, function (e) { e.preventDefault(); e.stopPropagation(); });
     });
-    dropZone.addEventListener('drop', function (e) { uploadMany(e.dataTransfer.files); });
+    dropZone.addEventListener('drop', function (e) { enqueueUploads(e.dataTransfer.files); });
 
     // ── Borrado y caption ────────────────────────────────────────────────────
+
+    function deleteItem(item) {
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('image_id', item.dataset.imageId);
+
+        return requestApi(formData)
+            .then(function (result) {
+                // 404 = la fila ya no existe (por ejemplo, doble clic sobre el
+                // botón de borrar): desde la perspectiva del usuario es un éxito,
+                // así que sacamos el elemento igual.
+                if (result.data.success || result.status === 404) {
+                    item.remove();
+                    refreshState();
+                    return;
+                }
+                alert(__('points.gallery_delete_error') + ': ' + (result.data.error || ''));
+            })
+            .catch(function () {
+                alert(__('points.gallery_delete_error'));
+            });
+    }
+
+    function saveCaption(item, value) {
+        const formData = new FormData();
+        formData.append('action', 'caption');
+        formData.append('image_id', item.dataset.imageId);
+        formData.append('caption', value);
+
+        return requestApi(formData)
+            .then(function (result) {
+                if (!result.data.success) {
+                    alert(__('points.gallery_caption_error') + ': ' + (result.data.error || ''));
+                }
+            })
+            .catch(function () {
+                alert(__('points.gallery_caption_error'));
+            });
+    }
 
     function wireItem(item) {
         item.querySelector('.poi-gallery-delete').addEventListener('click', function () {
             if (!confirm(__('points.gallery_delete_confirm'))) return;
-
-            const formData = new FormData();
-            formData.append('action', 'delete');
-            formData.append('image_id', item.dataset.imageId);
-
-            requestApi(formData).then(function (response) {
-                if (response.success) { item.remove(); refreshState(); }
-            });
+            deleteItem(item);
         });
 
         item.querySelector('.poi-gallery-caption').addEventListener('blur', function () {
-            const formData = new FormData();
-            formData.append('action', 'caption');
-            formData.append('image_id', item.dataset.imageId);
-            formData.append('caption', this.value);
-            requestApi(formData);
+            saveCaption(item, this.value);
         });
 
         item.addEventListener('dragstart', function (e) {
             draggedItem = item;
+            orderBeforeDrag = currentOrder();
             item.classList.add('is-dragging');
             e.dataTransfer.effectAllowed = 'move';
         });
@@ -173,7 +262,7 @@
             item.classList.remove('is-dragging');
             draggedItem = null;
             refreshState();
-            saveOrder();
+            confirmOrder(orderBeforeDrag);
         });
 
         item.addEventListener('dragover', function (e) {

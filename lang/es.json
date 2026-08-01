@@ -395,6 +395,9 @@
     "gallery_empty": "Todavía no hay fotos en este punto.",
     "gallery_save_first": "Guardá el punto para poder agregar fotos.",
     "gallery_upload_error": "No se pudo subir la imagen",
+    "gallery_delete_error": "No se pudo eliminar la foto",
+    "gallery_caption_error": "No se pudo guardar la descripción",
+    "gallery_reorder_error": "No se pudo reordenar las fotos",
     "gallery_photo_count": "fotos"
   },
   "routes": {
