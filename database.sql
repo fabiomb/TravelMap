@@ -211,6 +211,23 @@ CREATE TABLE IF NOT EXISTS links (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
+-- Tabla: poi_images
+-- Descripción: Galería de imágenes por punto de interés.
+--              points_of_interest.image_path se mantiene como espejo
+--              de la portada (imagen de menor sort_order).
+-- ============================================
+CREATE TABLE IF NOT EXISTS poi_images (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    poi_id     INT UNSIGNED NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    caption    VARCHAR(255) DEFAULT NULL,
+    sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (poi_id) REFERENCES points_of_interest(id) ON DELETE CASCADE,
+    INDEX idx_poi_sort (poi_id, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
 -- Tabla: password_shares
 -- Descripción: Contraseñas temporales para compartir acceso al mapa público
 -- ============================================

@@ -1612,17 +1612,9 @@
             renderTripsPanel();
         });
 
-        initLightbox();
     }
 
     // ==================== LIGHTBOX ====================
-
-    function initLightbox() {
-        const lightbox = document.getElementById('imageLightbox');
-        if (lightbox) {
-            lightbox.addEventListener('click', closeLightbox);
-        }
-    }
 
     window.openLightbox = function (imageUrl, altText) {
         const lightbox = document.getElementById('imageLightbox');

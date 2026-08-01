@@ -43,11 +43,14 @@ TravelMap/
 │   ├── css/                 # Estilos CSS personalizados
 │   │   ├── admin.css        # Estilos del panel de administración
 │   │   ├── public_map.css   # Estilos del mapa público
+│   │   ├── poi_gallery.css  # Carrusel y lightbox de galería (index.php y trip.php)
 │   │   └── public_map_leaflet.css  # Estilos para versión Leaflet
 │   ├── js/                  # JavaScript personalizado
 │   │   ├── admin.js         # Scripts del panel de administración
 │   │   ├── i18n.js          # Scripts de internacionalización
 │   │   ├── point_map.js     # Mapa para formulario de puntos
+│   │   ├── poi_gallery_admin.js  # Galería de POI en el formulario de admin
+│   │   ├── poi_lightbox.js  # Lightbox con galería del mapa general
 │   │   ├── public_map.js    # Mapa público (MapLibre GL + deck.gl)
 │   │   ├── public_map_leaflet.js  # Mapa público (versión Leaflet)
 │   │   └── trip_map.js      # Mapa para edición de viajes
@@ -89,6 +92,7 @@ TravelMap/
 │   └── auth.php             # Funciones de autenticación
 │
 ├── install/                 # Scripts de instalación y migración
+│   └── verify/              # Scripts de verificación por CLI (no accesibles por HTTP)
 │   ├── seed_admin.php       # Crear usuario administrador inicial
 │   ├── generate_thumbnails.php      # Generar miniaturas
 │   ├── migrate_language.php         # Migración de idiomas
@@ -133,6 +137,7 @@ TravelMap/
 | `Trip.php` | Viajes con rutas y puntos de interés |
 | `Route.php` | Rutas entre puntos (vuelos, trayectos) |
 | `Point.php` | Puntos de interés con imágenes |
+| `PoiImage.php` | Galería de imágenes de un POI; único escritor de la portada |
 | `Settings.php` | Configuración global del sistema |
 
 ## Helpers (src/helpers/)
@@ -147,6 +152,7 @@ TravelMap/
 | Endpoint | Método | Descripción |
 |----------|--------|-------------|
 | `/api/get_all_data.php` | GET | Obtiene todos los viajes, rutas y puntos |
+| `/api/poi_images.php` | POST | Administración de la galería de un POI (upload, delete, reorder, caption) |
 | `/api/get_config.php` | GET | Configuración pública del mapa |
 | `/api/geocode.php` | GET | Geocodificación de direcciones |
 | `/api/import_airbnb_point.php` | POST | Importa punto desde URL de Airbnb |

@@ -54,8 +54,11 @@ if (session_status() === PHP_SESSION_NONE) {
     <!-- Custom MapLibre CSS -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map.css?v=<?php echo $version; ?>">
     <?php endif; ?>
-    
-    <?php 
+
+    <!-- Galería de imágenes de POI (compartida por ambos renderers) -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
+
+    <?php
     // Insertar código de analytics u otros scripts personalizados
     if (!empty(SITE_ANALYTICS_CODE)): 
         echo SITE_ANALYTICS_CODE . "\n";
@@ -359,7 +362,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <?php else: ?>
     <script src="<?= ASSETS_URL ?>/js/public_map.js?v=<?php echo $version; ?>"></script>
     <?php endif; ?>
-    
+
     <!-- Lightbox para imágenes -->
     <div id="imageLightbox" class="lightbox" style="display: none;">
         <button class="lightbox-close" onclick="closeLightbox()" aria-label="<?= __('common.close') ?? 'Close' ?>">
@@ -367,12 +370,19 @@ if (session_status() === PHP_SESSION_NONE) {
                 <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
             </svg>
         </button>
+        <button class="lightbox-prev" id="lightboxPrev" onclick="changeImage(-1)" style="display: none;" aria-label="<?= __('map.gallery_prev') ?>">&#10094;</button>
+        <button class="lightbox-next" id="lightboxNext" onclick="changeImage(1)" style="display: none;" aria-label="<?= __('map.gallery_next') ?>">&#10095;</button>
         <div class="lightbox-content">
             <img id="lightboxImage" src="" alt="">
+            <div class="lightbox-caption" id="lightboxCaption"></div>
         </div>
+        <span class="lightbox-counter" id="lightboxCounter" style="display: none;"></span>
         <span class="lightbox-hint"><?= __('map.click_anywhere_to_close') ?? 'Click anywhere to close' ?></span>
     </div>
-    
+
+    <!-- Lightbox con galería (compartido por ambos renderers) -->
+    <script src="<?= ASSETS_URL ?>/js/poi_lightbox.js?v=<?php echo $version; ?>"></script>
+
     <?php if ($showFooterNote): ?>
     <!-- Footer -->
     <footer class="map-footer">

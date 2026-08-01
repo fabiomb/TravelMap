@@ -1869,8 +1869,6 @@ layer.bindPopup(`
             renderTripsPanel();
         });
 
-        // Inicializar lightbox
-        initLightbox();
     }
 
     // Inicialización principal: cargar configuración primero, luego inicializar el mapa
@@ -1886,19 +1884,6 @@ layer.bindPopup(`
             setupEventHandlers();
         });
     });
-
-    /**
-     * Inicializa el lightbox para imágenes
-     */
-    function initLightbox() {
-        const lightbox = document.getElementById('imageLightbox');
-        if (lightbox) {
-            // Cerrar lightbox al hacer click en cualquier parte
-            lightbox.addEventListener('click', function () {
-                closeLightbox();
-            });
-        }
-    }
 
     /**
      * Abre el lightbox con una imagen

@@ -1,6 +1,16 @@
 # Changelog
 
 
+## [1.0.300] - 2026-08-01
+### Galería de imágenes por punto de interés
+- Cada POI admite ahora varias imágenes en lugar de una sola. Nueva tabla `poi_images` (migración 026) con orden y texto opcional por foto; el `image_path` de `points_of_interest` se conserva como portada, así que las integraciones existentes (MCP, importador EXIF, `save_poi`) siguen funcionando sin cambios
+- `admin/point_form.php`: grilla de fotos reordenable por arrastre, con texto por imagen y borrado, todo contra `api/poi_images.php`. Las fotos se suben de a una para no chocar contra el `post_max_size` de PHP
+- `admin/points.php` muestra la cantidad de fotos de cada punto
+- Mapa general (`index.php`): el popup de un POI con varias fotos muestra flechas y puntos indicadores, y la vista ampliada recorre la galería de ese punto con teclado y contador
+- Mapa de viaje (`trip.php`): la navegación de imágenes recorre la galería completa de un punto antes de pasar al siguiente; el carrusel lateral sigue mostrando una tarjeta por punto, con la portada y la cantidad de fotos
+- Los backups exportan y restauran las galerías, remapeando los ids de punto
+
+
 ## [1.0.295] - 2026-07-26
 - El panel de fotografías de `trip.php` ahora se puede minimizar y redimensionar (antes tenía un alto fijo); la preferencia se guarda en `localStorage`
 - Cuando un viaje no tiene fotografías se muestra un estado vacío con icono y texto en lugar de un recuadro en blanco, pensado sobre todo para viajes planificados

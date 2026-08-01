@@ -8,6 +8,7 @@ require_once __DIR__ . '/src/models/Route.php';
 require_once __DIR__ . '/src/models/Point.php';
 require_once __DIR__ . '/src/models/TripTag.php';
 require_once __DIR__ . '/src/models/Link.php';
+require_once __DIR__ . '/src/models/PoiImage.php';
 require_once __DIR__ . '/src/helpers/FileHelper.php';
 require_once __DIR__ . '/src/helpers/DateTimeHelper.php';
 require_once __DIR__ . '/src/models/Settings.php';
@@ -55,6 +56,7 @@ $routeModel   = new Route();
 $pointModel   = new Point();
 $tripTagModel = new TripTag();
 $linkModel = new Link();
+$poiImageModel = new PoiImage();
 
 $trip = $tripModel->getById($tripId);
 
@@ -118,6 +120,9 @@ foreach ($routes as $route) {
     }
 }
 
+// Resolver imágenes de galería del viaje en una sola consulta
+$tripImages = $poiImageModel->getByTripId($tripId);
+
 // Procesar puntos para JS y timeline
 $processedPoints = [];
 foreach ($points as $point) {
@@ -140,6 +145,7 @@ foreach ($points as $point) {
         'thumbnail_url' => $thumbnail_url,
         'visit_date' => $point['visit_date'],
         'links' => $links,
+        'images' => PoiImage::toApiArray($tripImages[(int) $point['id']] ?? []),
     ];
     $processedPoints[] = $processedPoint;
     
@@ -215,6 +221,8 @@ $statsIcons = [
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/public_map.css?v=<?php echo $version; ?>">
     <!-- Trip Page Styles -->
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/trip.css?v=<?php echo $version; ?>">
+    <!-- Galería de imágenes de POI (compartida por ambos renderers) -->
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/poi_gallery.css?v=<?php echo $version; ?>">
 
     <style>
         :root {
@@ -403,6 +411,10 @@ $statsIcons = [
                                  onclick="viewImageFromData(this)">
                                 <div class="media-photo">
                                     <img src="<?= htmlspecialchars($p['thumbnail_url'] ?? $p['image_url']) ?>" alt="<?= htmlspecialchars($p['title']) ?>" loading="lazy">
+                                    <?php $imgCount = count($p['images'] ?? []); ?>
+                                    <?php if ($imgCount > 1): ?>
+                                        <span class="media-count-badge"><?= $imgCount ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <span class="media-caption"><?= htmlspecialchars($p['title']) ?></span>
                             </div>
@@ -441,6 +453,7 @@ $statsIcons = [
                 <div id="lightboxDesc" class="lightbox-description"></div>
             </div>
         </div>
+        <span class="lightbox-counter" id="lightboxCounter" style="display: none;"></span>
         <span class="lightbox-hint"><?= __('map.click_anywhere_to_close') ?></span>
     </div>
 

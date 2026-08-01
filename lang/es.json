@@ -190,7 +190,10 @@
     "group_by": "Agrupar por",
     "group_by_year": "Año",
     "group_by_tag": "Etiqueta",
-    "no_tag": "Sin etiqueta"
+    "no_tag": "Sin etiqueta",
+    "gallery_prev": "Imagen anterior",
+    "gallery_next": "Imagen siguiente",
+    "gallery_counter": "{current} de {total}"
   },
   "forms": {
     "required_fields": "Campos obligatorios",
@@ -385,7 +388,20 @@
     "point_info": "Información del Punto",
     "external_links": "Links Externos",
     "add_link": "Agregar link",
-    "link_label_optional": "Etiqueta (opcional)"
+    "link_label_optional": "Etiqueta (opcional)",
+    "gallery": "Galería de imágenes",
+    "gallery_add": "Agregar fotos",
+    "gallery_drag_hint": "Arrastrá las fotos para cambiar el orden. La primera es la portada.",
+    "gallery_cover": "Portada",
+    "gallery_caption_placeholder": "Descripción de la foto (opcional)",
+    "gallery_delete_confirm": "¿Eliminar esta foto? No se puede deshacer.",
+    "gallery_empty": "Todavía no hay fotos en este punto.",
+    "gallery_save_first": "Guardá el punto para poder agregar fotos.",
+    "gallery_upload_error": "No se pudo subir la imagen",
+    "gallery_delete_error": "No se pudo eliminar la foto",
+    "gallery_caption_error": "No se pudo guardar la descripción",
+    "gallery_reorder_error": "No se pudo reordenar las fotos",
+    "gallery_photo_count": "fotos"
   },
   "routes": {
     "title": "Rutas",

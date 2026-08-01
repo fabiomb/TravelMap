@@ -15,6 +15,7 @@ require_once __DIR__ . '/../src/models/Route.php';
 require_once __DIR__ . '/../src/models/Point.php';
 require_once __DIR__ . '/../src/models/TripTag.php';
 require_once __DIR__ . '/../src/models/Link.php';
+require_once __DIR__ . '/../src/models/PoiImage.php';
 require_once __DIR__ . '/../src/helpers/FileHelper.php';
 
 try {
@@ -34,7 +35,8 @@ try {
     $pointModel     = new Point();
     $tripTagModel   = new TripTag();
     $linkModel = new Link();
-    
+    $poiImageModel = new PoiImage();
+
     // Obtener todos los viajes publicados y planificados
     $publishedTrips = $tripModel->getAll('start_date DESC', 'published');
     $plannedTrips = $tripModel->getAll('start_date DESC', 'planned');
@@ -111,7 +113,10 @@ try {
         
         // Obtener puntos de interés del viaje
         $points = $pointModel->getAll($trip['id']);
-        
+
+        // Resolver imágenes de galería del viaje en una sola consulta
+        $tripImages = $poiImageModel->getByTripId((int) $trip['id']);
+
         // Procesar puntos
         $processedPoints = [];
         foreach ($points as $point) {
@@ -136,9 +141,10 @@ try {
                 'longitude' => (float) $point['longitude'],
                 'visit_date' => $point['visit_date'],
                 'links' => $links,
+                'images' => PoiImage::toApiArray($tripImages[(int) $point['id']] ?? []),
             ];
         }
-        
+
         // Agregar viaje al response
         $response['data']['trips'][] = [
             'id' => (int) $trip['id'],

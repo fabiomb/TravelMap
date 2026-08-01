@@ -571,33 +571,69 @@ function fitToRoute(route) {
     }
 }
 
-// openLightbox alias — called from map-renderer popup image onclick
+// Llamada desde el carrusel del popup (map-renderer.js).
+// Traduce el índice local del POI a su posición en la galería del viaje.
+window.openPoiGallery = function (poiId, localIndex) {
+    if (galleryItems.length === 0) initGallery();
+
+    const index = galleryItems.findIndex(function (item) {
+        return item.pointId === String(poiId) && item.localIndex === (localIndex || 0);
+    });
+
+    if (index !== -1) showLightboxImage(index);
+};
+
+// Compatibilidad: imágenes sueltas sin galería (rutas).
 window.openLightbox = function (imageUrl) {
     if (galleryItems.length === 0) initGallery();
-    const index = galleryItems.findIndex(item => item.url === imageUrl);
+    const index = galleryItems.findIndex(function (item) { return item.url === imageUrl; });
+
     if (index !== -1) {
         showLightboxImage(index);
-    } else {
-        const lightbox = document.getElementById('imageLightbox');
-        document.getElementById('lightboxImage').src = imageUrl;
-        document.getElementById('lightboxTitle').textContent = '';
-        document.getElementById('lightboxDesc').style.display = 'none';
-        document.querySelector('.lightbox-footer').classList.remove('has-content');
-        lightbox.style.display = 'flex';
+        return;
     }
+
+    document.getElementById('lightboxImage').src = imageUrl;
+    document.getElementById('lightboxTitle').textContent = '';
+    document.getElementById('lightboxDesc').style.display = 'none';
+    document.querySelector('.lightbox-footer').classList.remove('has-content');
+    document.getElementById('imageLightbox').style.display = 'flex';
 };
 
 // Lightbox variables
 let currentImageIndex = -1;
 let galleryItems = [];
 
-// Initialize gallery items
+// Construye la galería aplanada del viaje.
+//
+// Orden: puntos por visit_date, y dentro de cada punto sus imágenes por
+// sort_order. Así changeImage() agota la galería de un POI antes de pasar
+// al siguiente. Se arma desde TRIP_DATA y no del DOM, porque el carrusel
+// lateral sólo muestra la portada de cada punto.
 function initGallery() {
-    galleryItems = Array.from(document.querySelectorAll('.media-item')).map(item => ({
-        url: item.dataset.img,
-        title: item.dataset.title || '',
-        desc: item.dataset.desc || ''
-    }));
+    galleryItems = [];
+    if (typeof TRIP_DATA === 'undefined' || !TRIP_DATA.points) return;
+
+    const points = TRIP_DATA.points
+        .filter(function (p) { return p.images && p.images.length > 0; })
+        .slice()
+        .sort(function (a, b) {
+            const fa = Date.parse(a.visit_date || '1970-01-01T00:00:00');
+            const fb = Date.parse(b.visit_date || '1970-01-01T00:00:00');
+            return fa - fb;
+        });
+
+    points.forEach(function (point) {
+        point.images.forEach(function (image, i) {
+            galleryItems.push({
+                url:      image.url,
+                title:    point.title,
+                desc:     image.caption || point.description || '',
+                pointId:  String(point.id),
+                localIndex: i
+            });
+        });
+    });
 }
 
 // Call initGallery on load
@@ -669,7 +705,9 @@ window.viewImageFromData = function (element) {
     // If tooltip has no header image, the carousel is the only way to see the photo: open lightbox.
     // If tooltip has header image, the lightbox is accessible from the tooltip image — just fly.
     if (!showImage) {
-        const index = galleryItems.findIndex(item => item.url === url);
+        const index = galleryItems.findIndex(function (item) {
+            return item.pointId === String(pointId) && item.localIndex === 0;
+        });
         if (index !== -1) showLightboxImage(index);
     }
 
@@ -702,6 +740,16 @@ function showLightboxImage(index) {
         footer.classList.add('has-content');
     } else {
         footer.classList.remove('has-content');
+    }
+
+    const counter = document.getElementById('lightboxCounter');
+    if (counter) {
+        const template = (typeof window.__ === 'function')
+            ? window.__('map.gallery_counter') : '{current} / {total}';
+        counter.textContent = template
+            .replace('{current}', index + 1)
+            .replace('{total}', galleryItems.length);
+        counter.style.display = galleryItems.length > 1 ? 'block' : 'none';
     }
 
     lightbox.style.display = 'flex';
