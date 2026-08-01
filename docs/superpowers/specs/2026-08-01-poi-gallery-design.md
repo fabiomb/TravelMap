@@ -152,9 +152,11 @@ Sin intervenir este archivo, los backups perderían las galerías sin avisar.
 - **Export:** incluir `poi_images` en `$backup['data']`, condicionado a que la
   tabla exista (mismo patrón defensivo que ya usa con `links` frente a las
   tablas legacy `poi_links` / `route_links`).
-- **Restore:** insertar las filas remapeando `poi_id` al id nuevo del POI, como
-  ya se hace con `entity_id` en `links`. Los archivos de imagen quedan fuera del
-  backup, igual que hoy: el backup es de base de datos, no de `uploads/`.
+- **Restore:** insertar las filas remapeando `poi_id` al id nuevo del POI,
+  usando el `$idMap['points']` que el archivo ya construye.
+- **Archivos:** no requieren cambios. El modo ZIP opcional ya empaqueta
+  `uploads/points` completo con un `glob()` del directorio, no fila por fila, así
+  que las imágenes de galería entran solas.
 - El contador de estadísticas de la pantalla suma las imágenes de galería.
 
 Los backups viejos, sin la clave `poi_images`, se restauran igual: los POI
