@@ -10,7 +10,14 @@
       "Bash(rg -n \"existingRoutes|routesList|renderRoutes|routesCount\" assets/js/*.js admin/trip_edit_map.php)",
       "Bash(/c/xampp/php/php.exe -l version.php)",
       "Bash(git -C /c/xampp/htdocs/TravelMap status --short)",
-      "mcp__plugin_engram_engram__mem_save"
+      "mcp__plugin_engram_engram__mem_save",
+      "Bash(rg -n \"^function |^    function \" api/*.php)",
+      "Bash(rg -o \"\\\\\\\\\\\\$\\(archivo|ruta|imagen|fila|orden|resultado|datos|nombre|tamano|ancho|alto|calidad|origen|destino\\)\\\\b\" src/helpers/FileHelper.php src/models/Route.php src/models/Trip.php src/models/Link.php)",
+      "Bash(rg -c \"\\\\\\\\\\\\$\\(file_path|image_path|result|data|error|path|width|height|quality\\)\" src/helpers/FileHelper.php)",
+      "Bash(node --check assets/js/poi_gallery_admin.js)",
+      "Bash(C:/xampp/php/php.exe -l \"C:\\\\xampp\\\\htdocs\\\\TravelMap\\\\api\\\\get_all_data.php\")",
+      "Bash(C:/xampp/php/php.exe -l \"C:\\\\xampp\\\\htdocs\\\\TravelMap\\\\api\\\\get_trip.php\")",
+      "Bash(C:/xampp/php/php.exe -l \"C:\\\\xampp\\\\htdocs\\\\TravelMap\\\\trip.php\")"
     ]
   }
 }
