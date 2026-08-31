@@ -435,7 +435,7 @@
 
         // Note: CARTO Voyager tiles include more multilingual labels than standard OSM
         // For full language support, consider using MapLibre renderer in settings
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        L.tileLayer(MapConfig.getRasterTileUrl('voyager'), {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 19,
             subdomains: 'abcd'

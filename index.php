@@ -12,6 +12,8 @@ $settingsModel = new Settings(getDB());
 $mapRenderer = $settingsModel->get('map_renderer', 'maplibre');
 $showFooterNote = $settingsModel->get('show_footer_note', true);
 $footerNoteText = $settingsModel->get('footer_note_text', '');
+// CARTO basemaps require an API key
+$mapTilesApiKey = $settingsModel->get('map_tiles_api_key', '');
 
 // Verificar acceso al sitio público (con contraseña si es requerido)
 $accessInfo = check_public_access();
@@ -353,6 +355,7 @@ if (session_status() === PHP_SESSION_NONE) {
     
 
     <!-- Shared map modules -->
+    <script>window.MAP_TILES_API_KEY = <?= json_encode($mapTilesApiKey) ?>;</script>
     <script src="<?= ASSETS_URL ?>/js/map-config.js?v=<?php echo $version; ?>"></script>
     <script src="<?= ASSETS_URL ?>/js/map-renderer.js?v=<?php echo $version; ?>"></script>
 

@@ -558,6 +558,9 @@ require_once __DIR__ . '/../includes/header.php';
 <link rel="stylesheet" href="<?= ASSETS_URL ?>/vendor/leaflet/css/leaflet.css">
 <script src="<?= ASSETS_URL ?>/vendor/leaflet/js/leaflet.js"></script>
 
+<!-- Configuración compartida de mapas (URLs de tiles + API key de CARTO) -->
+<script src="<?= ASSETS_URL ?>/js/map-config.js?v=<?php echo $version; ?>"></script>
+
 <script>
 // Colores que coinciden exactamente con Route::getColorByTransport() y con settings
 const TRANSPORT_COLORS = {
@@ -649,9 +652,10 @@ function showPreview(data) {
 function initPreviewMap(data) {
     if (!previewMap) {
         previewMap = L.map('preview-map');
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        L.tileLayer(MapConfig.getRasterTileUrl('voyager'), {
             attribution: '© OpenStreetMap © CARTO',
-            maxZoom: 19
+            maxZoom: 19,
+            subdomains: 'abcd'
         }).addTo(previewMap);
     }
 

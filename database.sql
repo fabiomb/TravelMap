@@ -135,6 +135,7 @@ INSERT INTO settings (setting_key, setting_value, setting_type, description) VAL
 ('distance_unit', 'km', 'string', 'Unidad de distancia preferida (km para Kilómetros, mi para Millas)'),
 ('default_language', 'en', 'string', 'Idioma por defecto del sitio (en, es, etc.)'),
 ('map_style', 'voyager', 'string', 'Estilo del mapa base (positron, voyager, dark-matter, osm-liberty)'),
+('map_tiles_api_key', '', 'string', 'API Key de CARTO (requerida por los estilos de mapa de CARTO)'),
 ('thumbnail_max_width', '400', 'number', 'Ancho máximo de miniaturas en píxeles'),
 ('thumbnail_max_height', '300', 'number', 'Alto máximo de miniaturas en píxeles'),
 ('thumbnail_quality', '80', 'number', 'Calidad de compresión JPEG para miniaturas (0-100)'),

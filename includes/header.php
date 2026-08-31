@@ -8,6 +8,8 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../version.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../src/models/Settings.php';
 
 // Asegurar que el usuario esté autenticado
 require_auth();
@@ -27,6 +29,9 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'es'])) {
 $current_page = basename($_SERVER['PHP_SELF']);
 $username = get_current_username();
 $user_id = get_current_user_id();
+
+// CARTO basemaps require an API key; the admin Leaflet maps read it from window.
+$mapTilesApiKey = (new Settings(getDB()))->get('map_tiles_api_key', '');
 ?>
 <!DOCTYPE html>
 <html lang="<?= current_lang() ?>">
@@ -46,6 +51,7 @@ $user_id = get_current_user_id();
     
     <!-- Prevent sidebar flash: apply collapsed state before render -->
     <!-- Unit Manager and early scripts -->
+    <script>window.MAP_TILES_API_KEY = <?= json_encode($mapTilesApiKey) ?>;</script>
     <script src="<?= ASSETS_URL ?>/js/unit_manager.js?v=<?= $version ?>"></script>
     <script>
         (function() {

@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [1.0.301] - 2026-08-31
+### API Key de CARTO
+- CARTO empezó a exigir una API Key para servir los tiles del mapa base, así que sin key los estilos Voyager, Positron y Dark Matter quedaban en blanco
+- Nueva configuración `map_tiles_api_key` (migración 027), editable desde Admin → Configuración → Mapa, con la aclaración de que la key es obligatoria para los estilos de CARTO y que OSM Liberty no la necesita
+- `assets/js/map-config.js` centraliza el armado de la URL de tiles: `getRasterTileUrl()` y `withTilesApiKey()` agregan `?key=` únicamente a las URLs de `cartocdn.com`
+- Todos los mapas Leaflet usan ese helper: mapa público (`index.php`), página de viaje (`trip.php`), editor de mapa del viaje, formulario de puntos y preview del importador BRouter
+
+
 ## [1.0.300] - 2026-08-01
 ### Galería de imágenes por punto de interés
 - Cada POI admite ahora varias imágenes en lugar de una sola. Nueva tabla `poi_images` (migración 026) con orden y texto opcional por foto; el `image_path` de `points_of_interest` se conserva como portada, así que las integraciones existentes (MCP, importador EXIF, `save_poi`) siguen funcionando sin cambios

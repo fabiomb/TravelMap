@@ -466,7 +466,7 @@
 
         // Add tile layer
         // Note: Para soporte real de idiomas, cambiar a MapLibre GL en configuración
-        L.tileLayer(tileConfig.url, {
+        L.tileLayer(MapConfig.withTilesApiKey(tileConfig.url), {
             attribution: tileConfig.attribution,
             maxZoom: 19,
             subdomains: tileConfig.subdomains || 'abc'

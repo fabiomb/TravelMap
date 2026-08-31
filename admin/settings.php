@@ -60,6 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ];
         }
         
+        if (isset($_POST['map_tiles_api_key'])) {
+            $updates['map_tiles_api_key'] = [
+                'value' => trim($_POST['map_tiles_api_key']),
+                'type' => 'string'
+            ];
+        }
+
         if (isset($_POST['map_renderer'])) {
             $updates['map_renderer'] = [
                 'value' => $_POST['map_renderer'],
@@ -703,6 +710,24 @@ require_once __DIR__ . '/../includes/header.php';
                         background: linear-gradient(135deg, #c5e8b7 0%, #fff2cc 50%, #b3d9ff 100%);
                     }
                 </style>
+
+                <div class="form-group" style="margin-top: 24px;">
+                    <label for="map_tiles_api_key" class="form-label"><?= __('settings.map_tiles_api_key') ?? 'CARTO API Key' ?></label>
+                    <input type="text" class="form-control" id="map_tiles_api_key" name="map_tiles_api_key"
+                           value="<?= htmlspecialchars($currentSettings['map_tiles_api_key'] ?? '') ?>"
+                           placeholder="<?= __('settings.map_tiles_api_key_placeholder') ?? 'Paste your CARTO API key' ?>"
+                           autocomplete="off" spellcheck="false">
+                    <div class="form-hint"><?= __('settings.map_tiles_api_key_desc') ?? 'Required by the Voyager, Positron and Dark Matter styles: CARTO no longer serves basemap tiles without a key. Get one from your account at carto.com. OSM Liberty does not need a key.' ?></div>
+                </div>
+
+                <div class="alert alert-warning alert-permanent mb-0" style="margin-top: 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span><?= __('settings.map_tiles_api_key_note') ?? 'Without a valid key the CARTO styles render a blank map. The key travels to the browser with every tile request, so restrict it by domain in your CARTO account.' ?></span>
+                </div>
             </div>
         </div>
         

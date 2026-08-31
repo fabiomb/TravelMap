@@ -245,7 +245,7 @@ function initMapLibre() {
 function initLeaflet() {
     map = L.map('tripMap', { closePopupOnClick: false }).setView([0, 0], 2);
 
-    const tileUrl = MapConfig.RASTER_TILES[MAP_STYLE] || MapConfig.RASTER_TILES['voyager'];
+    const tileUrl = MapConfig.getRasterTileUrl(MAP_STYLE);
 
     L.tileLayer(tileUrl, {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'

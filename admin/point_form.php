@@ -575,6 +575,9 @@ const initialLng = <?= !empty($form_data['longitude']) ? $form_data['longitude']
 const PHP_TRANSLATIONS = <?= $lang->getTranslationsAsJson() ?>;
 </script>
 
+<!-- Configuración compartida de mapas (URLs de tiles + API key de CARTO) -->
+<script src="<?= ASSETS_URL ?>/js/map-config.js?v=<?php echo $version; ?>"></script>
+
 <!-- Script del mapa de puntos -->
 <script src="<?= ASSETS_URL ?>/js/point_map.js?v=<?php echo $version; ?>"></script>
 

@@ -27,6 +27,27 @@ window.MapConfig = (function () {
         return MAP_STYLES[styleKey] || MAP_STYLES['voyager'];
     }
 
+    // ── CARTO API key ─────────────────────────────────────────────────────────
+    // CARTO basemaps require an API key. Every page that renders a map injects
+    // it as window.MAP_TILES_API_KEY from the `map_tiles_api_key` setting.
+
+    function getTilesApiKey() {
+        const key = (typeof window !== 'undefined') ? window.MAP_TILES_API_KEY : '';
+        return key ? String(key).trim() : '';
+    }
+
+    /** Appends the configured API key to CARTO tile URLs. Other providers are left untouched. */
+    function withTilesApiKey(url) {
+        const key = getTilesApiKey();
+        if (!key || !url || url.indexOf('cartocdn.com') === -1) return url;
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + 'key=' + encodeURIComponent(key);
+    }
+
+    /** Raster tile URL for a style, already carrying the API key when one is configured. */
+    function getRasterTileUrl(styleKey) {
+        return withTilesApiKey(RASTER_TILES[styleKey] || RASTER_TILES['voyager']);
+    }
+
     // ── Transport icons (SVG strings) ─────────────────────────────────────────
 
     const transportIcons = {
@@ -89,6 +110,9 @@ window.MapConfig = (function () {
         MAP_STYLES,
         RASTER_TILES,
         getMapStyleUrl,
+        getTilesApiKey,
+        withTilesApiKey,
+        getRasterTileUrl,
         transportIcons,
         transportConfig,
         pointTypeIcons,

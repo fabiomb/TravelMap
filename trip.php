@@ -180,6 +180,8 @@ $tripDataForJS = [
 $settingsModel = new Settings($db);
 $mapRenderer = $settingsModel->get('map_renderer', 'maplibre');
 $mapStyle = $settingsModel->get('map_style', 'voyager');
+// CARTO basemaps require an API key
+$mapTilesApiKey = $settingsModel->get('map_tiles_api_key', '');
 $tripTooltipConfig = [
     'showImage'       => (bool) $settingsModel->get('trip_tooltip_show_image', true),
     'showTripTitle'   => (bool) $settingsModel->get('trip_tooltip_show_trip_title', false),
@@ -462,6 +464,7 @@ $statsIcons = [
         const TRIP_DATA = <?= json_encode($tripDataForJS) ?>;
         const MAP_RENDERER = '<?= $mapRenderer ?>';
         const MAP_STYLE = '<?= $mapStyle ?>';
+        window.MAP_TILES_API_KEY = <?= json_encode($mapTilesApiKey) ?>;
         const ASSETS_URL = '<?= ASSETS_URL ?>';
         const TRIP_TOOLTIP_CONFIG = <?= json_encode($tripTooltipConfig) ?>;
     </script>

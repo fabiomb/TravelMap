@@ -478,6 +478,9 @@ i18n.init();
 </script>
 
 
+<!-- Configuración compartida de mapas (URLs de tiles + API key de CARTO) -->
+<script src="<?= ASSETS_URL ?>/js/map-config.js?v=<?php echo $version; ?>"></script>
+
 <!-- Script del mapa -->
 <script src="<?= ASSETS_URL ?>/js/trip_map.js?v=<?php echo $version; ?>"></script>
 
