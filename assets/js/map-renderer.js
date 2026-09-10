@@ -63,6 +63,7 @@ window.MapRenderer = (function () {
      * @param {object} [opts]
      * @param {boolean} [opts.isFuture=false]   - Future trips get grey dashed style.
      * @param {string}  [opts.visibility='visible'] - MapLibre layer visibility.
+     * @param {number}  [opts.tripId]          - Stored in layer metadata so callers can filter by trip.
      * @returns {{ source, target, color }|null}
      *   Returns a flight-data entry if this is a plane arc, null if a layer was added.
      */
@@ -70,6 +71,7 @@ window.MapRenderer = (function () {
         opts = opts || {};
         var isFuture = opts.isFuture || false;
         var visibility = opts.visibility || 'visible';
+        var tripId = opts.tripId;
 
         var geojson = MapConfig.normalizeGeojson(route.geojson);
         if (!geojson || !geojson.geometry) return null;
@@ -116,7 +118,7 @@ window.MapRenderer = (function () {
                     'visibility': visibility
                 },
                 paint: paint,
-                metadata: { transportType: transportType }
+                metadata: { transportType: transportType, tripId: tripId }
             });
         }
 

@@ -48,11 +48,31 @@ require_once __DIR__ . '/../includes/header.php';
 // Obtener filtro de viaje
 $filter_trip_id = isset($_GET['trip_id']) && is_numeric($_GET['trip_id']) ? (int) $_GET['trip_id'] : null;
 
-// Obtener puntos (filtrados o todos)
-$points = $pointModel->getAll($filter_trip_id);
+// Paginación
+$per_page = 25;
+$total_points = $pointModel->countAll($filter_trip_id);
+$total_pages = max(1, (int) ceil($total_points / $per_page));
+$current_page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 1;
+$current_page = max(1, min($total_pages, $current_page));
+$offset = ($current_page - 1) * $per_page;
 
-// Obtener todos los viajes para el filtro
-$trips = $tripModel->getAll('title ASC');
+// Construye una URL de la propia página conservando el filtro activo
+$page_url = function (int $page) use ($filter_trip_id): string {
+    $params = [];
+    if ($filter_trip_id) {
+        $params['trip_id'] = $filter_trip_id;
+    }
+    if ($page > 1) {
+        $params['page'] = $page;
+    }
+    return 'points.php' . ($params ? '?' . http_build_query($params) : '');
+};
+
+// Obtener puntos de la página actual (filtrados o todos)
+$points = $pointModel->getAll($filter_trip_id, 'visit_date DESC, created_at DESC', $per_page, $offset);
+
+// Obtener todos los viajes para el filtro (más recientes primero)
+$trips = $tripModel->getAll('start_date DESC, created_at DESC');
 
 // Obtener tipos de puntos
 $point_types = Point::getTypes();
@@ -169,6 +189,7 @@ $galleryCounts = $galleryModel->countByPoiIds(array_column($points, 'id'));
                                     <?php if ($point['image_path']): ?>
                                         <img src="<?= BASE_URL ?>/<?= htmlspecialchars($point['image_path']) ?>"
                                              alt="<?= htmlspecialchars($point['title']) ?>"
+                                             loading="lazy" decoding="async"
                                              class="table-thumb">
                                     <?php else: ?>
                                         <div class="table-thumb-placeholder">
@@ -222,7 +243,7 @@ $galleryCounts = $galleryModel->countByPoiIds(array_column($points, 'id'));
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                             </svg>
                                         </a>
-                                        <a href="?delete=<?= $point['id'] ?><?= $filter_trip_id ? '&trip_id=' . $filter_trip_id : '' ?>" class="btn btn-icon btn-sm btn-outline-danger btn-delete" title="<?= __('common.delete') ?>">
+                                        <a href="?delete=<?= $point['id'] ?><?= $filter_trip_id ? '&trip_id=' . $filter_trip_id : '' ?><?= $current_page > 1 ? '&page=' . $current_page : '' ?>" class="btn btn-icon btn-sm btn-outline-danger btn-delete" title="<?= __('common.delete') ?>">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <polyline points="3 6 5 6 21 6"></polyline>
                                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -236,9 +257,46 @@ $galleryCounts = $galleryModel->countByPoiIds(array_column($points, 'id'));
                 </table>
             </div>
 
-            <div class="admin-card-footer" style="font-size: 12px; color: var(--admin-text-muted);">
-                <?= count($points) ?> <?= __('points.title') ?>
-                <?= $filter_trip_id ? '(' . __('points.filter_by_trip') . ')' : '' ?>
+            <div class="admin-card-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--admin-text-muted);">
+                <span>
+                    <?= $offset + 1 ?>–<?= $offset + count($points) ?> / <?= $total_points ?> <?= __('points.title') ?>
+                    <?= $filter_trip_id ? '(' . __('points.filter_by_trip') . ')' : '' ?>
+                </span>
+
+                <?php if ($total_pages > 1): ?>
+                    <?php
+                    // Ventana deslizante de 5 páginas centrada en la actual
+                    $window_start = max(1, min($current_page - 2, $total_pages - 4));
+                    $window_end   = min($total_pages, $window_start + 4);
+                    ?>
+                    <nav style="display: flex; align-items: center; gap: 4px;" aria-label="<?= __('points.title') ?>">
+                        <?php if ($current_page > 1): ?>
+                            <a href="<?= htmlspecialchars($page_url($current_page - 1)) ?>" class="btn btn-sm btn-outline-primary"><?= __('common.previous') ?></a>
+                        <?php endif; ?>
+
+                        <?php if ($window_start > 1): ?>
+                            <a href="<?= htmlspecialchars($page_url(1)) ?>" class="btn btn-sm btn-outline-primary">1</a>
+                            <?php if ($window_start > 2): ?><span>…</span><?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php for ($p = $window_start; $p <= $window_end; $p++): ?>
+                            <?php if ($p === $current_page): ?>
+                                <span class="btn btn-sm btn-primary" aria-current="page"><?= $p ?></span>
+                            <?php else: ?>
+                                <a href="<?= htmlspecialchars($page_url($p)) ?>" class="btn btn-sm btn-outline-primary"><?= $p ?></a>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($window_end < $total_pages): ?>
+                            <?php if ($window_end < $total_pages - 1): ?><span>…</span><?php endif; ?>
+                            <a href="<?= htmlspecialchars($page_url($total_pages)) ?>" class="btn btn-sm btn-outline-primary"><?= $total_pages ?></a>
+                        <?php endif; ?>
+
+                        <?php if ($current_page < $total_pages): ?>
+                            <a href="<?= htmlspecialchars($page_url($current_page + 1)) ?>" class="btn btn-sm btn-outline-primary"><?= __('common.next') ?></a>
+                        <?php endif; ?>
+                    </nav>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

@@ -20,32 +20,59 @@ class Point {
      * 
      * @param int|null $trip_id Filtrar por viaje (opcional)
      * @param string $order_by Campo por el que ordenar
+     * @param int|null $limit Máximo de resultados (null = sin límite)
+     * @param int $offset Desplazamiento para paginación
      * @return array Lista de puntos
      */
-    public function getAll($trip_id = null, $order_by = 'visit_date DESC, created_at DESC') {
+    public function getAll($trip_id = null, $order_by = 'visit_date DESC, created_at DESC', ?int $limit = null, int $offset = 0) {
         try {
+            $sql = "SELECT p.*, t.title as trip_title, t.color_hex as trip_color
+                    FROM points_of_interest p
+                    LEFT JOIN trips t ON p.trip_id = t.id";
+
+            $params = [];
             if ($trip_id) {
-                $stmt = $this->db->prepare("
-                    SELECT p.*, t.title as trip_title, t.color_hex as trip_color
-                    FROM points_of_interest p
-                    LEFT JOIN trips t ON p.trip_id = t.id
-                    WHERE p.trip_id = ?
-                    ORDER BY {$order_by}
-                ");
-                $stmt->execute([$trip_id]);
-            } else {
-                $stmt = $this->db->prepare("
-                    SELECT p.*, t.title as trip_title, t.color_hex as trip_color
-                    FROM points_of_interest p
-                    LEFT JOIN trips t ON p.trip_id = t.id
-                    ORDER BY {$order_by}
-                ");
-                $stmt->execute();
+                $sql .= ' WHERE p.trip_id = ?';
+                $params[] = $trip_id;
             }
+
+            $sql .= " ORDER BY {$order_by}";
+
+            if ($limit !== null) {
+                $sql .= ' LIMIT ' . max(1, $limit) . ' OFFSET ' . max(0, $offset);
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log('Error al obtener puntos: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Contar puntos de interés, opcionalmente filtrados por viaje.
+     *
+     * @param int|null $trip_id Filtrar por viaje (opcional)
+     * @return int Total de puntos
+     */
+    public function countAll($trip_id = null): int {
+        try {
+            $sql = 'SELECT COUNT(*) FROM points_of_interest';
+            $params = [];
+
+            if ($trip_id) {
+                $sql .= ' WHERE trip_id = ?';
+                $params[] = $trip_id;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log('Error al contar puntos: ' . $e->getMessage());
+            return 0;
         }
     }
 

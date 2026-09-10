@@ -558,7 +558,8 @@
 
         const arcEntry = MapRenderer.addRouteLayer(map, route, sourceId, layerId, {
             isFuture: isFuture,
-            visibility: visibility ? 'visible' : 'none'
+            visibility: visibility ? 'visible' : 'none',
+            tripId: trip.id
         });
 
         if (arcEntry !== null) return; // Simple plane arc — handled by deck.gl

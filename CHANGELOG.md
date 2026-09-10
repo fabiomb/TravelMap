@@ -1,6 +1,15 @@
 # Changelog
 
 
+## [1.0.302] - 2026-09-10
+### Paginación de POIs y corrección del filtro de viajes en MapLibre
+- `admin/points.php` pagina el listado de puntos de a 25 en lugar de traer todos: con muchos viajes la página tardaba en cargar y quedaba interminable. El navegador muestra una ventana de 5 páginas más accesos a la primera y a la última, y conserva el filtro de viaje al cambiar de página
+- El conteo de fotos por punto (`countByPoiIds`) y las miniaturas ahora se limitan a la página visible; las imágenes se cargan con `loading="lazy"`
+- `Point::getAll()` acepta `limit` y `offset` (la firma anterior sigue siendo válida, así que `api/get_all_data.php` no cambia) y se suma `Point::countAll()` para el total
+- El filtro por viaje de `admin/points.php` se ordena por fecha de inicio descendente en vez de alfabéticamente, para que el último viaje quede siempre primero
+- **Fix**: en el mapa público con MapLibre GL, las rutas de los viajes destildados seguían dibujándose. `MapRenderer.addRouteLayer()` creaba la capa sin `tripId` en su `metadata`, así que `updateTripVisibility()` y `toggleRoutes()` nunca encontraban las capas a ocultar. Los POIs sí se filtraban porque usan las propiedades del feature de supercluster, no la metadata de la capa. Leaflet no estaba afectado
+
+
 ## [1.0.301] - 2026-08-31
 ### API Key de CARTO
 - CARTO empezó a exigir una API Key para servir los tiles del mapa base, así que sin key los estilos Voyager, Positron y Dark Matter quedaban en blanco
